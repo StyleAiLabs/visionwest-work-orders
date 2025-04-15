@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import WorkOrdersPage from './pages/WorkOrdersPage';
+import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
+import PhotoUploadPage from './pages/PhotoUploadPage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './hooks/useAuth';
@@ -46,6 +48,24 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <WorkOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/work-orders/:id"
+            element={
+              <ProtectedRoute>
+                <WorkOrderDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/work-orders/:id/photos/add"
+            element={
+              <ProtectedRoute>
+                <PhotoUploadPage />
               </ProtectedRoute>
             }
           />
