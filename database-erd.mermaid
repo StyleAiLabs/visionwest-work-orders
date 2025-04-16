@@ -1,0 +1,73 @@
+erDiagram
+    USERS ||--o{ WORK_ORDERS : "creates/updates"
+    USERS ||--o{ STATUS_UPDATES : "updates"
+    USERS ||--o{ PHOTOS : "uploads"
+    USERS ||--o{ WORK_ORDER_NOTES : "creates"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+
+    WORK_ORDERS ||--o{ STATUS_UPDATES : "has"
+    WORK_ORDERS ||--o{ PHOTOS : "contains"
+    WORK_ORDERS ||--o{ WORK_ORDER_NOTES : "has"
+    WORK_ORDERS ||--o{ NOTIFICATIONS : "generates"
+    WORK_ORDERS ||--o{ SMS_NOTIFICATIONS : "triggers"
+
+    USERS {
+        int id PK
+        string username
+        string email
+        string role
+        string full_name
+        string phone_number
+        boolean is_active
+    }
+
+    WORK_ORDERS {
+        int id PK
+        string job_no
+        date date
+        string status
+        string work_order_type
+        string supplier_name
+        string property_name
+        text description
+    }
+
+    STATUS_UPDATES {
+        int id PK
+        int work_order_id FK
+        string previous_status
+        string new_status
+        string notes
+        int updated_by FK
+    }
+
+    PHOTOS {
+        int id PK
+        int work_order_id FK
+        string file_path
+        string file_name
+        int uploaded_by FK
+    }
+
+    WORK_ORDER_NOTES {
+        int id PK
+        int work_order_id FK
+        text note
+        int created_by FK
+    }
+
+    NOTIFICATIONS {
+        int id PK
+        int user_id FK
+        int work_order_id FK
+        text message
+        boolean is_read
+    }
+
+    SMS_NOTIFICATIONS {
+        int id PK
+        int work_order_id FK
+        string phone_number
+        text message
+        string status
+    }
