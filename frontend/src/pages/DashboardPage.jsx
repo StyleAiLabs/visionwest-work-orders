@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import SummaryCard from '../components/dashboard/SummaryCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
+import { alertsService } from '../services/alertsService';
 
 const DashboardPage = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [summary, setSummary] = useState({
         pending: 0,
         inProgress: 0,
@@ -17,14 +19,20 @@ const DashboardPage = () => {
     });
     const [activities, setActivities] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
 
     // Mock data loading - replace with actual API calls later
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
+                setIsLoading(true);
                 // In a real implementation, these would be actual API calls
                 // const summaryData = await api.get('/work-orders/summary');
                 // const activitiesData = await api.get('/activities');
+
+                // Get the unread alerts count from alertsService
+                const alertsCount = await alertsService.getUnreadCount();
+                setUnreadAlertsCount(alertsCount);
 
                 // Mock data for development
                 const mockSummary = {
@@ -34,32 +42,36 @@ const DashboardPage = () => {
                     total: 25
                 };
 
-                const mockActivities = [
-                    {
-                        id: 1,
-                        type: 'status-change',
-                        message: 'Status changed to "In Progress"',
-                        details: 'Job #RBWO010965',
-                        time: '2h ago'
-                    },
-                    {
-                        id: 2,
-                        type: 'completed',
-                        message: 'Work order completed',
-                        details: 'Job #RBWO010932',
-                        time: '5h ago'
-                    },
-                    {
-                        id: 3,
-                        type: 'new',
-                        message: 'New work order assigned',
-                        details: 'Job #RBWO010980',
-                        time: '8h ago'
+                // Also fetch recent activities - in a real app, this might be fetched
+                // from a separate endpoint, but we'll use our alerts for now
+                const alertsResponse = await alertsService.getAlerts();
+                const recentAlerts = alertsResponse.data.slice(0, 3).map(alert => {
+                    let type;
+                    switch (alert.type) {
+                        case 'status-change':
+                            type = 'status-change';
+                            break;
+                        case 'completion':
+                            type = 'completed';
+                            break;
+                        case 'work-order':
+                            type = 'new';
+                            break;
+                        default:
+                            type = alert.type;
                     }
-                ];
+
+                    return {
+                        id: alert.id,
+                        type,
+                        message: alert.title,
+                        details: alert.message,
+                        time: alert.time
+                    };
+                });
 
                 setSummary(mockSummary);
-                setActivities(mockActivities);
+                setActivities(recentAlerts);
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {
@@ -73,12 +85,23 @@ const DashboardPage = () => {
     // Header right content with notification and profile buttons
     const headerRightContent = (
         <>
-            <button className="p-1 rounded-full hover:bg-indigo-500">
+            <button
+                className="p-1 rounded-full hover:bg-indigo-500 relative"
+                onClick={() => navigate('/alerts')}
+            >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
+                {unreadAlertsCount > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {unreadAlertsCount > 9 ? '9+' : unreadAlertsCount}
+                    </div>
+                )}
             </button>
-            <button className="p-1 rounded-full hover:bg-indigo-500">
+            <button
+                className="p-1 rounded-full hover:bg-indigo-500"
+                onClick={() => navigate('/settings')}
+            >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -113,7 +136,17 @@ const DashboardPage = () => {
 
                 {/* Recent Activity */}
                 <div className="bg-white rounded-lg shadow p-4 mb-6">
-                    <h3 className="text-lg font-semibold mb-3">Recent Activity</h3>
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-lg font-semibold">Recent Activity</h3>
+                        {unreadAlertsCount > 0 && (
+                            <button
+                                onClick={() => navigate('/alerts')}
+                                className="text-indigo-600 text-sm font-medium flex items-center"
+                            >
+                                View All ({unreadAlertsCount} new)
+                            </button>
+                        )}
+                    </div>
                     <div className="space-y-3">
                         {activities.map(activity => (
                             <ActivityItem
@@ -159,14 +192,13 @@ const DashboardPage = () => {
                             label="Today"
                         />
                         <QuickActionButton
-                            to="/work-orders?sort=latest"
+                            to="/alerts?filter=urgent"
                             icon={
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             }
-                            label="Latest"
+                            label="Urgent"
                         />
                     </div>
                 </div>
