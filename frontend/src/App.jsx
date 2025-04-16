@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import WorkOrdersPage from './pages/WorkOrdersPage';
 import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
 import PhotoUploadPage from './pages/PhotoUploadPage';
+import StatusUpdatePage from './pages/StatusUpdatePage'; // Add this import
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './hooks/useAuth';
@@ -84,6 +85,15 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/work-orders/:id/update-status"
+            element={
+              <ProtectedRoute>
+                <StatusUpdatePage />
               </ProtectedRoute>
             }
           />

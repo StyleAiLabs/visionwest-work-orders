@@ -159,10 +159,22 @@ const WorkOrderDetailPage = () => {
                     <p className="text-sm text-gray-600 mt-1">{workOrder.property.name}</p>
 
                     {/* Update Status */}
-                    <StatusUpdateForm
-                        currentStatus={workOrder.status}
-                        onStatusChange={handleStatusChange}
-                    />
+                    {/* Update Status */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <div className="flex justify-between items-center">
+                            <StatusBadge status={workOrder.status} />
+                            <button
+                                onClick={() => navigate(`/work-orders/${workOrder.id}/update-status`)}
+                                className="text-indigo-600 text-sm font-medium flex items-center"
+                            >
+                                <span>Update Status</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Work Order Details */}
