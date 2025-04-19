@@ -13,7 +13,22 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl requests)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [
+            process.env.CORS_ORIGIN,
+            'http://localhost:5173',
+            'https://vision-west.netlify.app' // Add your Netlify URL here
+        ];
+
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     optionsSuccessStatus: 200
 }));
 app.use(express.json());
@@ -28,7 +43,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth.routes'));
 
 // Set port
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5000;
 
 // Start server
 app.listen(PORT, () => {
@@ -42,6 +57,11 @@ if (process.env.NODE_ENV === 'development') {
         // Seed database
         const seedDatabase = require('./utils/seeder');
         await seedDatabase();
+    });
+} else {
+    // In production, just sync without altering existing tables
+    db.sequelize.sync().then(() => {
+        console.log('Database synced in production mode');
     });
 }
 
