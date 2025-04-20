@@ -90,7 +90,7 @@ exports.uploadPhotos = async (req, res) => {
             // Create a unique filename
             const timestamp = Date.now();
             const safeFilename = file.originalname.replace(/\s+/g, '-').toLowerCase();
-            const s3Key = `Work Orders/${jobNo}/${timestamp}-${safeFilename}`;
+            const s3Key = `work-orders/${jobNo}/${timestamp}-${safeFilename}`;
 
             // Set up the S3 upload parameters
             const params = {
