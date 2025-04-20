@@ -4,8 +4,16 @@ const WorkOrder = db.workOrder;
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const writeFileAsync = promisify(fs.writeFile);
-const mkdirAsync = promisify(fs.mkdir);
+const AWS = require('aws-sdk');
+const multer = require('multer');
+const unlinkAsync = promisify(fs.unlink);
+
+// Configure AWS S3
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1'
+});
 
 // Get all photos for a work order
 exports.getWorkOrderPhotos = async (req, res) => {
@@ -49,7 +57,7 @@ exports.getWorkOrderPhotos = async (req, res) => {
     }
 };
 
-// Upload photos for a work order
+// Upload photos to AWS S3 for a work order
 exports.uploadPhotos = async (req, res) => {
     try {
         const { workOrderId } = req.params;
@@ -72,34 +80,35 @@ exports.uploadPhotos = async (req, res) => {
             });
         }
 
-        // Create uploads directory if it doesn't exist
-        const uploadDir = path.join(__dirname, '../uploads');
-        const workOrderDir = path.join(uploadDir, `work-order-${workOrderId}`);
+        // Get the job number for organizing files
+        const jobNo = workOrder.job_no;
 
-        try {
-            await mkdirAsync(uploadDir, { recursive: true });
-            await mkdirAsync(workOrderDir, { recursive: true });
-        } catch (err) {
-            if (err.code !== 'EEXIST') {
-                throw err;
-            }
-        }
-
-        // Process and save each uploaded file
+        // Process and upload each file to S3
         const uploadedPhotos = [];
 
         for (const file of req.files) {
-            const filename = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-            const filePath = path.join(workOrderDir, filename);
+            // Create a unique filename
+            const timestamp = Date.now();
+            const safeFilename = file.originalname.replace(/\s+/g, '-').toLowerCase();
+            const s3Key = `Work Orders/${jobNo}/${timestamp}-${safeFilename}`;
 
-            // Save file to disk
-            await writeFileAsync(filePath, file.buffer);
+            // Set up the S3 upload parameters
+            const params = {
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: s3Key,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+                ACL: 'public-read' // Make the file publicly accessible
+            };
+
+            // Upload to S3
+            const uploadResult = await s3.upload(params).promise();
 
             // Save file info to database
             const photo = await Photo.create({
                 work_order_id: workOrderId,
-                file_path: `/uploads/work-order-${workOrderId}/${filename}`,
-                file_name: filename,
+                file_path: uploadResult.Location, // S3 URL
+                file_name: safeFilename,
                 description: description || null,
                 uploaded_by: req.userId // From auth middleware
             });
@@ -119,10 +128,11 @@ exports.uploadPhotos = async (req, res) => {
             data: uploadedPhotos
         });
     } catch (error) {
-        console.error('Error uploading photos:', error);
+        console.error('Error uploading photos to S3:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while uploading photos.'
+            message: 'An error occurred while uploading photos to S3.',
+            error: error.message
         });
     }
 };
@@ -141,15 +151,19 @@ exports.deletePhoto = async (req, res) => {
             });
         }
 
-        // Get absolute file path
-        const filePath = path.join(__dirname, '..', photo.file_path.replace(/^\/uploads/, 'uploads'));
+        // Extract the S3 key from the URL
+        const url = new URL(photo.file_path);
+        const key = url.pathname.substring(1); // Remove leading slash
 
-        // Delete file from filesystem
+        // Delete from S3
         try {
-            fs.unlinkSync(filePath);
-        } catch (err) {
-            console.error('Error deleting file from filesystem:', err);
-            // Continue even if file doesn't exist on disk
+            await s3.deleteObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: key
+            }).promise();
+        } catch (s3Error) {
+            console.error('Error deleting from S3:', s3Error);
+            // Continue even if S3 deletion fails
         }
 
         // Delete record from database

@@ -61,15 +61,18 @@ const initializeDatabase = async () => {
         if (process.env.NODE_ENV === 'development') {
             await db.sequelize.sync({ alter: true });
             console.log('Database synced in development mode');
+
+            // Seed database in both environments
+            const seedDatabase = require('./utils/seeder');
+            await seedDatabase();
+            console.log('Database seeded successfully');
+
         } else {
             await db.sequelize.sync();
             console.log('Database synced in production mode');
         }
 
-        // Seed database in both environments
-        const seedDatabase = require('./utils/seeder');
-        await seedDatabase();
-        console.log('Database seeded successfully');
+
     } catch (error) {
         console.error('Database initialization failed:', error);
         process.exit(1);
