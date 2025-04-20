@@ -98,7 +98,7 @@ exports.uploadPhotos = async (req, res) => {
                 Key: s3Key,
                 Body: file.buffer,
                 ContentType: file.mimetype,
-                ACL: 'public-read' // Make the file publicly accessible
+                // ACL: 'public-read' // Make the file publicly accessible
             };
 
             // Upload to S3
