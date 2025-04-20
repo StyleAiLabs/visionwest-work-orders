@@ -46,13 +46,13 @@ exports.getAllWorkOrders = async (req, res) => {
         }
 
         // Apply date filter
-        if (date === 'today') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            whereClause.date = {
-                [Op.gte]: today
-            };
-        }
+        // if (date === 'today') {
+        //     const today = new Date();
+        //     today.setHours(0, 0, 0, 0);
+        //     whereClause.date = {
+        //         [Op.gte]: today
+        //     };
+        // }
 
         // Apply sort
         if (sort === 'latest') {
