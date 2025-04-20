@@ -1,6 +1,7 @@
 const db = require('../models');
 const Photo = db.photo;
 const WorkOrder = db.workOrder;
+const User = db.user;  // Add this line to import User model
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
@@ -29,19 +30,29 @@ exports.getWorkOrderPhotos = async (req, res) => {
             });
         }
 
-        // Get photos
+        // Get photos with user information
         const photos = await Photo.findAll({
             where: { work_order_id: workOrderId },
+            include: [{
+                model: User,
+                as: 'uploader',
+                attributes: ['id', 'name', 'email']
+            }],
             order: [['createdAt', 'DESC']]
         });
 
-        // Format response
+        // Format response with uploader info
         const formattedPhotos = photos.map(photo => ({
             id: photo.id,
             url: photo.file_path,
             filename: photo.file_name,
             description: photo.description,
-            uploadedAt: photo.createdAt
+            uploadedAt: photo.createdAt,
+            uploadedBy: photo.uploader ? {
+                id: photo.uploader.id,
+                name: photo.uploader.name,
+                email: photo.uploader.email
+            } : null
         }));
 
         return res.status(200).json({
@@ -86,6 +97,9 @@ exports.uploadPhotos = async (req, res) => {
         // Process and upload each file to S3
         const uploadedPhotos = [];
 
+        // Get user information
+        const user = await User.findByPk(req.userId);
+
         for (const file of req.files) {
             // Create a unique filename
             const timestamp = Date.now();
@@ -118,7 +132,12 @@ exports.uploadPhotos = async (req, res) => {
                 url: photo.file_path,
                 filename: photo.file_name,
                 description: photo.description,
-                uploadedAt: photo.createdAt
+                uploadedAt: photo.createdAt,
+                uploadedBy: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email
+                }
             });
         }
 

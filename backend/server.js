@@ -63,9 +63,9 @@ const initializeDatabase = async () => {
             console.log('Database synced in development mode');
 
             // Seed database in both environments
-            const seedDatabase = require('./utils/seeder');
-            await seedDatabase();
-            console.log('Database seeded successfully');
+            //const seedDatabase = require('./utils/seeder');
+            //await seedDatabase();
+            //console.log('Database seeded successfully');
 
         } else {
             await db.sequelize.sync();
