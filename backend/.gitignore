@@ -50,6 +50,9 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
+# Uploaded files
+uploads/
+
 # MacOS files
 .DS_Store
 
