@@ -55,25 +55,32 @@ app.use(require('./middleware/error.middleware'));
 // Set port
 const PORT = process.env.PORT || 5002;
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}.`);
-});
+// Sync database and seed data
+const initializeDatabase = async () => {
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            await db.sequelize.sync({ alter: true });
+            console.log('Database synced in development mode');
+        } else {
+            await db.sequelize.sync();
+            console.log('Database synced in production mode');
+        }
 
-// Sync database (in development)
-if (process.env.NODE_ENV === 'development') {
-    db.sequelize.sync({ alter: true }).then(async () => {
-        console.log('Database synced in development mode');
-        // Seed database
+        // Seed database in both environments
         const seedDatabase = require('./utils/seeder');
         await seedDatabase();
-    });
-} else {
-    // In production, just sync without altering existing tables
-    db.sequelize.sync().then(() => {
-        console.log('Database synced in production mode');
-    });
-}
+        console.log('Database seeded successfully');
+    } catch (error) {
+        console.error('Database initialization failed:', error);
+        process.exit(1);
+    }
+};
+
+// Start server and initialize database
+app.listen(PORT, async () => {
+    console.log(`Server is running on port ${PORT}.`);
+    await initializeDatabase();
+});
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
