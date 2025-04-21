@@ -48,6 +48,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/work-orders', require('./routes/workOrder.routes'));
 app.use('/api/alerts', require('./routes/notification.routes'));
 app.use('/api/photos', require('./routes/photo.routes'));
+app.use('/api/webhook', require('./routes/webhook.routes'));
 
 // Error handling middleware
 app.use(require('./middleware/error.middleware'));
