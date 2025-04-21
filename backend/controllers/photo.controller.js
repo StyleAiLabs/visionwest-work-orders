@@ -21,6 +21,9 @@ exports.getWorkOrderPhotos = async (req, res) => {
     try {
         const { workOrderId } = req.params;
 
+        // Add logging for debugging
+        console.log('Fetching photos for work order:', workOrderId);
+
         // Verify work order exists
         const workOrder = await WorkOrder.findByPk(workOrderId);
         if (!workOrder) {
@@ -30,40 +33,60 @@ exports.getWorkOrderPhotos = async (req, res) => {
             });
         }
 
-        // Get photos with user information
+        // Get photos without user information first to check if query works
         const photos = await Photo.findAll({
             where: { work_order_id: workOrderId },
-            include: [{
-                model: User,
-                as: 'uploader',
-                attributes: ['id', 'name', 'email']
-            }],
             order: [['createdAt', 'DESC']]
         });
 
-        // Format response with uploader info
+        console.log('Found photos:', photos.length);
+
+        // If no photos found, return empty array
+        if (!photos || photos.length === 0) {
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+
+        // Format basic photo information
         const formattedPhotos = photos.map(photo => ({
             id: photo.id,
             url: photo.file_path,
             filename: photo.file_name,
             description: photo.description,
             uploadedAt: photo.createdAt,
-            uploadedBy: photo.uploader ? {
-                id: photo.uploader.id,
-                name: photo.uploader.name,
-                email: photo.uploader.email
-            } : null
+            uploadedBy: null // We'll add user info in a separate query
         }));
+
+        // Get user information separately
+        for (let photo of formattedPhotos) {
+            const photoRecord = photos.find(p => p.id === photo.id);
+            if (photoRecord.uploaded_by) {
+                const user = await User.findByPk(photoRecord.uploaded_by);
+                if (user) {
+                    photo.uploadedBy = {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email
+                    };
+                }
+            }
+        }
 
         return res.status(200).json({
             success: true,
+            count: formattedPhotos.length,
             data: formattedPhotos
         });
+
     } catch (error) {
-        console.error('Error fetching work order photos:', error);
+        console.error('Error details:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching work order photos.'
+            message: 'An error occurred while fetching work order photos.',
+            error: error.message
         });
     }
 };
