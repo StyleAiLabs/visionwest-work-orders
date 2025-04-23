@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { verifyToken, isAdmin, isAnyValidRole } = require('../middleware/auth.middleware');
 const workOrderController = require('../controllers/workOrder.controller');
-const { verifyToken, isAnyValidRole } = require('../middleware/auth.middleware');
 
 // Apply auth middleware to all routes
 router.use(verifyToken, isAnyValidRole);
@@ -23,5 +23,8 @@ router.patch('/:id/status', workOrderController.updateWorkOrderStatus);
 
 // Add note to work order
 router.post('/:id/notes', workOrderController.addWorkOrderNote);
+
+// Delete work order and all related data (admin only)
+router.delete('/:workOrderId', verifyToken, isAdmin, workOrderController.deleteWorkOrder);
 
 module.exports = router;

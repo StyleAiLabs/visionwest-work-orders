@@ -5,6 +5,9 @@ const WorkOrderNote = db.workOrderNote;
 const Photo = db.photo;
 const User = db.user;
 const { Op } = db.Sequelize;
+const Note = db.note;
+const Alert = db.alert;
+const fileService = require('../utils/fileService');
 
 // Get work order summary for dashboard
 exports.getSummary = async (req, res) => {
@@ -405,6 +408,81 @@ exports.addWorkOrderNote = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'An error occurred while adding the note.'
+        });
+    }
+};
+
+// Delete work order
+exports.deleteWorkOrder = async (req, res) => {
+    try {
+        const { workOrderId } = req.params;
+
+        // Check if work order exists
+        const workOrder = await WorkOrder.findByPk(workOrderId);
+        if (!workOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Work order not found'
+            });
+        }
+
+        // Start transaction
+        const t = await db.sequelize.transaction();
+
+        try {
+            // Get all photos to delete from S3
+            const photos = await Photo.findAll({
+                where: { work_order_id: workOrderId }
+            });
+
+            // Delete photos from S3
+            for (const photo of photos) {
+                try {
+                    await fileService.deleteFile(photo.file_key);
+                } catch (error) {
+                    console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
+                }
+            }
+
+            // Delete related records in order
+            await Photo.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await Note.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await Alert.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            // Finally delete the work order
+            await workOrder.destroy({ transaction: t });
+
+            // Commit transaction
+            await t.commit();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Work order and all related data deleted successfully'
+            });
+
+        } catch (error) {
+            // Rollback transaction on error
+            await t.rollback();
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error deleting work order:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while deleting the work order',
+            error: error.message
         });
     }
 };
