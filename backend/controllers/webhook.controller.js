@@ -193,9 +193,9 @@ exports.addNoteToWorkOrder = async (req, res) => {
             });
         }
 
-        // Create note using WorkOrderNote model
+        // Create note using WorkOrderNote model with correct column name
         let note = await WorkOrderNote.create({
-            content: note_content,
+            note: note_content,  // Changed from content to note
             work_order_id: workOrder.id,
             created_by: 1, // System user ID
             source: 'webhook'
@@ -217,7 +217,7 @@ exports.addNoteToWorkOrder = async (req, res) => {
                 noteId: note.id,
                 workOrderId: workOrder.id,
                 jobNo: job_no,
-                content: note_content,
+                note: note.note,  // Changed from content to note
                 createdAt: note.createdAt
             }
         });
