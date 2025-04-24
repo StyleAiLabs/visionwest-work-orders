@@ -155,3 +155,95 @@ exports.verifyWebhook = (req, res) => {
         timestamp: new Date().toISOString()
     });
 };
+
+exports.addNoteToWorkOrder = async (req, res) => {
+    try {
+        const { job_no, note_content } = req.body;
+
+        // Validate required fields
+        if (!job_no || !note_content) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields. Please provide job number and note content.'
+            });
+        }
+
+        // Find the work order
+        const workOrder = await WorkOrder.findOne({
+            where: { job_no }
+        });
+
+        if (!workOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Work order not found with the provided job number.'
+            });
+        }
+
+        // Find admin user to set as creator
+        const adminUser = await User.findOne({ where: { role: 'admin' } });
+        if (!adminUser) {
+            return res.status(500).json({
+                success: false,
+                message: 'No admin user found to assign as note creator.'
+            });
+        }
+
+        // Create the note
+        const note = await db.note.create({
+            content: note_content,
+            work_order_id: workOrder.id,
+            created_by: adminUser.id,
+            metadata: {
+                created_via: 'webhook',
+                created_at: new Date().toISOString()
+            }
+        });
+
+        // Notify users about the new note
+        await notifyUsersAboutNote(workOrder.id, note.id, adminUser.id);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Note added successfully to work order',
+            data: {
+                workOrderId: workOrder.id,
+                jobNo: workOrder.job_no,
+                noteId: note.id,
+                content: note.content
+            }
+        });
+
+    } catch (error) {
+        console.error('Error adding note via webhook:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while adding the note.',
+            error: error.message
+        });
+    }
+};
+
+// Helper function to create notifications for the new note
+async function notifyUsersAboutNote(workOrderId, noteId, createdById) {
+    try {
+        const staffUsers = await User.findAll({
+            where: {
+                role: ['staff', 'admin'],
+                is_active: true
+            }
+        });
+
+        for (const user of staffUsers) {
+            await notificationController.createNotification(
+                user.id,
+                workOrderId,
+                'note',
+                'New Note Added',
+                `A new note has been added to work order #${workOrderId} via webhook.`
+            );
+        }
+    } catch (error) {
+        console.error('Error creating note notifications:', error);
+    }
+}
