@@ -125,7 +125,93 @@ exports.getAllWorkOrders = async (req, res) => {
     }
 };
 
-// Get single work order by ID
+// Get single work order by // Delete work order
+exports.deleteWorkOrder = async (req, res) => {
+    try {
+        const { workOrderId } = req.params;
+
+        // Check if work order exists
+        const workOrder = await WorkOrder.findByPk(workOrderId);
+        if (!workOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Work order not found'
+            });
+        }
+
+        // Start transaction
+        const t = await db.sequelize.transaction();
+
+        try {
+            // Get all photos to delete from S3
+            const photos = await Photo.findAll({
+                where: { work_order_id: workOrderId }
+            });
+
+            // Delete photos from S3
+            if (photos.length > 0 && process.env.AWS_S3_BUCKET) {
+                for (const photo of photos) {
+                    try {
+                        const url = new URL(photo.file_path);
+                        const key = url.pathname.substring(1);
+
+                        await s3.deleteObject({
+                            Bucket: process.env.AWS_S3_BUCKET,
+                            Key: key
+                        }).promise();
+                    } catch (error) {
+                        console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
+                    }
+                }
+            }
+
+            // Delete related records in order
+            await Photo.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await WorkOrderNote.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await StatusUpdate.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await db.notification.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            // Finally delete the work order
+            await workOrder.destroy({ transaction: t });
+
+            // Commit transaction
+            await t.commit();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Work order and all related data deleted successfully'
+            });
+
+        } catch (error) {
+            // Rollback transaction on error
+            await t.rollback();
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error deleting work order:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while deleting the work order',
+            error: error.message
+        });
+    }
+};
 exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -420,6 +506,7 @@ exports.addWorkOrderNote = async (req, res) => {
 };
 
 // Delete work order
+// Delete work order
 exports.deleteWorkOrder = async (req, res) => {
     try {
         const { workOrderId } = req.params;
@@ -465,12 +552,17 @@ exports.deleteWorkOrder = async (req, res) => {
                 transaction: t
             });
 
-            await Note.destroy({
+            await WorkOrderNote.destroy({
                 where: { work_order_id: workOrderId },
                 transaction: t
             });
 
-            await Alert.destroy({
+            await StatusUpdate.destroy({
+                where: { work_order_id: workOrderId },
+                transaction: t
+            });
+
+            await db.notification.destroy({
                 where: { work_order_id: workOrderId },
                 transaction: t
             });
