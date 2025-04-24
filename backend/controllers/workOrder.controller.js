@@ -524,48 +524,59 @@ exports.deleteWorkOrder = async (req, res) => {
         const t = await db.sequelize.transaction();
 
         try {
-            // Get all photos to delete from S3
-            const photos = await Photo.findAll({
-                where: { work_order_id: workOrderId }
-            });
+            // Delete photos from S3 and database
+            if (db.photo) {
+                const photos = await Photo.findAll({
+                    where: { work_order_id: workOrderId }
+                });
 
-            // Delete photos from S3
-            if (photos.length > 0 && process.env.AWS_S3_BUCKET) {
-                for (const photo of photos) {
-                    try {
-                        const url = new URL(photo.file_path);
-                        const key = url.pathname.substring(1);
+                // Delete photos from S3
+                if (photos.length > 0 && process.env.AWS_S3_BUCKET) {
+                    for (const photo of photos) {
+                        try {
+                            const url = new URL(photo.file_path);
+                            const key = url.pathname.substring(1);
 
-                        await s3.deleteObject({
-                            Bucket: process.env.AWS_S3_BUCKET,
-                            Key: key
-                        }).promise();
-                    } catch (error) {
-                        console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
+                            await s3.deleteObject({
+                                Bucket: process.env.AWS_S3_BUCKET,
+                                Key: key
+                            }).promise();
+                        } catch (error) {
+                            console.warn(`Failed to delete S3 file for photo: ${photo.id}`, error);
+                        }
                     }
                 }
+
+                // Delete photos from database
+                await Photo.destroy({
+                    where: { work_order_id: workOrderId },
+                    transaction: t
+                });
             }
 
-            // Delete related records in order
-            await Photo.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
+            // Delete work order notes
+            if (db.workOrderNote) {
+                await WorkOrderNote.destroy({
+                    where: { work_order_id: workOrderId },
+                    transaction: t
+                });
+            }
 
-            await WorkOrderNote.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
+            // Delete status updates
+            if (db.statusUpdate) {
+                await StatusUpdate.destroy({
+                    where: { work_order_id: workOrderId },
+                    transaction: t
+                });
+            }
 
-            await StatusUpdate.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
-
-            await db.notification.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
+            // Delete notifications
+            if (db.notification) {
+                await db.notification.destroy({
+                    where: { work_order_id: workOrderId },
+                    transaction: t
+                });
+            }
 
             // Finally delete the work order
             await workOrder.destroy({ transaction: t });
