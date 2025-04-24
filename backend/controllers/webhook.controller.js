@@ -4,7 +4,9 @@ const WorkOrder = db.workOrder;
 const Notification = db.notification;
 const User = db.user;
 const Note = db.note;
+const Alert = db.alert;
 const notificationController = require('./notification.controller');
+const WorkOrderNote = db.workOrderNote;
 
 // Create work order from n8n email processing
 exports.createWorkOrderFromEmail = async (req, res) => {
@@ -159,6 +161,16 @@ exports.verifyWebhook = (req, res) => {
 
 exports.addNoteToWorkOrder = async (req, res) => {
     try {
+        // Add debug logging
+        console.log('Received webhook request:', {
+            body: req.body,
+            models: {
+                hasWorkOrder: !!db.workOrder,
+                hasWorkOrderNote: !!db.workOrderNote,
+                hasNotification: !!db.notification
+            }
+        });
+
         const { job_no, note_content } = req.body;
 
         // Validate required fields
@@ -181,20 +193,21 @@ exports.addNoteToWorkOrder = async (req, res) => {
             });
         }
 
-        // Create the note without user reference for webhook
-        const note = await Note.create({
+        // Create note using WorkOrderNote model
+        let note = await WorkOrderNote.create({
             content: note_content,
             work_order_id: workOrder.id,
-            created_by: 1, // Assuming system user has ID 1
+            created_by: 1, // System user ID
             source: 'webhook'
         });
 
-        // Create alert for the new note
+        // Create notification for the new note
         await Alert.create({
+            user_id: 1, // System user ID
             work_order_id: workOrder.id,
             type: 'note',
             message: `New note added via webhook for job ${job_no}`,
-            reference_id: note.id
+            is_read: false
         });
 
         return res.status(201).json({
@@ -203,14 +216,14 @@ exports.addNoteToWorkOrder = async (req, res) => {
             data: {
                 noteId: note.id,
                 workOrderId: workOrder.id,
-                jobNo: workOrder.job_no,
-                content: note.content,
+                jobNo: job_no,
+                content: note_content,
                 createdAt: note.createdAt
             }
         });
 
     } catch (error) {
-        console.error('Webhook note creation error:', error);
+        console.error('Webhook error details:', error);
         return res.status(500).json({
             success: false,
             message: 'An error occurred while adding the note.',
