@@ -7,7 +7,14 @@ const User = db.user;
 const { Op } = db.Sequelize;
 const Note = db.note;
 const Alert = db.alert;
-const fileService = require('../utils/fileService');
+const AWS = require('aws-sdk');
+
+// Configure AWS S3 client
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1'
+});
 
 // Get work order summary for dashboard
 exports.getSummary = async (req, res) => {
@@ -436,11 +443,19 @@ exports.deleteWorkOrder = async (req, res) => {
             });
 
             // Delete photos from S3
-            for (const photo of photos) {
-                try {
-                    await fileService.deleteFile(photo.file_key);
-                } catch (error) {
-                    console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
+            if (photos.length > 0 && process.env.AWS_S3_BUCKET) {
+                for (const photo of photos) {
+                    try {
+                        const url = new URL(photo.file_path);
+                        const key = url.pathname.substring(1);
+
+                        await s3.deleteObject({
+                            Bucket: process.env.AWS_S3_BUCKET,
+                            Key: key
+                        }).promise();
+                    } catch (error) {
+                        console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
+                    }
                 }
             }
 
