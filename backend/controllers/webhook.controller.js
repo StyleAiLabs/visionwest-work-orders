@@ -3,6 +3,7 @@ const db = require('../models');
 const WorkOrder = db.workOrder;
 const Notification = db.notification;
 const User = db.user;
+const Note = db.note;
 const notificationController = require('./notification.controller');
 
 // Create work order from n8n email processing
@@ -170,52 +171,46 @@ exports.addNoteToWorkOrder = async (req, res) => {
 
         // Find the work order
         const workOrder = await WorkOrder.findOne({
-            where: { job_no }
+            where: { job_no: job_no }
         });
 
         if (!workOrder) {
             return res.status(404).json({
                 success: false,
-                message: 'Work order not found with the provided job number.'
+                message: `Work order not found with job number: ${job_no}`
             });
         }
 
-        // Find admin user to set as creator
-        const adminUser = await User.findOne({ where: { role: 'admin' } });
-        if (!adminUser) {
-            return res.status(500).json({
-                success: false,
-                message: 'No admin user found to assign as note creator.'
-            });
-        }
-
-        // Create the note
-        const note = await db.note.create({
+        // Create the note without user reference for webhook
+        const note = await Note.create({
             content: note_content,
             work_order_id: workOrder.id,
-            created_by: adminUser.id,
-            metadata: {
-                created_via: 'webhook',
-                created_at: new Date().toISOString()
-            }
+            created_by: 1, // Assuming system user has ID 1
+            source: 'webhook'
         });
 
-        // Notify users about the new note
-        await notifyUsersAboutNote(workOrder.id, note.id, adminUser.id);
+        // Create alert for the new note
+        await Alert.create({
+            work_order_id: workOrder.id,
+            type: 'note',
+            message: `New note added via webhook for job ${job_no}`,
+            reference_id: note.id
+        });
 
         return res.status(201).json({
             success: true,
-            message: 'Note added successfully to work order',
+            message: 'Note added successfully',
             data: {
+                noteId: note.id,
                 workOrderId: workOrder.id,
                 jobNo: workOrder.job_no,
-                noteId: note.id,
-                content: note.content
+                content: note.content,
+                createdAt: note.createdAt
             }
         });
 
     } catch (error) {
-        console.error('Error adding note via webhook:', error);
+        console.error('Webhook note creation error:', error);
         return res.status(500).json({
             success: false,
             message: 'An error occurred while adding the note.',
