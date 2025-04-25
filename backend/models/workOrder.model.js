@@ -69,8 +69,45 @@ module.exports = (sequelize, Sequelize) => {
         authorized_email: {
             type: Sequelize.STRING,
             allowNull: true
+        },
+        createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.NOW
+        },
+        updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.NOW
         }
+    }, {
+        timestamps: true,
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
     });
+
+    WorkOrder.associate = (models) => {
+        // Relationships
+        WorkOrder.belongsTo(models.user, {
+            foreignKey: 'created_by',
+            as: 'creator'
+        });
+
+        WorkOrder.hasMany(models.workOrderNote, {
+            foreignKey: 'work_order_id',
+            as: 'notes'
+        });
+
+        WorkOrder.hasMany(models.photo, {
+            foreignKey: 'work_order_id',
+            as: 'photos'
+        });
+
+        WorkOrder.hasMany(models.statusUpdate, {
+            foreignKey: 'work_order_id',
+            as: 'statusUpdates'
+        });
+    };
 
     return WorkOrder;
 };

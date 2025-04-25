@@ -216,15 +216,21 @@ exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const workOrder = await WorkOrder.findByPk(id, {
+        // Add logging for debugging
+        console.log('Fetching work order with ID:', id);
+
+        const workOrder = await WorkOrder.findOne({
+            where: { id },
             include: [
                 {
                     model: Photo,
+                    as: 'photos',
                     attributes: ['id', 'file_path', 'file_name', 'description', 'createdAt']
                 },
                 {
                     model: WorkOrderNote,
-                    attributes: ['id', 'note', 'createdAt'],
+                    as: 'notes',
+                    attributes: ['id', 'note', 'createdAt', 'created_by'],
                     include: [
                         {
                             model: User,
@@ -235,7 +241,8 @@ exports.getWorkOrderById = async (req, res) => {
                 },
                 {
                     model: StatusUpdate,
-                    attributes: ['id', 'previous_status', 'new_status', 'notes', 'createdAt'],
+                    as: 'statusUpdates',
+                    attributes: ['id', 'previous_status', 'new_status', 'notes', 'createdAt', 'updated_by'],
                     include: [
                         {
                             model: User,
@@ -243,71 +250,96 @@ exports.getWorkOrderById = async (req, res) => {
                             attributes: ['id', 'full_name', 'email']
                         }
                     ]
+                },
+                {
+                    model: User,
+                    as: 'creator',
+                    attributes: ['id', 'full_name', 'email']
                 }
             ]
         });
 
+        // Add logging to check what was retrieved
+        console.log('Work order found:', workOrder ? 'Yes' : 'No');
+
         if (!workOrder) {
             return res.status(404).json({
                 success: false,
-                message: 'Work order not found.'
+                message: 'Work order not found'
             });
         }
 
-        // Format the response
+        // Format the response with null checks
         const formattedWorkOrder = {
             id: workOrder.id,
             jobNo: workOrder.job_no,
-            date: formatDate(workOrder.date),
+            date: workOrder.date ? formatDate(workOrder.date) : null,
             status: workOrder.status,
-            supplier: {
+            supplier: workOrder.supplier_name ? {
                 name: workOrder.supplier_name,
-                phone: workOrder.supplier_phone,
-                email: workOrder.supplier_email
-            },
+                phone: workOrder.supplier_phone || null,
+                email: workOrder.supplier_email || null
+            } : null,
             property: {
                 name: workOrder.property_name,
-                phone: workOrder.property_phone
+                phone: workOrder.property_phone || null
             },
             description: workOrder.description,
             poNumber: workOrder.po_number,
-            authorizedBy: {
+            authorizedBy: workOrder.authorized_by ? {
                 name: workOrder.authorized_by,
-                contact: workOrder.authorized_contact,
-                email: workOrder.authorized_email
-            },
-            photos: workOrder.photos.map(photo => ({
+                contact: workOrder.authorized_contact || null,
+                email: workOrder.authorized_email || null
+            } : null,
+            creator: workOrder.creator ? {
+                id: workOrder.creator.id,
+                name: workOrder.creator.full_name,
+                email: workOrder.creator.email
+            } : null,
+            photos: (workOrder.photos || []).map(photo => ({
                 id: photo.id,
                 url: photo.file_path,
                 filename: photo.file_name,
                 description: photo.description,
                 uploadedAt: photo.createdAt
             })),
-            notes: workOrder.work_order_notes.map(note => ({
+            notes: (workOrder.notes || []).map(note => ({
                 id: note.id,
-                text: note.note,
-                createdBy: note.creator ? note.creator.full_name : 'Unknown',
+                content: note.note,
+                createdBy: note.creator ? {
+                    id: note.creator.id,
+                    name: note.creator.full_name,
+                    email: note.creator.email
+                } : null,
                 createdAt: note.createdAt
             })),
-            statusUpdates: workOrder.status_updates.map(update => ({
+            statusUpdates: (workOrder.statusUpdates || []).map(update => ({
                 id: update.id,
                 previousStatus: update.previous_status,
                 newStatus: update.new_status,
                 notes: update.notes,
-                updatedBy: update.updater ? update.updater.full_name : 'Unknown',
+                updatedBy: update.updater ? {
+                    id: update.updater.id,
+                    name: update.updater.full_name,
+                    email: update.updater.email
+                } : null,
                 updatedAt: update.createdAt
-            }))
+            })),
+            createdAt: workOrder.createdAt,
+            updatedAt: workOrder.updatedAt
         };
 
         return res.status(200).json({
             success: true,
             data: formattedWorkOrder
         });
+
     } catch (error) {
         console.error('Error fetching work order details:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching work order details.'
+            message: 'An error occurred while fetching work order details.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 };

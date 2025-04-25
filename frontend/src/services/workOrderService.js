@@ -26,5 +26,25 @@ export const workOrderService = {
             console.error('Error fetching work order:', error);
             throw error;
         }
+    },
+
+    async updateStatus(id, status) {
+        try {
+            const response = await api.patch(`/work-orders/${id}/status`, { status });
+            return response.data;
+        } catch (error) {
+            console.error('Error updating status:', error);
+            throw error;
+        }
+    },
+
+    async addNote(workOrderId, content) {
+        try {
+            const response = await api.post(`/work-orders/${workOrderId}/notes`, { content });
+            return response.data;
+        } catch (error) {
+            console.error('Error adding note:', error);
+            throw error;
+        }
     }
 };
