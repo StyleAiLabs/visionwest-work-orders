@@ -161,27 +161,9 @@ exports.verifyWebhook = (req, res) => {
 
 exports.addNoteToWorkOrder = async (req, res) => {
     try {
-        // Add debug logging
-        console.log('Received webhook request:', {
-            body: req.body,
-            models: {
-                hasWorkOrder: !!db.workOrder,
-                hasWorkOrderNote: !!db.workOrderNote,
-                hasNotification: !!db.notification
-            }
-        });
-
         const { job_no, note_content } = req.body;
 
-        // Validate required fields
-        if (!job_no || !note_content) {
-            return res.status(400).json({
-                success: false,
-                message: 'Missing required fields. Please provide job number and note content.'
-            });
-        }
-
-        // Find the work order
+        // Find work order
         const workOrder = await WorkOrder.findOne({
             where: { job_no: job_no }
         });
@@ -189,41 +171,34 @@ exports.addNoteToWorkOrder = async (req, res) => {
         if (!workOrder) {
             return res.status(404).json({
                 success: false,
-                message: `Work order not found with job number: ${job_no}`
+                message: `Work order not found: ${job_no}`
             });
         }
 
-        // Create note using WorkOrderNote model with correct column name
-        let note = await WorkOrderNote.create({
-            note: note_content,  // Changed from content to note
+        // Create work order note with correct column names
+        const note = await WorkOrderNote.create({
+            note: note_content,
             work_order_id: workOrder.id,
-            created_by: 1, // System user ID
-            source: 'webhook'
-        });
-
-        // Create notification for the new note
-        await Alert.create({
-            user_id: 1, // System user ID
-            work_order_id: workOrder.id,
-            type: 'note',
-            message: `New note added via webhook for job ${job_no}`,
-            is_read: false
+            created_by: 1  // System user ID
+        }, {
+            // This ensures Sequelize uses the correct column names
+            fields: ['note', 'work_order_id', 'created_by']
         });
 
         return res.status(201).json({
             success: true,
             message: 'Note added successfully',
             data: {
-                noteId: note.id,
-                workOrderId: workOrder.id,
+                id: note.id,
+                workOrderId: note.work_order_id,
                 jobNo: job_no,
-                note: note.note,  // Changed from content to note
-                createdAt: note.createdAt
+                note: note.note,
+                createdBy: note.created_by
             }
         });
 
     } catch (error) {
-        console.error('Webhook error details:', error);
+        console.error('Webhook error:', error);
         return res.status(500).json({
             success: false,
             message: 'An error occurred while adding the note.',
