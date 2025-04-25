@@ -70,6 +70,14 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: true
         },
+        created_by: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'users',
+                key: 'id'
+            }
+        },
         createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
@@ -85,29 +93,6 @@ module.exports = (sequelize, Sequelize) => {
         createdAt: 'createdAt',
         updatedAt: 'updatedAt'
     });
-
-    WorkOrder.associate = (models) => {
-        // Relationships
-        WorkOrder.belongsTo(models.user, {
-            foreignKey: 'created_by',
-            as: 'creator'
-        });
-
-        WorkOrder.hasMany(models.workOrderNote, {
-            foreignKey: 'work_order_id',
-            as: 'notes'
-        });
-
-        WorkOrder.hasMany(models.photo, {
-            foreignKey: 'work_order_id',
-            as: 'photos'
-        });
-
-        WorkOrder.hasMany(models.statusUpdate, {
-            foreignKey: 'work_order_id',
-            as: 'statusUpdates'
-        });
-    };
 
     return WorkOrder;
 };

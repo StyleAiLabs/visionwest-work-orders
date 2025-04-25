@@ -5,8 +5,6 @@ const WorkOrderNote = db.workOrderNote;
 const Photo = db.photo;
 const User = db.user;
 const { Op } = db.Sequelize;
-const Note = db.note;
-const Alert = db.alert;
 const AWS = require('aws-sdk');
 
 // Configure AWS S3 client
@@ -125,221 +123,178 @@ exports.getAllWorkOrders = async (req, res) => {
     }
 };
 
-// Get single work order by // Delete work order
-exports.deleteWorkOrder = async (req, res) => {
-    try {
-        const { workOrderId } = req.params;
-
-        // Check if work order exists
-        const workOrder = await WorkOrder.findByPk(workOrderId);
-        if (!workOrder) {
-            return res.status(404).json({
-                success: false,
-                message: 'Work order not found'
-            });
-        }
-
-        // Start transaction
-        const t = await db.sequelize.transaction();
-
-        try {
-            // Get all photos to delete from S3
-            const photos = await Photo.findAll({
-                where: { work_order_id: workOrderId }
-            });
-
-            // Delete photos from S3
-            if (photos.length > 0 && process.env.AWS_S3_BUCKET) {
-                for (const photo of photos) {
-                    try {
-                        const url = new URL(photo.file_path);
-                        const key = url.pathname.substring(1);
-
-                        await s3.deleteObject({
-                            Bucket: process.env.AWS_S3_BUCKET,
-                            Key: key
-                        }).promise();
-                    } catch (error) {
-                        console.warn(`Failed to delete S3 file: ${photo.file_key}`, error);
-                    }
-                }
-            }
-
-            // Delete related records in order
-            await Photo.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
-
-            await WorkOrderNote.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
-
-            await StatusUpdate.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
-
-            await db.notification.destroy({
-                where: { work_order_id: workOrderId },
-                transaction: t
-            });
-
-            // Finally delete the work order
-            await workOrder.destroy({ transaction: t });
-
-            // Commit transaction
-            await t.commit();
-
-            return res.status(200).json({
-                success: true,
-                message: 'Work order and all related data deleted successfully'
-            });
-
-        } catch (error) {
-            // Rollback transaction on error
-            await t.rollback();
-            throw error;
-        }
-
-    } catch (error) {
-        console.error('Error deleting work order:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'An error occurred while deleting the work order',
-            error: error.message
-        });
-    }
-};
+// Add this enhanced error handling to the getWorkOrderById function
 exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Add logging for debugging
+        // More detailed logging
         console.log('Fetching work order with ID:', id);
+        console.log('Request user ID:', req.userId);
+        console.log('Request params:', req.params);
 
-        const workOrder = await WorkOrder.findOne({
-            where: { id },
-            include: [
-                {
-                    model: Photo,
-                    as: 'photos',
-                    attributes: ['id', 'file_path', 'file_name', 'description', 'createdAt']
-                },
-                {
-                    model: WorkOrderNote,
-                    as: 'notes',
-                    attributes: ['id', 'note', 'createdAt', 'created_by'],
-                    include: [
-                        {
-                            model: User,
-                            as: 'creator',
-                            attributes: ['id', 'full_name', 'email']
-                        }
-                    ]
-                },
-                {
-                    model: StatusUpdate,
-                    as: 'statusUpdates',
-                    attributes: ['id', 'previous_status', 'new_status', 'notes', 'createdAt', 'updated_by'],
-                    include: [
-                        {
-                            model: User,
-                            as: 'updater',
-                            attributes: ['id', 'full_name', 'email']
-                        }
-                    ]
-                },
-                {
-                    model: User,
-                    as: 'creator',
-                    attributes: ['id', 'full_name', 'email']
-                }
-            ]
-        });
+        try {
+            // First check if the work order exists with a simple query
+            const simpleWorkOrder = await WorkOrder.findByPk(id);
+            console.log('Simple work order query result:', simpleWorkOrder ? 'Found' : 'Not found');
 
-        // Add logging to check what was retrieved
-        console.log('Work order found:', workOrder ? 'Yes' : 'No');
+            if (!simpleWorkOrder) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Work order not found'
+                });
+            }
 
-        if (!workOrder) {
-            return res.status(404).json({
-                success: false,
-                message: 'Work order not found'
+            // Then try to fetch associations one by one
+            const workOrder = await WorkOrder.findOne({
+                where: { id },
+                include: []
             });
+
+            console.log('Work order (without associations):',
+                workOrder ? 'Found' : 'Not found');
+
+            // Try to fetch photos
+            let photos = [];
+            try {
+                photos = await Photo.findAll({
+                    where: { work_order_id: id }
+                });
+                console.log('Photos count:', photos.length);
+            } catch (photoError) {
+                console.error('Error fetching photos:', photoError);
+            }
+
+            // Try to fetch notes
+            let notes = [];
+            try {
+                notes = await WorkOrderNote.findAll({
+                    where: { work_order_id: id },
+                    include: [{
+                        model: User,
+                        as: 'creator',
+                        attributes: ['id', 'full_name', 'email']
+                    }]
+                });
+                console.log('Notes count:', notes.length);
+            } catch (noteError) {
+                console.error('Error fetching notes:', noteError);
+            }
+
+            // Try to fetch status updates
+            let statusUpdates = [];
+            try {
+                statusUpdates = await StatusUpdate.findAll({
+                    where: { work_order_id: id },
+                    include: [{
+                        model: User,
+                        as: 'updater',
+                        attributes: ['id', 'full_name', 'email']
+                    }]
+                });
+                console.log('Status updates count:', statusUpdates.length);
+            } catch (statusError) {
+                console.error('Error fetching status updates:', statusError);
+            }
+
+            // Try to fetch creator user
+            let creator = null;
+            try {
+                if (workOrder.created_by) {
+                    creator = await User.findByPk(workOrder.created_by, {
+                        attributes: ['id', 'full_name', 'email']
+                    });
+                    console.log('Creator:', creator ? creator.full_name : 'Not found');
+                }
+            } catch (creatorError) {
+                console.error('Error fetching creator:', creatorError);
+            }
+
+            // Format the response with null checks
+            const formattedWorkOrder = {
+                id: workOrder.id,
+                jobNo: workOrder.job_no,
+                date: workOrder.date ? formatDate(workOrder.date) : null,
+                status: workOrder.status,
+                supplier: workOrder.supplier_name ? {
+                    name: workOrder.supplier_name,
+                    phone: workOrder.supplier_phone || null,
+                    email: workOrder.supplier_email || null
+                } : null,
+                property: {
+                    name: workOrder.property_name,
+                    phone: workOrder.property_phone || null
+                },
+                description: workOrder.description,
+                poNumber: workOrder.po_number,
+                authorizedBy: workOrder.authorized_by ? {
+                    name: workOrder.authorized_by,
+                    contact: workOrder.authorized_contact || null,
+                    email: workOrder.authorized_email || null
+                } : null,
+                creator: creator ? {
+                    id: creator.id,
+                    name: creator.full_name,
+                    email: creator.email
+                } : null,
+                photos: photos.map(photo => ({
+                    id: photo.id,
+                    url: photo.file_path,
+                    filename: photo.file_name,
+                    description: photo.description,
+                    uploadedAt: photo.createdAt
+                })),
+                notes: notes.map(note => ({
+                    id: note.id,
+                    content: note.note,
+                    createdBy: note.creator ? {
+                        id: note.creator.id,
+                        name: note.creator.full_name,
+                        email: note.creator.email
+                    } : null,
+                    createdAt: note.createdAt
+                })),
+                statusUpdates: statusUpdates.map(update => ({
+                    id: update.id,
+                    previousStatus: update.previous_status,
+                    newStatus: update.new_status,
+                    notes: update.notes,
+                    updatedBy: update.updater ? {
+                        id: update.updater.id,
+                        name: update.updater.full_name,
+                        email: update.updater.email
+                    } : null,
+                    updatedAt: update.createdAt
+                })),
+                createdAt: workOrder.createdAt,
+                updatedAt: workOrder.updatedAt
+            };
+
+            return res.status(200).json({
+                success: true,
+                data: formattedWorkOrder
+            });
+
+        } catch (innerError) {
+            console.error('Inner error details:', innerError);
+            throw innerError; // Re-throw to be caught by outer catch
         }
-
-        // Format the response with null checks
-        const formattedWorkOrder = {
-            id: workOrder.id,
-            jobNo: workOrder.job_no,
-            date: workOrder.date ? formatDate(workOrder.date) : null,
-            status: workOrder.status,
-            supplier: workOrder.supplier_name ? {
-                name: workOrder.supplier_name,
-                phone: workOrder.supplier_phone || null,
-                email: workOrder.supplier_email || null
-            } : null,
-            property: {
-                name: workOrder.property_name,
-                phone: workOrder.property_phone || null
-            },
-            description: workOrder.description,
-            poNumber: workOrder.po_number,
-            authorizedBy: workOrder.authorized_by ? {
-                name: workOrder.authorized_by,
-                contact: workOrder.authorized_contact || null,
-                email: workOrder.authorized_email || null
-            } : null,
-            creator: workOrder.creator ? {
-                id: workOrder.creator.id,
-                name: workOrder.creator.full_name,
-                email: workOrder.creator.email
-            } : null,
-            photos: (workOrder.photos || []).map(photo => ({
-                id: photo.id,
-                url: photo.file_path,
-                filename: photo.file_name,
-                description: photo.description,
-                uploadedAt: photo.createdAt
-            })),
-            notes: (workOrder.notes || []).map(note => ({
-                id: note.id,
-                content: note.note,
-                createdBy: note.creator ? {
-                    id: note.creator.id,
-                    name: note.creator.full_name,
-                    email: note.creator.email
-                } : null,
-                createdAt: note.createdAt
-            })),
-            statusUpdates: (workOrder.statusUpdates || []).map(update => ({
-                id: update.id,
-                previousStatus: update.previous_status,
-                newStatus: update.new_status,
-                notes: update.notes,
-                updatedBy: update.updater ? {
-                    id: update.updater.id,
-                    name: update.updater.full_name,
-                    email: update.updater.email
-                } : null,
-                updatedAt: update.createdAt
-            })),
-            createdAt: workOrder.createdAt,
-            updatedAt: workOrder.updatedAt
-        };
-
-        return res.status(200).json({
-            success: true,
-            data: formattedWorkOrder
-        });
 
     } catch (error) {
         console.error('Error fetching work order details:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+
+        // More detailed error response in development
         return res.status(500).json({
             success: false,
             message: 'An error occurred while fetching work order details.',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === 'development' ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            } : undefined
         });
     }
 };
@@ -537,7 +492,6 @@ exports.addWorkOrderNote = async (req, res) => {
     }
 };
 
-// Delete work order
 // Delete work order
 exports.deleteWorkOrder = async (req, res) => {
     try {

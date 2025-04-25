@@ -54,15 +54,15 @@ db.user.hasMany(db.notification, { foreignKey: 'user_id' });
 db.notification.belongsTo(db.user, { foreignKey: 'user_id' });
 
 // WorkOrder to StatusUpdate relationship
-db.workOrder.hasMany(db.statusUpdate, { foreignKey: 'work_order_id' });
+db.workOrder.hasMany(db.statusUpdate, { foreignKey: 'work_order_id', as: 'statusUpdates' });
 db.statusUpdate.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
 
 // WorkOrder to WorkOrderNote relationship
-db.workOrder.hasMany(db.workOrderNote, { foreignKey: 'work_order_id' });
+db.workOrder.hasMany(db.workOrderNote, { foreignKey: 'work_order_id', as: 'notes' });
 db.workOrderNote.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
 
 // WorkOrder to Photo relationship
-db.workOrder.hasMany(db.photo, { foreignKey: 'work_order_id' });
+db.workOrder.hasMany(db.photo, { foreignKey: 'work_order_id', as: 'photos' });
 db.photo.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
 
 // WorkOrder to Notification relationship
