@@ -11,6 +11,19 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
         }
     };
 
+    const formatDate = (dateString) => {
+        try {
+            if (!dateString) return 'Date unavailable';
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (isNaN(date.getTime())) return 'Invalid date';
+            return `Created ${formatDistanceToNow(date)} ago`;
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return 'Date unavailable';
+        }
+    };
+
     return (
         <div
             onClick={onClick}
@@ -27,7 +40,7 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
             <p className="text-gray-500 text-sm mb-3">{workOrder.description}</p>
 
             <div className="flex justify-between items-center text-xs text-gray-500">
-                <span>Created {formatDistanceToNow(new Date(workOrder.created_at))} ago</span>
+                <span>{formatDate(workOrder.created_at)}</span>
                 {workOrder.photos_count > 0 && (
                     <span>{workOrder.photos_count} photos</span>
                 )}
