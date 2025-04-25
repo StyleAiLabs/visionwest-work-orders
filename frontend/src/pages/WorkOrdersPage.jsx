@@ -28,6 +28,7 @@ const WorkOrdersPage = () => {
         try {
             setIsLoading(true);
             const response = await workOrderService.getWorkOrders(filters);
+            //console.log('Fetched work orders:', response.data);
             setWorkOrders(response.data);
             setError(null);
         } catch (error) {
