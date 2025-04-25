@@ -7,6 +7,7 @@ import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import { useAuth } from '../hooks/useAuth';
 import { alertsService } from '../services/alertsService';
+import { dashboardService } from '../services/dashboardService';
 
 const DashboardPage = () => {
     const { user } = useAuth();
@@ -19,61 +20,37 @@ const DashboardPage = () => {
     });
     const [activities, setActivities] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
 
-    // Mock data loading - replace with actual API calls later
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 setIsLoading(true);
-                // In a real implementation, these would be actual API calls
-                // const summaryData = await api.get('/work-orders/summary');
-                // const activitiesData = await api.get('/activities');
+                setError(null);
 
-                // Get the unread alerts count from alertsService
+                // Fetch dashboard summary
+                const summaryData = await dashboardService.getDashboardSummary();
+                setSummary(summaryData.data);
+
+                // Fetch unread alerts count
                 const alertsCount = await alertsService.getUnreadCount();
                 setUnreadAlertsCount(alertsCount);
 
-                // Mock data for development
-                const mockSummary = {
-                    pending: 8,
-                    inProgress: 5,
-                    completed: 12,
-                    total: 25
-                };
+                // Fetch recent activities
+                const recentActivities = await dashboardService.getRecentActivities();
+                const formattedActivities = recentActivities.data.map(activity => ({
+                    id: activity.id,
+                    type: getActivityType(activity.status),
+                    message: `Job #${activity.jobNo} - ${getActivityMessage(activity.status)}`,
+                    details: activity.property,
+                    time: formatDate(activity.date)
+                }));
+                setActivities(formattedActivities);
 
-                // Also fetch recent activities - in a real app, this might be fetched
-                // from a separate endpoint, but we'll use our alerts for now
-                const alertsResponse = await alertsService.getAlerts();
-                const recentAlerts = alertsResponse.data.slice(0, 3).map(alert => {
-                    let type;
-                    switch (alert.type) {
-                        case 'status-change':
-                            type = 'status-change';
-                            break;
-                        case 'completion':
-                            type = 'completed';
-                            break;
-                        case 'work-order':
-                            type = 'new';
-                            break;
-                        default:
-                            type = alert.type;
-                    }
-
-                    return {
-                        id: alert.id,
-                        type,
-                        message: alert.title,
-                        details: alert.message,
-                        time: alert.time
-                    };
-                });
-
-                setSummary(mockSummary);
-                setActivities(recentAlerts);
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
+                setError('Failed to load dashboard data. Please try again.');
             } finally {
                 setIsLoading(false);
             }
@@ -81,6 +58,32 @@ const DashboardPage = () => {
 
         fetchDashboardData();
     }, []);
+
+    const getActivityType = (status) => {
+        switch (status) {
+            case 'pending': return 'new';
+            case 'in-progress': return 'status-change';
+            case 'completed': return 'completed';
+            default: return 'status-change';
+        }
+    };
+
+    const getActivityMessage = (status) => {
+        switch (status) {
+            case 'pending': return 'New work order created';
+            case 'in-progress': return 'Status updated to In Progress';
+            case 'completed': return 'Work order completed';
+            default: return 'Status updated';
+        }
+    };
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('en-NZ', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
 
     // Header right content with notification and profile buttons
     const headerRightContent = (
@@ -113,6 +116,29 @@ const DashboardPage = () => {
         return (
             <div className="min-h-screen flex justify-center items-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50">
+                <AppHeader
+                    title="Dashboard"
+                    rightContent={headerRightContent}
+                />
+                <div className="flex-1 p-4">
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <p className="text-red-700">{error}</p>
+                        <button
+                            className="mt-2 text-red-700 underline"
+                            onClick={() => window.location.reload()}
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+                <MobileNavigation />
             </div>
         );
     }
