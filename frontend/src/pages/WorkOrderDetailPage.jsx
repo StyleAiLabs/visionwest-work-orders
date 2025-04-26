@@ -8,7 +8,8 @@ import StatusBadge from '../components/workOrders/StatusBadge';
 import PhotoGallery from '../components/workOrders/PhotoGallery';
 import NotesSection from '../components/workOrders/NotesSection';
 import DetailItem from '../components/workOrders/DetailItem';
-
+import StatusUpdateForm from '../components/workOrders/StatusUpdateForm';
+import Toast from '../components/common/Toast';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -17,6 +18,7 @@ const WorkOrderDetailPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+    const [showStatusUpdate, setShowStatusUpdate] = useState(false);
 
     useEffect(() => {
         fetchWorkOrder();
@@ -41,11 +43,12 @@ const WorkOrderDetailPage = () => {
         setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
     };
 
-    const handleStatusChange = async (newStatus) => {
+    const handleStatusChange = async (status, notes = '') => {
         try {
-            await workOrderService.updateWorkOrderStatus(id, newStatus);
+            await workOrderService.updateWorkOrderStatus(id, status, notes);
             await fetchWorkOrder(); // Refresh data after status update
             showToast('Status updated successfully', 'success');
+            setShowStatusUpdate(false); // Hide the status form
         } catch (error) {
             console.error('Error updating status:', error);
             showToast('Failed to update status');
@@ -124,13 +127,12 @@ const WorkOrderDetailPage = () => {
                     <p className="text-sm text-gray-600 mt-1">{workOrder.property.name}</p>
 
                     {/* Update Status */}
-                    {/* Update Status */}
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <div className="flex justify-between items-center">
                             <StatusBadge status={workOrder.status} />
                             <button
-                                onClick={() => navigate(`/work-orders/${workOrder.id}/update-status`)}
+                                onClick={() => setShowStatusUpdate(true)}
                                 className="text-indigo-600 text-sm font-medium flex items-center"
                             >
                                 <span>Update Status</span>
@@ -139,6 +141,16 @@ const WorkOrderDetailPage = () => {
                                 </svg>
                             </button>
                         </div>
+
+                        {showStatusUpdate && (
+                            <div className="mt-3">
+                                <StatusUpdateForm
+                                    currentStatus={workOrder.status}
+                                    onStatusChange={handleStatusChange}
+                                    onCancel={() => setShowStatusUpdate(false)}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 

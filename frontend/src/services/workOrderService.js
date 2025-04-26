@@ -46,5 +46,18 @@ export const workOrderService = {
             console.error('Error adding note:', error);
             throw error;
         }
+    },
+
+    async updateWorkOrderStatus(id, status, notes = '') {
+        try {
+            const response = await api.patch(`/work-orders/${id}/status`, {
+                status,
+                notes
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error updating work order status:', error);
+            throw error;
+        }
     }
 };
