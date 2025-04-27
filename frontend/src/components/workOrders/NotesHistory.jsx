@@ -2,13 +2,19 @@ import React from 'react';
 import { format } from 'date-fns';
 
 const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
-    // Format date helper
-    const formatDate = (dateString) => {
+    // Add debugging
+    React.useEffect(() => {
+        console.log('Notes received:', notes);
+        console.log('Status updates received:', statusUpdates);
+    }, [notes, statusUpdates]);
+
+    // Format date and time helper function
+    const formatDateTime = (dateString) => {
         try {
             if (!dateString) return '';
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return '';
-            return format(date, 'dd MMM yyyy, h:mm a');
+            return format(date, 'dd MMM yyyy, h:mm a'); // Format with date and time
         } catch (error) {
             console.error('Date formatting error:', error);
             return '';
@@ -17,8 +23,8 @@ const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
 
     // Combine notes and status updates into a single timeline
     const createTimeline = () => {
-        const statusNotes = statusUpdates
-            .filter(update => update.notes && update.notes.trim() !== '')
+        const statusNotes = (statusUpdates || [])
+            .filter(update => update && update.notes && update.notes.trim() !== '')
             .map(update => ({
                 id: `status-${update.id}`,
                 content: update.notes,
@@ -26,18 +32,27 @@ const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
                 status: update.newStatus,
                 previousStatus: update.previousStatus,
                 createdAt: update.updatedAt,
-                user: update.updatedBy ? update.updatedBy.name : 'Unknown',
-                timestamp: new Date(update.updatedAt).getTime()
+                user: update.updatedBy ? update.updatedBy.name : 'System',
+                timestamp: new Date(update.updatedAt || Date.now()).getTime()
             }));
 
-        const generalNotes = notes.map(note => ({
-            id: `note-${note.id}`,
-            content: note.content,
-            type: 'note',
-            createdAt: note.createdAt,
-            user: note.createdBy ? note.createdBy.name : 'Unknown',
-            timestamp: new Date(note.createdAt).getTime()
-        }));
+        // Try different possible property names for timestamps
+        const generalNotes = (notes || []).map(note => {
+            // Check which timestamp field exists
+            const timestamp = note.createdAt || note.created_at || note.updatedAt || note.updated_at || Date.now();
+
+            console.log('Note object:', note); // Debug log
+            console.log('Using timestamp:', timestamp); // Debug which field we're using
+
+            return {
+                id: `note-${note.id}`,
+                content: note.content || note.note || note.text || '',
+                type: 'note',
+                createdAt: timestamp,
+                user: note.createdBy?.name || note.creator?.name || note.user?.name || 'System',
+                timestamp: new Date(timestamp).getTime()
+            };
+        });
 
         // Combine and sort by timestamp (newest first)
         return [...statusNotes, ...generalNotes]
@@ -64,8 +79,8 @@ const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
                     <div
                         key={item.id}
                         className={`p-3 rounded-lg border-l-4 ${item.type === 'status'
-                                ? 'border-blue-400 bg-blue-50'
-                                : 'border-green-400 bg-green-50'
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-green-400 bg-green-50'
                             }`}
                     >
                         <div className="flex justify-between items-center mb-1">
@@ -82,7 +97,7 @@ const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
                                     </span>
                                 )}
                             </div>
-                            <span className="text-xs text-gray-500">{formatDate(item.createdAt)}</span>
+                            <span className="text-xs text-gray-500">{formatDateTime(item.createdAt)}</span>
                         </div>
 
                         {item.type === 'status' && (
