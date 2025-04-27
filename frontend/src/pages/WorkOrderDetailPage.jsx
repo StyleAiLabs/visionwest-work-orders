@@ -10,6 +10,7 @@ import NotesSection from '../components/workOrders/NotesSection';
 import DetailItem from '../components/workOrders/DetailItem';
 import StatusUpdateForm from '../components/workOrders/StatusUpdateForm';
 import Toast from '../components/common/Toast';
+import NotesHistory from '../components/workOrders/NotesHistory';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -57,12 +58,19 @@ const WorkOrderDetailPage = () => {
 
     const handleSaveNotes = async (content) => {
         try {
+            if (!content || content.trim() === '') {
+                showToast('Note content cannot be empty', 'error');
+                return false;
+            }
+
             await workOrderService.addNote(id, content);
-            await fetchWorkOrder(); // Refresh data to show new note
+            await fetchWorkOrder(); // Refresh to get updated notes
+            showToast('Note added successfully', 'success');
             return true;
         } catch (error) {
-            console.error('Error saving notes:', error);
-            throw error;
+            console.error('Error saving note:', error);
+            showToast('Failed to add note', 'error');
+            return false;
         }
     };
 
@@ -178,6 +186,12 @@ const WorkOrderDetailPage = () => {
                     <NotesSection
                         initialNotes={workOrder.notes}
                         onSaveNotes={handleSaveNotes}
+                    />
+
+                    {/* Notes History */}
+                    <NotesHistory
+                        notes={workOrder.notes}
+                        statusUpdates={workOrder.statusUpdates}
                     />
                 </div>
             </div>

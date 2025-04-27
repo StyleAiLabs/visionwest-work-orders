@@ -8,6 +8,8 @@ router.get('/:id', verifyToken, noteController.getNoteById);
 router.post('/', verifyToken, noteController.createNote);
 router.put('/:id', verifyToken, noteController.updateNote);
 router.delete('/:id', verifyToken, noteController.deleteNote);
-router.post('/work-order/:workOrderId/notes', verifyToken, noteController.addNote);
+
+// Add this route for better organization
+router.post('/work-orders/:workOrderId/notes', verifyToken, noteController.addNote);
 
 module.exports = router;

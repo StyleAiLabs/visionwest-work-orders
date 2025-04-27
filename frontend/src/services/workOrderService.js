@@ -40,7 +40,10 @@ export const workOrderService = {
 
     async addNote(workOrderId, content) {
         try {
-            const response = await api.post(`/work-orders/${workOrderId}/notes`, { content });
+            // Fix the endpoint to match what's defined in the routes
+            const response = await api.post(`/work-order/${workOrderId}/notes`, {
+                content: content // The controller expects 'content' field
+            });
             return response.data;
         } catch (error) {
             console.error('Error adding note:', error);

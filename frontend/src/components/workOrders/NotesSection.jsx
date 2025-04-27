@@ -1,39 +1,62 @@
 import React, { useState } from 'react';
-import Button from '../common/Button';
 
-const NotesSection = ({ initialNotes = '', onSaveNotes }) => {
-    const [notes, setNotes] = useState(initialNotes);
-    const [isSaving, setIsSaving] = useState(false);
+const NotesSection = ({ initialNotes = [], onSaveNotes }) => {
+    const [noteContent, setNoteContent] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleSave = async () => {
-        setIsSaving(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!noteContent.trim()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
         try {
-            await onSaveNotes(notes);
-        } catch (error) {
-            console.error('Error saving notes:', error);
+            await onSaveNotes(noteContent.trim());
+            setNoteContent(''); // Clear form after successful submission
+        } catch (err) {
+            setError('Failed to add note. Please try again.');
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
     };
 
     return (
         <div className="bg-white rounded-lg shadow p-4 mb-4">
-            <h2 className="text-md font-semibold mb-3">Notes</h2>
-            <textarea
-                className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                rows="3"
-                placeholder="Add notes about the work order..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-            ></textarea>
-            <Button
-                type="button"
-                fullWidth
-                onClick={handleSave}
-                disabled={isSaving}
-            >
-                {isSaving ? 'Saving...' : 'Save Notes'}
-            </Button>
+            <h2 className="text-md font-semibold mb-3">Add Note</h2>
+
+            <form onSubmit={handleSubmit}>
+                {error && (
+                    <div className="mb-3 text-sm text-red-600">
+                        {error}
+                    </div>
+                )}
+
+                <div className="mb-3">
+                    <textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        placeholder="Add a note about this work order..."
+                        className="w-full border border-gray-300 rounded-md p-3 text-sm h-24 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        disabled={isSubmitting}
+                    ></textarea>
+                </div>
+
+                <div className="flex justify-end">
+                    <button
+                        type="submit"
+                        className={`px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        disabled={isSubmitting || !noteContent.trim()}
+                    >
+                        {isSubmitting ? 'Saving...' : 'Add Note'}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };
