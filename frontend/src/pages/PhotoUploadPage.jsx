@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
 import Button from '../components/common/Button';
-import api from '../services/api';
+import { workOrderService } from '../services/workOrderService';
+// Update this import to use the default export
+import photoService from '../services/photoService';
+import Toast from '../components/common/Toast';
 
 const PhotoUploadPage = () => {
     const { id } = useParams();
@@ -12,27 +15,29 @@ const PhotoUploadPage = () => {
     const [selectedPhotos, setSelectedPhotos] = useState([]);
     const [description, setDescription] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+    // Show toast message
+    const showToast = (message, type = 'error') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+    };
 
     // Fetch work order basic info
     useEffect(() => {
         const fetchWorkOrder = async () => {
             try {
                 setIsLoading(true);
-                // In a real implementation, this would be an actual API call
-                // const response = await api.get(`/work-orders/${id}/basic`);
-                // setWorkOrder(response.data);
-
-                // Mock data for development
-                setTimeout(() => {
-                    setWorkOrder({
-                        id: id,
-                        jobNo: 'RBWO010965',
-                        property: 'VisionWest Community Trust'
-                    });
-                    setIsLoading(false);
-                }, 500);
+                const response = await workOrderService.getWorkOrderById(id);
+                setWorkOrder({
+                    id: response.data.id,
+                    jobNo: response.data.jobNo,
+                    property: response.data.property.name
+                });
             } catch (error) {
                 console.error('Error fetching work order details:', error);
+                showToast('Failed to load work order details', 'error');
+            } finally {
                 setIsLoading(false);
             }
         };
@@ -44,8 +49,23 @@ const PhotoUploadPage = () => {
     const handlePhotoSelect = (e) => {
         const files = Array.from(e.target.files);
 
+        // Validate file types and sizes
+        const validFiles = files.filter(file => {
+            const isValidType = file.type.startsWith('image/');
+            const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB max
+
+            if (!isValidType) {
+                showToast('Only image files are allowed', 'error');
+            }
+            if (!isValidSize) {
+                showToast('Image file size must be less than 5MB', 'error');
+            }
+
+            return isValidType && isValidSize;
+        });
+
         // Create preview URLs for the selected files
-        const newPhotos = files.map(file => ({
+        const newPhotos = validFiles.map(file => ({
             file,
             previewUrl: URL.createObjectURL(file)
         }));
@@ -67,31 +87,40 @@ const PhotoUploadPage = () => {
     // Handle form submission
     const handleSubmit = async () => {
         if (selectedPhotos.length === 0) {
-            alert('Please select at least one photo to upload');
+            showToast('Please select at least one photo to upload', 'error');
             return;
         }
 
         setIsUploading(true);
 
         try {
-            // In a real implementation, this would upload photos via API
-            // const formData = new FormData();
-            // selectedPhotos.forEach(photo => {
-            //   formData.append('photos', photo.file);
-            // });
-            // formData.append('description', description);
-            // await api.post(`/work-orders/${id}/photos`, formData);
+            // Extract just the File objects for upload
+            const files = selectedPhotos.map(photo => photo.file);
 
-            // Mock upload delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Upload the photos using the service
+            await photoService.uploadPhotos(id, files, description);
+
+            showToast('Photos uploaded successfully', 'success');
 
             // Navigate back to work order detail page after successful upload
-            navigate(`/work-orders/${id}`);
+            setTimeout(() => {
+                navigate(`/work-orders/${id}`);
+            }, 1000);
         } catch (error) {
             console.error('Error uploading photos:', error);
+            showToast('Failed to upload photos. Please try again.', 'error');
             setIsUploading(false);
         }
     };
+
+    // Clean up object URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            selectedPhotos.forEach(photo => {
+                URL.revokeObjectURL(photo.previewUrl);
+            });
+        };
+    }, []);
 
     // Header with check button for completion
     const headerRightContent = (
@@ -166,6 +195,7 @@ const PhotoUploadPage = () => {
                                     capture="camera"
                                     onChange={handlePhotoSelect}
                                     className="hidden"
+                                    disabled={isUploading}
                                 />
                             </label>
                             <label className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-md text-sm font-medium cursor-pointer">
@@ -176,6 +206,7 @@ const PhotoUploadPage = () => {
                                     multiple
                                     onChange={handlePhotoSelect}
                                     className="hidden"
+                                    disabled={isUploading}
                                 />
                             </label>
                         </div>
@@ -199,6 +230,7 @@ const PhotoUploadPage = () => {
                                     <button
                                         className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1"
                                         onClick={() => handleRemovePhoto(index)}
+                                        disabled={isUploading}
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -233,6 +265,7 @@ const PhotoUploadPage = () => {
                         placeholder="Describe the photos you're uploading..."
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        disabled={isUploading}
                     ></textarea>
                 </div>
 
@@ -245,6 +278,14 @@ const PhotoUploadPage = () => {
                     {isUploading ? 'Uploading...' : 'Upload Photos'}
                 </Button>
             </div>
+
+            {toast.show && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast({ show: false, message: '', type: 'error' })}
+                />
+            )}
         </div>
     );
 };

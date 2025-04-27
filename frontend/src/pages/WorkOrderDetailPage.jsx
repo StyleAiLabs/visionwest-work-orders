@@ -74,11 +74,24 @@ const WorkOrderDetailPage = () => {
         }
     };
 
+    // Update the handlePhotoDeleted function:
+    const handlePhotoDeleted = async () => {
+        try {
+            // First fetch the updated work order data to refresh photos
+            await fetchWorkOrder();
+            // Then show success toast after data is refreshed
+            showToast('Photo deleted successfully', 'success');
+        } catch (error) {
+            console.error('Error refreshing after photo deletion:', error);
+            showToast('Photo was deleted but refresh failed', 'error');
+        }
+    };
+
     // Header options menu
     const headerRightContent = (
         <button className="p-1 rounded-full hover:bg-indigo-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
         </button>
     );
@@ -179,19 +192,23 @@ const WorkOrderDetailPage = () => {
                         </div>
                     </div>
 
+                    {/* Notes History - MOVED HERE */}
+                    <NotesHistory
+                        notes={workOrder.notes}
+                        statusUpdates={workOrder.statusUpdates}
+                    />
+
                     {/* Photo Gallery */}
-                    <PhotoGallery photos={workOrder.photos} workOrderId={workOrder.id} />
+                    <PhotoGallery
+                        photos={workOrder.photos}
+                        workOrderId={workOrder.id}
+                        onPhotoDeleted={handlePhotoDeleted}
+                    />
 
                     {/* Notes Section */}
                     <NotesSection
                         initialNotes={workOrder.notes}
                         onSaveNotes={handleSaveNotes}
-                    />
-
-                    {/* Notes History */}
-                    <NotesHistory
-                        notes={workOrder.notes}
-                        statusUpdates={workOrder.statusUpdates}
                     />
                 </div>
             </div>
