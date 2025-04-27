@@ -8,7 +8,6 @@ dotenv.config();
 
 // Initialize database connection
 const db = require('./models');
-
 // Create Express app
 const app = express();
 

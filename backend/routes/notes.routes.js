@@ -3,13 +3,11 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/auth.middleware');
 const noteController = require('../controllers/notes.controller');
 
-router.get('/', verifyToken, noteController.getAllNotes);
-router.get('/:id', verifyToken, noteController.getNoteById);
-router.post('/', verifyToken, noteController.createNote);
-router.put('/:id', verifyToken, noteController.updateNote);
+// Only include routes that have controller methods implemented
+router.post('/', verifyToken, noteController.addNote);
 router.delete('/:id', verifyToken, noteController.deleteNote);
 
-// Add this route for better organization
+// Add the work order notes endpoint
 router.post('/work-orders/:workOrderId/notes', verifyToken, noteController.addNote);
 
 module.exports = router;

@@ -40,9 +40,9 @@ export const workOrderService = {
 
     async addNote(workOrderId, content) {
         try {
-            // Fix the endpoint to match what's defined in the routes
-            const response = await api.post(`/work-order/${workOrderId}/notes`, {
-                content: content // The controller expects 'content' field
+            // Change the endpoint to match the backend route
+            const response = await api.post(`/work-orders/${workOrderId}/notes`, {
+                content: content
             });
             return response.data;
         } catch (error) {
