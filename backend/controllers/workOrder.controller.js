@@ -130,143 +130,144 @@ exports.getWorkOrderById = async (req, res) => {
         const { id } = req.params;
         console.log(`Fetching work order with ID: ${id}`);
 
-        // Find the work order first
-        const workOrder = await WorkOrder.findByPk(id);
+        // Simple query first to check if it exists
+        const workOrderExists = await WorkOrder.findByPk(id, {
+            attributes: ['id']
+        });
 
-        if (!workOrder) {
+        if (!workOrderExists) {
             return res.status(404).json({
                 success: false,
                 message: 'Work order not found'
             });
         }
 
-        // Then fetch related data separately with error handling
-        let photos = [];
-        let notes = [];
-        let statusUpdates = [];
-        let creator = null;
+        // Now fetch with minimal attributes first (avoid joins)
+        const workOrder = await WorkOrder.findByPk(id);
 
-        try {
-            // Fetch photos
-            photos = await Photo.findAll({
-                where: { work_order_id: id },
-                include: [{
-                    model: User,
-                    as: 'uploader',
-                    attributes: ['id', 'full_name', 'email']
-                }]
-            });
-        } catch (photoError) {
-            console.error('Error fetching photos:', photoError);
-            photos = []; // Fail gracefully
-        }
-
-        try {
-            // Fetch notes
-            notes = await WorkOrderNote.findAll({
-                where: { work_order_id: id },
-                include: [{
-                    model: User,
-                    as: 'creator',
-                    attributes: ['id', 'full_name', 'email']
-                }]
-            });
-        } catch (notesError) {
-            console.error('Error fetching notes:', notesError);
-            notes = []; // Fail gracefully
-        }
-
-        try {
-            // Fetch status updates
-            statusUpdates = await StatusUpdate.findAll({
-                where: { work_order_id: id },
-                include: [{
-                    model: User,
-                    as: 'updater',
-                    attributes: ['id', 'full_name', 'email']
-                }]
-            });
-        } catch (statusError) {
-            console.error('Error fetching status updates:', statusError);
-            statusUpdates = []; // Fail gracefully
-        }
-
-        // Fetch creator user
-        if (workOrder.created_by) {
-            try {
-                creator = await User.findByPk(workOrder.created_by, {
-                    attributes: ['id', 'full_name', 'email']
-                });
-            } catch (creatorError) {
-                console.error('Error fetching creator:', creatorError);
-                // Fail gracefully
-            }
-        }
-
-        // Format the response
+        // Create a base response object with minimal data
         const formattedWorkOrder = {
             id: workOrder.id,
-            jobNo: workOrder.job_no,
-            date: formatDate(workOrder.date),
-            status: workOrder.status,
-            supplier: {
-                name: workOrder.supplier_name,
-                phone: workOrder.supplier_phone || null,
-                email: workOrder.supplier_email || null
-            },
-            property: {
-                name: workOrder.property_name,
-                phone: workOrder.property_phone || null
-            },
-            description: workOrder.description,
-            poNumber: workOrder.po_number,
-            authorizedBy: workOrder.authorized_by ? {
-                name: workOrder.authorized_by,
-                contact: workOrder.authorized_contact || null,
-                email: workOrder.authorized_email || null
-            } : null,
-            creator: creator ? {
-                id: creator.id,
-                name: creator.full_name,
-                email: creator.email
-            } : null,
-            photos: photos.map(photo => ({
-                id: photo.id,
-                url: photo.file_path,
-                filename: photo.file_name,
-                description: photo.description || null,
-                uploadedAt: photo.createdAt,
-                uploadedBy: photo.uploader ? {
-                    id: photo.uploader.id,
-                    name: photo.uploader.full_name,
-                    email: photo.uploader.email
-                } : null
-            })),
-            notes: notes.map(note => ({
-                id: note.id,
-                content: note.note,
-                createdBy: note.creator ? {
-                    id: note.creator.id,
-                    name: note.creator.full_name,
-                    email: note.creator.email
-                } : null,
-                createdAt: note.createdAt
-            })),
-            statusUpdates: statusUpdates.map(update => ({
-                id: update.id,
-                previousStatus: update.previous_status,
-                newStatus: update.new_status,
-                notes: update.notes,
-                updatedBy: update.updater ? {
-                    id: update.updater.id,
-                    name: update.updater.full_name,
-                    email: update.updater.email
-                } : null,
-                updatedAt: update.createdAt
-            })),
+            jobNo: workOrder.job_no || '',
+            status: workOrder.status || 'unknown',
+            description: workOrder.description || '',
             createdAt: workOrder.createdAt,
-            updatedAt: workOrder.updatedAt
+            updatedAt: workOrder.updatedAt,
+
+            // Initialize empty arrays for related data
+            photos: [],
+            notes: [],
+            statusUpdates: []
         };
+
+        // Only if basic data works, try to add more fields with safe defaults
+        try {
+            formattedWorkOrder.date = workOrder.date ? formatDate(workOrder.date) : '';
+            formattedWorkOrder.supplier = {
+                name: workOrder.supplier_name || '',
+                phone: workOrder.supplier_phone || '',
+                email: workOrder.supplier_email || ''
+            };
+            formattedWorkOrder.property = {
+                name: workOrder.property_name || '',
+                phone: workOrder.property_phone || ''
+            };
+            formattedWorkOrder.poNumber = workOrder.po_number || '';
+        } catch (basicDataError) {
+            console.error('Error formatting basic work order data:', basicDataError);
+            // Continue anyway with what we have
+        }
+
+        // Try to add authorized by info
+        try {
+            formattedWorkOrder.authorizedBy = workOrder.authorized_by ? {
+                name: workOrder.authorized_by || '',
+                contact: workOrder.authorized_contact || '',
+                email: workOrder.authorized_email || ''
+            } : null;
+        } catch (authError) {
+            console.error('Error adding authorized by info:', authError);
+            formattedWorkOrder.authorizedBy = null;
+        }
+
+        // Add creator info if available
+        try {
+            if (workOrder.created_by) {
+                const creator = await User.findByPk(workOrder.created_by, {
+                    attributes: ['id', 'full_name', 'email']
+                });
+                if (creator) {
+                    formattedWorkOrder.creator = {
+                        id: creator.id,
+                        name: creator.full_name || '',
+                        email: creator.email || ''
+                    };
+                }
+            }
+        } catch (creatorError) {
+            console.error('Error fetching creator:', creatorError);
+            formattedWorkOrder.creator = null;
+        }
+
+        // Try to fetch photos
+        try {
+            const photos = await Photo.findAll({
+                where: { work_order_id: id }
+            });
+
+            formattedWorkOrder.photos = photos.map(photo => {
+                try {
+                    return {
+                        id: photo.id,
+                        url: photo.file_path || '',
+                        filename: photo.file_name || '',
+                        description: photo.description || '',
+                        uploadedAt: photo.createdAt
+                    };
+                } catch (photoMapError) {
+                    console.error('Error mapping photo:', photoMapError);
+                    return { id: photo.id, error: true };
+                }
+            }).filter(p => p !== null);
+        } catch (photoError) {
+            console.error('Error fetching photos:', photoError);
+        }
+
+        // Try to fetch notes
+        try {
+            const notes = await WorkOrderNote.findAll({
+                where: { work_order_id: id },
+                attributes: ['id', 'note', 'created_by', 'createdAt']
+            });
+
+            formattedWorkOrder.notes = notes.map(note => ({
+                id: note.id,
+                content: note.note || '',
+                createdById: note.created_by,
+                createdAt: note.createdAt
+            }));
+        } catch (notesError) {
+            console.error('Error fetching notes:', notesError);
+        }
+
+        // Try to fetch status updates
+        try {
+            const statusUpdates = await StatusUpdate.findAll({
+                where: { work_order_id: id },
+                attributes: ['id', 'previous_status', 'new_status', 'notes', 'updated_by', 'createdAt']
+            });
+
+            formattedWorkOrder.statusUpdates = statusUpdates.map(update => ({
+                id: update.id,
+                previousStatus: update.previous_status || '',
+                newStatus: update.new_status || '',
+                notes: update.notes || '',
+                updatedById: update.updated_by,
+                updatedAt: update.createdAt
+            }));
+        } catch (statusError) {
+            console.error('Error fetching status updates:', statusError);
+        }
 
         return res.status(200).json({
             success: true,

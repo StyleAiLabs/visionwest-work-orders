@@ -97,6 +97,16 @@ const WorkOrderDetailPage = () => {
         }
     };
 
+    // Add this helper function
+    const safeRender = (component, fallback = null) => {
+        try {
+            return component();
+        } catch (error) {
+            console.error('Error rendering component:', error);
+            return fallback;
+        }
+    };
+
     // Header options menu
     const headerRightContent = (
         <button className="p-1 rounded-full hover:bg-indigo-500">
@@ -140,47 +150,51 @@ const WorkOrderDetailPage = () => {
     return (
         <div className="min-h-screen flex flex-col bg-gray-50 pb-20">
             <AppHeader
-                title={`Job #${workOrder.jobNo}`}
+                title={`Job #${workOrder?.jobNo || 'Unknown'}`}
                 showBackButton={true}
                 onBackClick={() => navigate('/work-orders')}
             />
 
             {/* Work Order Details */}
             <div className="flex-1 p-4">
-                <div className="bg-white rounded-lg shadow p-4 mb-4">
-                    {/* Order details content... */}
+                {safeRender(() => (
+                    <div className="bg-white rounded-lg shadow p-4 mb-4">
+                        {/* Order details content... */}
 
-                    {/* Only show status update button for non-client users */}
-                    {!isClient && (
-                        <div className="mt-4">
-                            <button
-                                onClick={() => setShowStatusUpdate(true)}
-                                className="w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
-                            >
-                                Update Status
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        {/* Only show status update button for non-client users */}
+                        {!isClient && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setShowStatusUpdate(true)}
+                                    className="w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                                >
+                                    Update Status
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ))}
 
                 {/* Status Update Form - Only shown when showStatusUpdate is true and user is not client */}
-                {showStatusUpdate && !isClient && (
-                    <StatusUpdateForm
-                        initialStatus={workOrder.status}
-                        onSubmit={handleStatusChange} // Fixed: Use the correct function name
-                        onCancel={() => setShowStatusUpdate(false)}
-                    />
-                )}
-
-
+                {safeRender(() => (
+                    showStatusUpdate && !isClient && (
+                        <StatusUpdateForm
+                            initialStatus={workOrder.status}
+                            onSubmit={handleStatusChange} // Fixed: Use the correct function name
+                            onCancel={() => setShowStatusUpdate(false)}
+                        />
+                    )
+                ))}
 
                 {/* Photo Gallery - Only allow uploads for non-client users */}
-                <PhotoGallery
-                    photos={workOrder.photos}
-                    workOrderId={id}
-                    onPhotoDeleted={handlePhotoDeleted}
-                    canUpload={!isClient} // Pass this prop to control upload button visibility
-                />
+                {safeRender(() => (
+                    <PhotoGallery
+                        photos={workOrder.photos || []}
+                        workOrderId={id}
+                        onPhotoDeleted={handlePhotoDeleted}
+                        canUpload={!isClient} // Pass this prop to control upload button visibility
+                    />
+                ))}
 
                 {/* Notes Section - Available to all users including clients */}
                 <NotesSection

@@ -34,19 +34,19 @@ db.photo = require('./photo.model.js')(sequelize, Sequelize);
 
 // Define relationships
 // User to WorkOrder relationship
-db.user.hasMany(db.workOrder, { foreignKey: 'created_by' });
+db.user.hasMany(db.workOrder, { foreignKey: 'created_by', as: 'createdWorkOrders' });
 db.workOrder.belongsTo(db.user, { foreignKey: 'created_by', as: 'creator' });
 
 // User to StatusUpdate relationship
-db.user.hasMany(db.statusUpdate, { foreignKey: 'updated_by' });
+db.user.hasMany(db.statusUpdate, { foreignKey: 'updated_by', as: 'statusUpdates' });
 db.statusUpdate.belongsTo(db.user, { foreignKey: 'updated_by', as: 'updater' });
 
 // User to WorkOrderNote relationship
-db.user.hasMany(db.workOrderNote, { foreignKey: 'created_by' });
+db.user.hasMany(db.workOrderNote, { foreignKey: 'created_by', as: 'notes' });
 db.workOrderNote.belongsTo(db.user, { foreignKey: 'created_by', as: 'creator' });
 
 // User to Photo relationship
-db.user.hasMany(db.photo, { foreignKey: 'uploaded_by' });
+db.user.hasMany(db.photo, { foreignKey: 'uploaded_by', as: 'uploads' });
 db.photo.belongsTo(db.user, { foreignKey: 'uploaded_by', as: 'uploader' });
 
 // User to Notification relationship
