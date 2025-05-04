@@ -2,9 +2,9 @@ import React from 'react';
 
 const StatusBadge = ({ status }) => {
     const statusStyles = {
-        pending: 'bg-amber-50 text-amber-800 border-amber-300',
-        'in-progress': 'bg-blue-50 text-blue-800 border-blue-300',
-        completed: 'bg-green-50 text-green-800 border-green-300'
+        pending: 'bg-amber-100 text-amber-800 border-amber-300',
+        'in-progress': 'bg-vw-green-light text-vw-dark border-vw-green',
+        completed: 'bg-green-100 text-green-800 border-green-300'
     };
 
     const statusDisplay = {

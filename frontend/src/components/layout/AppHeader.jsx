@@ -1,8 +1,9 @@
 import React from 'react';
+import visionwestLogo from '../../assets/visionwest-logo.png';
 
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     return (
-        <div className="bg-indigo-600 text-white p-4 flex items-center justify-between">
+        <div className="bg-vw-dark text-white p-4 flex items-center justify-between">
             <div className="flex items-center">
                 {showBackButton && (
                     <button
@@ -15,7 +16,11 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                         </svg>
                     </button>
                 )}
-                <h2 className="text-xl font-bold">{title}</h2>
+                {title === "Dashboard" ? (
+                    <img src={visionwestLogo} alt="VisionWest Logo" className="h-8" />
+                ) : (
+                    <h2 className="text-xl font-bold">{title}</h2>
+                )}
             </div>
 
             {rightContent && (

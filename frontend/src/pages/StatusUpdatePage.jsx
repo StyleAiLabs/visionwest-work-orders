@@ -91,18 +91,20 @@ const StatusUpdatePage = () => {
         navigate(`/work-orders/${id}`);
     };
 
+    // Update the loading spinner
     if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vw-green"></div>
             </div>
         );
     }
 
+    // Update the status color functions
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'text-amber-600';
-            case 'in-progress': return 'text-blue-600';
+            case 'in-progress': return 'text-vw-green';
             case 'completed': return 'text-green-600';
             default: return 'text-gray-600';
         }

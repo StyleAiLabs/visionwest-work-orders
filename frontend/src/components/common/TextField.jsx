@@ -30,7 +30,7 @@ const TextField = ({
                 onChange={onChange}
                 onBlur={onBlur}
                 required={required}
-                className={`appearance-none rounded-md relative block w-full px-3 py-3 border ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                className={`appearance-none rounded-md relative block w-full px-3 py-3 border ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-vw-green focus:border-vw-green'
                     } placeholder-gray-500 text-gray-900 focus:outline-none focus:z-10 sm:text-sm`}
                 {...props}
             />

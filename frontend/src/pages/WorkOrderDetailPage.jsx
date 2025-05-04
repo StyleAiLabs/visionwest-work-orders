@@ -107,9 +107,10 @@ const WorkOrderDetailPage = () => {
         }
     };
 
-    // Header options menu
+    // Update the header right content button styles
+
     const headerRightContent = (
-        <button className="p-1 rounded-full hover:bg-indigo-500">
+        <button className="p-1 rounded-full hover:bg-vw-green">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
@@ -119,7 +120,7 @@ const WorkOrderDetailPage = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vw-green"></div>
             </div>
         );
     }
@@ -166,7 +167,7 @@ const WorkOrderDetailPage = () => {
                             <div className="mt-4">
                                 <button
                                     onClick={() => setShowStatusUpdate(true)}
-                                    className="w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                                    className="w-full text-center px-4 py-2 bg-vw-green hover:bg-vw-green-dark text-white rounded-md text-sm font-medium"
                                 >
                                     Update Status
                                 </button>

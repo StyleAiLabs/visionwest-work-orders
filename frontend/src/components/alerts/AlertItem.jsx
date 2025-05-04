@@ -6,16 +6,16 @@ const AlertItem = ({ alert, onMarkAsRead }) => {
         switch (type) {
             case 'work-order':
                 return (
-                    <div className="bg-indigo-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="bg-blue-100 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
                 );
             case 'status-change':
                 return (
-                    <div className="bg-blue-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="bg-purple-100 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </div>
@@ -49,8 +49,7 @@ const AlertItem = ({ alert, onMarkAsRead }) => {
 
     return (
         <div
-            className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${alert.read ? 'bg-white border-gray-200' : 'bg-indigo-50 border-indigo-500'
-                }`}
+            className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${alert.read ? 'bg-white border-gray-200' : 'bg-yellow-50 border-yellow-400'}`}
         >
             {getIconByType(alert.type)}
             <div className="flex-1 min-w-0">
@@ -65,7 +64,7 @@ const AlertItem = ({ alert, onMarkAsRead }) => {
                     <div className="mt-2">
                         <Link
                             to={`/work-orders/${alert.workOrderId}`}
-                            className="text-xs text-indigo-600 font-medium"
+                            className="text-xs text-blue-600 font-medium"
                         >
                             View Work Order →
                         </Link>

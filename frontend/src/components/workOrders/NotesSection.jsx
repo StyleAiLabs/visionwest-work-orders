@@ -41,7 +41,7 @@ const NotesSection = ({ initialNotes = [], onSaveNotes }) => {
                         value={noteContent}
                         onChange={(e) => setNoteContent(e.target.value)}
                         placeholder="Add a note about this work order..."
-                        className="w-full border border-gray-300 rounded-md p-3 text-sm h-24 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full border border-gray-300 rounded-md p-3 text-sm h-24 focus:ring-2 focus:ring-vw-green focus:border-transparent"
                         disabled={isSubmitting}
                     ></textarea>
                 </div>
@@ -49,8 +49,7 @@ const NotesSection = ({ initialNotes = [], onSaveNotes }) => {
                 <div className="flex justify-end">
                     <button
                         type="submit"
-                        className={`px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
+                        className={`px-4 py-2 bg-vw-green text-white rounded-md text-sm font-medium hover:bg-vw-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-vw-green ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={isSubmitting || !noteContent.trim()}
                     >
                         {isSubmitting ? 'Saving...' : 'Add Note'}

@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Toast = ({ message, type = 'error', onClose }) => {
-    const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+    const bgColor = type === 'error' ? 'bg-red-500' : 'bg-vw-green-dark';
 
     return (
         <div className={`fixed bottom-20 left-4 right-4 ${bgColor} text-white p-4 rounded-lg shadow-lg z-50`}>

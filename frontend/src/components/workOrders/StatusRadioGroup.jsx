@@ -19,7 +19,7 @@ const StatusRadioGroup = ({ status, onStatusChange }) => {
                 </div>
             </label>
 
-            <label className={`flex items-center p-3 border rounded-md ${status === 'in-progress' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+            <label className={`flex items-center p-3 border rounded-md ${status === 'in-progress' ? 'bg-vw-green-light border-vw-green' : 'hover:bg-vw-green-light'
                 }`}>
                 <input
                     type="radio"
@@ -27,7 +27,7 @@ const StatusRadioGroup = ({ status, onStatusChange }) => {
                     value="in-progress"
                     checked={status === 'in-progress'}
                     onChange={() => onStatusChange('in-progress')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 text-vw-green focus:ring-vw-green"
                 />
                 <div className="ml-3">
                     <span className="text-sm font-medium text-gray-900">In Progress</span>

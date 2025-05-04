@@ -2,7 +2,7 @@ import React from 'react';
 
 const ActivityItem = ({ type, message, details, time }) => {
     const borderColors = {
-        'status-change': 'border-blue-500',
+        'status-change': 'border-vw-green',
         'completed': 'border-green-500',
         'new': 'border-amber-500',
     };

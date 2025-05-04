@@ -122,14 +122,15 @@ const PhotoUploadPage = () => {
         };
     }, []);
 
-    // Header with check button for completion
+    // Update the header button styles
+
     const headerRightContent = (
         <button
             onClick={handleSubmit}
             disabled={isUploading || selectedPhotos.length === 0}
             className={`p-1 rounded-full ${isUploading || selectedPhotos.length === 0
                 ? 'text-gray-400'
-                : 'hover:bg-indigo-500'
+                : 'hover:bg-vw-green'
                 }`}
         >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -141,7 +142,7 @@ const PhotoUploadPage = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vw-green"></div>
             </div>
         );
     }
@@ -271,9 +272,9 @@ const PhotoUploadPage = () => {
 
                 {/* Upload Button */}
                 <Button
-                    fullWidth
-                    disabled={isUploading || selectedPhotos.length === 0}
+                    type="button"
                     onClick={handleSubmit}
+                    disabled={isUploading || selectedPhotos.length === 0}
                 >
                     {isUploading ? 'Uploading...' : 'Upload Photos'}
                 </Button>

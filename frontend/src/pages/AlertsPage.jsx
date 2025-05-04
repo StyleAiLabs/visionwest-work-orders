@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AlertItem from '../components/alerts/AlertItem';
 import AlertFilter from '../components/alerts/AlertFilter';
 import { useAlerts } from '../context/AlertContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const AlertsPage = () => {
     const navigate = useNavigate();
@@ -55,7 +56,7 @@ const AlertsPage = () => {
                     unreadCount > 0 && (
                         <button
                             onClick={handleMarkAllAsRead}
-                            className="text-white bg-indigo-500 text-xs font-medium py-1 px-2 rounded"
+                            className="bg-amber-400 hover:bg-amber-500 text-white text-xs font-medium py-1 px-2 rounded"
                         >
                             Mark All Read
                         </button>
@@ -73,7 +74,7 @@ const AlertsPage = () => {
             <div className="flex-1 overflow-y-auto p-4">
                 {isLoading ? (
                     <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
                     </div>
                 ) : filteredAlerts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-48 bg-white rounded-lg shadow p-4">
@@ -83,7 +84,7 @@ const AlertsPage = () => {
                         <p className="text-gray-600">No alerts found</p>
                         {activeFilter !== 'all' && (
                             <button
-                                className="mt-2 text-indigo-600 text-sm"
+                                className="mt-2 text-blue-600 text-sm"
                                 onClick={() => setActiveFilter('all')}
                             >
                                 View all alerts

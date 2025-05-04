@@ -95,7 +95,7 @@ const PhotoGallery = ({ photos = [], workOrderId, onPhotoDeleted, canUpload = tr
                     {canUpload && (
                         <button
                             onClick={() => navigate(`/work-orders/${workOrderId}/photos/add`)}
-                            className="text-indigo-600 text-sm font-medium flex items-center"
+                            className="text-vw-green text-sm font-medium flex items-center"
                         >
                             <span>Upload</span>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -89,7 +89,7 @@ const DashboardPage = () => {
     const headerRightContent = (
         <>
             <button
-                className="p-1 rounded-full hover:bg-indigo-500 relative"
+                className="p-1 rounded-full hover:bg-vw-green relative"
                 onClick={() => navigate('/alerts')}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +102,7 @@ const DashboardPage = () => {
                 )}
             </button>
             <button
-                className="p-1 rounded-full hover:bg-indigo-500"
+                className="p-1 rounded-full hover:bg-vw-green"
                 onClick={() => navigate('/settings')}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -167,7 +167,7 @@ const DashboardPage = () => {
                         {unreadAlertsCount > 0 && (
                             <button
                                 onClick={() => navigate('/alerts')}
-                                className="text-indigo-600 text-sm font-medium flex items-center"
+                                className="text-blue-600 text-sm font-medium flex items-center"
                             >
                                 View All ({unreadAlertsCount} new)
                             </button>
