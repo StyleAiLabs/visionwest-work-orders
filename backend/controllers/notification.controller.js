@@ -1,6 +1,7 @@
 const db = require('../models');
 const Notification = db.notification;
 const WorkOrder = db.workOrder;
+const User = db.user; // Add this line - missing User model reference
 const { Op } = db.Sequelize;
 
 // Get all notifications for the authenticated user
@@ -141,8 +142,11 @@ exports.markAllAsRead = async (req, res) => {
     try {
         const userId = req.userId; // From auth middleware
 
+        // Add logging to help diagnose the issue
+        console.log(`Marking all notifications as read for user ${userId}`);
+
         // Update all unread notifications
-        await Notification.update(
+        const result = await Notification.update(
             { is_read: true },
             {
                 where: {
@@ -151,6 +155,8 @@ exports.markAllAsRead = async (req, res) => {
                 }
             }
         );
+
+        console.log(`Updated ${result[0]} notifications to read status`);
 
         return res.status(200).json({
             success: true,
