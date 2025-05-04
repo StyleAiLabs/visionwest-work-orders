@@ -18,7 +18,9 @@ router.post('/:id/notes', workOrderController.addWorkOrderNote);
 // Routes only for staff and admin
 router.post('/', isStaffOrAdmin, workOrderController.createWorkOrder);
 router.patch('/:id/status', isStaffOrAdmin, workOrderController.updateWorkOrderStatus);
-router.post('/:id/photos', isStaffOrAdmin, photoController.uploadPhoto);
+
+// Fix the method name to match what's in the controller
+router.post('/:id/photos', isStaffOrAdmin, photoController.uploadPhotos); // Changed from uploadPhoto to uploadPhotos
 router.delete('/:id/photos/:photoId', isStaffOrAdmin, photoController.deletePhoto);
 
 // Delete work order (admin only)
