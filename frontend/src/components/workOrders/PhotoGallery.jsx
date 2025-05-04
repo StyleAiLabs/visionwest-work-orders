@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import photoService from '../../services/photoService';
 
-const PhotoGallery = ({ photos = [], workOrderId, onPhotoDeleted }) => {
+const PhotoGallery = ({ photos = [], workOrderId, onPhotoDeleted, canUpload = true }) => {
+    const navigate = useNavigate();
     const [showFullImage, setShowFullImage] = useState(false);
     const [currentPhoto, setCurrentPhoto] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -87,17 +88,21 @@ const PhotoGallery = ({ photos = [], workOrderId, onPhotoDeleted }) => {
     return (
         <>
             <div className="bg-white rounded-lg shadow p-4 mb-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-md font-semibold">Photos</h2>
-                    <Link
-                        to={`/work-orders/${workOrderId}/photos/add`}
-                        className="text-white bg-indigo-600 py-1 px-3 rounded-md text-sm flex items-center"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Photo
-                    </Link>
+                <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-md font-semibold">Photos ({photos.length})</h2>
+
+                    {/* Only show upload button if canUpload is true */}
+                    {canUpload && (
+                        <button
+                            onClick={() => navigate(`/work-orders/${workOrderId}/photos/add`)}
+                            className="text-indigo-600 text-sm font-medium flex items-center"
+                        >
+                            <span>Upload</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
 
                 {/* Photo Grid */}

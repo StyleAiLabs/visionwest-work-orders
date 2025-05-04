@@ -4,15 +4,24 @@ import AppHeader from '../components/layout/AppHeader';
 import StatusRadioGroup from '../components/workOrders/StatusRadioGroup';
 import Button from '../components/common/Button';
 import api from '../services/api';
+import { useAuth } from '../hooks/useAuth'; // Import useAuth
 
 const StatusUpdatePage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth(); // Get user info
     const [workOrder, setWorkOrder] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState('');
     const [notes, setNotes] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Redirect clients away from this page
+    useEffect(() => {
+        if (user && user.role === 'client') {
+            navigate(`/work-orders/${id}`);
+        }
+    }, [user, id, navigate]);
 
     // Fetch work order details
     useEffect(() => {

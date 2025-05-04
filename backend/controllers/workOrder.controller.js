@@ -339,6 +339,14 @@ exports.createWorkOrder = async (req, res) => {
 // Update work order status
 exports.updateWorkOrderStatus = async (req, res) => {
     try {
+        // Check if user is client - this is a redundant safeguard
+        if (req.userRole === 'client') {
+            return res.status(403).json({
+                success: false,
+                message: 'Clients are not authorized to update work order status.'
+            });
+        }
+
         const { id } = req.params;
         const { status, notes } = req.body;
 

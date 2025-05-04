@@ -1,30 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, isAdmin, isAnyValidRole } = require('../middleware/auth.middleware');
+const { verifyToken, isAdmin, isStaffOrAdmin, isAnyValidRole } = require('../middleware/auth.middleware');
 const workOrderController = require('../controllers/workOrder.controller');
+const photoController = require('../controllers/photo.controller');
 
 // Apply auth middleware to all routes
 router.use(verifyToken, isAnyValidRole);
 
-// Get work order summary for dashboard
+// Routes that everyone (including clients) can access
 router.get('/summary', workOrderController.getSummary);
-
-// Get all work orders (with filtering)
 router.get('/', workOrderController.getAllWorkOrders);
-
-// Get work order by ID
 router.get('/:id', workOrderController.getWorkOrderById);
 
-// Create new work order
-router.post('/', workOrderController.createWorkOrder);
-
-// Update work order status
-router.patch('/:id/status', workOrderController.updateWorkOrderStatus);
-
-// Add note to work order
+// Add note - allowed for all roles (including clients)
 router.post('/:id/notes', workOrderController.addWorkOrderNote);
 
-// Delete work order and all related data (admin only)
-router.delete('/:workOrderId', verifyToken, isAdmin, workOrderController.deleteWorkOrder);
+// Routes only for staff and admin
+router.post('/', isStaffOrAdmin, workOrderController.createWorkOrder);
+router.patch('/:id/status', isStaffOrAdmin, workOrderController.updateWorkOrderStatus);
+router.post('/:id/photos', isStaffOrAdmin, photoController.uploadPhoto);
+router.delete('/:id/photos/:photoId', isStaffOrAdmin, photoController.deletePhoto);
+
+// Delete work order (admin only)
+router.delete('/:id', isAdmin, workOrderController.deleteWorkOrder);
 
 module.exports = router;

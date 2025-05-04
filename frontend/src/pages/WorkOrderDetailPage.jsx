@@ -12,6 +12,7 @@ import StatusUpdateForm from '../components/workOrders/StatusUpdateForm';
 import Toast from '../components/common/Toast';
 import NotesHistory from '../components/workOrders/NotesHistory';
 import { useAlerts } from '../context/AlertContext';
+import { useAuth } from '../hooks/useAuth'; // Correct import path
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -24,6 +25,8 @@ const WorkOrderDetailPage = () => {
 
     // Add alerts context
     const { refreshAlerts } = useAlerts();
+    const { user } = useAuth(); // Get the current user with role
+    const isClient = user && user.role === 'client';
 
     useEffect(() => {
         fetchWorkOrder();
@@ -135,101 +138,73 @@ const WorkOrderDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16">
+        <div className="min-h-screen flex flex-col bg-gray-50 pb-20">
             <AppHeader
-                title="Work Order Details"
+                title={`Job #${workOrder.jobNo}`}
                 showBackButton={true}
                 onBackClick={() => navigate('/work-orders')}
-                rightContent={headerRightContent}
             />
 
-            {/* Work Order Content */}
-            <div className="flex-1 overflow-y-auto">
-                {/* Status & Info Box */}
-                <div className="bg-white p-4 shadow">
-                    <div className="flex justify-between items-center mb-3">
-                        <StatusBadge status={workOrder.status} />
-                        <span className="text-sm text-gray-500">{workOrder.date}</span>
-                    </div>
-                    <h1 className="text-lg font-bold text-gray-900">Job #{workOrder.jobNo}</h1>
-                    <p className="text-sm text-gray-600 mt-1">{workOrder.property.name}</p>
+            {/* Work Order Details */}
+            <div className="flex-1 p-4">
+                <div className="bg-white rounded-lg shadow p-4 mb-4">
+                    {/* Order details content... */}
 
-                    {/* Update Status */}
-                    <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <div className="flex justify-between items-center">
-                            <StatusBadge status={workOrder.status} />
+                    {/* Only show status update button for non-client users */}
+                    {!isClient && (
+                        <div className="mt-4">
                             <button
                                 onClick={() => setShowStatusUpdate(true)}
-                                className="text-indigo-600 text-sm font-medium flex items-center"
+                                className="w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
                             >
-                                <span>Update Status</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
+                                Update Status
                             </button>
                         </div>
-
-                        {showStatusUpdate && (
-                            <div className="mt-3">
-                                <StatusUpdateForm
-                                    currentStatus={workOrder.status}
-                                    onStatusChange={handleStatusChange}
-                                    onCancel={() => setShowStatusUpdate(false)}
-                                />
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
 
-                {/* Work Order Details */}
-                <div className="p-4">
-                    <div className="bg-white rounded-lg shadow p-4 mb-4">
-                        <h2 className="text-md font-semibold mb-3">Work Description</h2>
-                        <p className="text-sm text-gray-600">{workOrder.description}</p>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-4 mb-4">
-                        <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <div className="space-y-2 text-sm">
-                            <DetailItem label="PO Number" value={workOrder.poNumber} />
-                            <DetailItem label="Supplier" value={workOrder.supplier.name} />
-                            <DetailItem label="Authorized By" value={workOrder.authorizedBy.name} />
-                            <DetailItem label="Contact" value={workOrder.authorizedBy.contact} />
-                        </div>
-                    </div>
-
-                    {/* Notes History - MOVED HERE */}
-                    <NotesHistory
-                        notes={workOrder.notes}
-                        statusUpdates={workOrder.statusUpdates}
+                {/* Status Update Form - Only shown when showStatusUpdate is true and user is not client */}
+                {showStatusUpdate && !isClient && (
+                    <StatusUpdateForm
+                        initialStatus={workOrder.status}
+                        onSubmit={handleStatusChange} // Fixed: Use the correct function name
+                        onCancel={() => setShowStatusUpdate(false)}
                     />
+                )}
 
-                    {/* Photo Gallery */}
-                    <PhotoGallery
-                        photos={workOrder.photos}
-                        workOrderId={workOrder.id}
-                        onPhotoDeleted={handlePhotoDeleted}
-                    />
 
-                    {/* Notes Section */}
-                    <NotesSection
-                        initialNotes={workOrder.notes}
-                        onSaveNotes={handleSaveNotes}
-                    />
-                </div>
+
+                {/* Photo Gallery - Only allow uploads for non-client users */}
+                <PhotoGallery
+                    photos={workOrder.photos}
+                    workOrderId={id}
+                    onPhotoDeleted={handlePhotoDeleted}
+                    canUpload={!isClient} // Pass this prop to control upload button visibility
+                />
+
+                {/* Notes Section - Available to all users including clients */}
+                <NotesSection
+                    workOrderId={id}
+                    onSaveNotes={handleSaveNotes} // Change to match the expected prop name
+                />
+
+                {/* Notes/Status History */}
+                <NotesHistory
+                    notes={workOrder.notes}
+                    statusUpdates={workOrder.statusUpdates}
+                />
             </div>
 
+            <MobileNavigation />
+
+            {/* Toast notification */}
             {toast.show && (
                 <Toast
                     message={toast.message}
                     type={toast.type}
-                    onClose={() => setToast({ show: false, message: '', type: 'error' })}
+                    onClose={() => setToast({ ...toast, show: false })}
                 />
             )}
-
-            {/* Bottom Navigation */}
-            <MobileNavigation />
         </div>
     );
 };

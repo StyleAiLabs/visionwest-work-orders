@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth'; // Fix the import path
 
-const StatusUpdateForm = ({ currentStatus, onStatusChange, onCancel, showNotes = true }) => {
+const StatusUpdateForm = ({ initialStatus, onSubmit, onCancel, showNotes = true }) => {
+    const { user } = useAuth();
+
+    // If user is client, don't render the form
+    if (user && user.role === 'client') {
+        return null;
+    }
+
     const [notes, setNotes] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState(currentStatus);
+    const [selectedStatus, setSelectedStatus] = useState(initialStatus);
 
     const handleSubmit = () => {
-        onStatusChange(selectedStatus, notes);
+        onSubmit(selectedStatus, notes);
     };
 
     return (
