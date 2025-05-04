@@ -165,19 +165,28 @@ exports.uploadPhotos = async (req, res) => {
             });
         }
 
-        // After successful upload, create notification
-        await notificationController.notifyPhotoUpdate(
-            workOrderId,
-            'add',
-            req.userId,
-            uploadedPhotos.length // Pass number of photos uploaded
-        );
-
-        return res.status(201).json({
+        // After successful upload, send response first
+        const response = {
             success: true,
             message: `${uploadedPhotos.length} photo(s) uploaded successfully!`,
             data: uploadedPhotos
-        });
+        };
+
+        res.status(201).json(response);
+
+        // Then create notification asynchronously (non-blocking)
+        try {
+            await notificationController.notifyPhotoUpdate(
+                workOrderId,
+                'add',
+                req.userId,
+                uploadedPhotos.length
+            );
+        } catch (notificationError) {
+            // Log error but don't affect the already sent response
+            console.error('Error creating notification:', notificationError);
+        }
+
     } catch (error) {
         console.error('Error uploading photos to S3:', error);
         return res.status(500).json({
