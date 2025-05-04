@@ -175,6 +175,12 @@ exports.markAllAsRead = async (req, res) => {
 // Create notification (internal use for other controllers)
 exports.createNotification = async (userId, workOrderId, type, title, message) => {
     try {
+        // Skip if userId is undefined/null
+        if (!userId) {
+            console.log(`Skipping notification creation: Missing userId for workOrderId ${workOrderId}`);
+            return null;
+        }
+
         const notification = await Notification.create({
             user_id: userId,
             work_order_id: workOrderId,
@@ -185,9 +191,10 @@ exports.createNotification = async (userId, workOrderId, type, title, message) =
             created_at: new Date()
         });
 
+        console.log(`Created notification ID ${notification.id} for user ${userId}`);
         return notification;
     } catch (error) {
-        console.error('Error creating notification:', error);
+        console.error(`Error creating notification for user ${userId}:`, error);
         throw error;
     }
 };
@@ -256,28 +263,46 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
 exports.notifyNewNote = async (workOrderId, noteContent, createdBy) => {
     try {
         const workOrder = await WorkOrder.findByPk(workOrderId);
+        if (!workOrder) {
+            throw new Error('Work order not found');
+        }
+
         const title = 'New Note Added';
         const message = `New note added to Job #${workOrder.job_no}`;
 
         // Create notifications for all relevant users except the creator
-        await Promise.all([
-            // Notify staff
-            this.createNotification(
-                workOrder.assigned_to,
-                workOrderId,
-                'work-order',
-                title,
-                message
-            ),
-            // Notify client
-            this.createNotification(
-                workOrder.client_id,
-                workOrderId,
-                'work-order',
-                title,
-                message
-            )
-        ]);
+        const notificationPromises = [];
+
+        // Notify assigned staff if different from creator
+        if (workOrder.assigned_to && workOrder.assigned_to !== createdBy) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.assigned_to,
+                    workOrderId,
+                    'work-order',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Notify client if different from creator
+        if (workOrder.client_id && workOrder.client_id !== createdBy) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.client_id,
+                    workOrderId,
+                    'work-order',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Execute all notification creation promises if any
+        if (notificationPromises.length > 0) {
+            await Promise.all(notificationPromises);
+        }
     } catch (error) {
         console.error('Error creating new note notification:', error);
         throw error;
@@ -296,25 +321,38 @@ exports.notifyPhotoUpdate = async (workOrderId, action, userId, photoCount) => {
             } Job #${workOrder.job_no}`;
 
         // Create notifications for relevant users
-        await Promise.all([
-            // Notify assigned staff
-            this.createNotification(
-                workOrder.assigned_to,
-                workOrderId,
-                'photo-update',
-                title,
-                message
-            ),
-            // Notify client if applicable
-            workOrder.client_id && this.createNotification(
-                workOrder.client_id,
-                workOrderId,
-                'photo-update',
-                title,
-                message
-            )
-        ]);
+        const notificationPromises = [];
 
+        // Notify assigned staff if exists and not the same as uploader
+        if (workOrder.assigned_to && workOrder.assigned_to !== userId) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.assigned_to,
+                    workOrderId,
+                    'photo-update',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Notify client if exists and not the same as uploader
+        if (workOrder.client_id && workOrder.client_id !== userId) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.client_id,
+                    workOrderId,
+                    'photo-update',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Execute all notification creation promises if any
+        if (notificationPromises.length > 0) {
+            await Promise.all(notificationPromises);
+        }
     } catch (error) {
         console.error('Error creating photo update notification:', error);
         throw error;
