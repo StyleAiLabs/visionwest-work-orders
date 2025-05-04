@@ -237,18 +237,24 @@ exports.deletePhoto = async (req, res) => {
         // Delete record from database
         await photo.destroy();
 
-        // Create notification after successful deletion
-        await notificationController.notifyPhotoUpdate(
-            workOrderId,
-            'delete',
-            req.userId,
-            1 // Single photo deleted
-        );
-
-        return res.status(200).json({
+        // Send success response immediately
+        res.status(200).json({
             success: true,
             message: 'Photo deleted successfully!'
         });
+
+        // Create notification after response (non-blocking)
+        try {
+            await notificationController.notifyPhotoUpdate(
+                workOrderId,
+                'delete',
+                req.userId,
+                1 // Single photo deleted
+            );
+        } catch (notificationError) {
+            console.error('Error creating deletion notification:', notificationError);
+        }
+
     } catch (error) {
         console.error('Error deleting photo:', error);
         return res.status(500).json({

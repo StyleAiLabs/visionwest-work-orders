@@ -8,7 +8,7 @@ export const alertsService = {
         if (!isAuthenticated()) return { data: [] };
 
         try {
-            const response = await api.get(`/api/alerts?filter=${filter}`);
+            const response = await api.get(`/alerts?filter=${filter}`);
             return response;
         } catch (error) {
             console.error('Error fetching alerts:', error);
