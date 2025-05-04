@@ -419,14 +419,25 @@ exports.updateWorkOrderStatus = async (req, res) => {
             updated_by: req.userId
         });
 
-        // Create notification - make sure to notify current user and clients
-        await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
-
-        return res.status(200).json({
+        // Send successful response first
+        const response = {
             success: true,
             message: 'Work order status updated successfully!',
             data: { id: workOrder.id, status: workOrder.status }
-        });
+        };
+
+        res.status(200).json(response);
+
+        // AFTER sending response, try to create notifications
+        // This way, if notification fails, the status update is still successful
+        try {
+            await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
+            console.log(`Notifications sent for work order ${id} status change`);
+        } catch (notificationError) {
+            // Log the error but don't affect the main flow since we've already sent the response
+            console.error('Error creating status change notification:', notificationError);
+        }
+
     } catch (error) {
         console.error('Error updating work order status:', error);
         return res.status(500).json({

@@ -204,17 +204,15 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
     try {
         const workOrder = await WorkOrder.findByPk(workOrderId);
         if (!workOrder) {
-            throw new Error('Work order not found');
+            console.log(`Work order ${workOrderId} not found - skipping notification`);
+            return;
         }
 
         const title = 'Work Order Status Updated';
         const message = `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
 
-        // Create notifications for relevant staff and client
-        const notificationPromises = [];
-
-        // Get all client users if there's no specific client_id
-        if (!workOrder.client_id) {
+        // Create notifications for all client users
+        try {
             const clientUsers = await User.findAll({
                 where: {
                     role: 'client',
@@ -222,37 +220,56 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
                 }
             });
 
-            // Create notification for each client user
             for (const clientUser of clientUsers) {
-                notificationPromises.push(
-                    this.createNotification(
+                try {
+                    await this.createNotification(
                         clientUser.id,
                         workOrderId,
                         'status-change',
                         title,
                         message
-                    )
-                );
+                    );
+                } catch (clientNotifError) {
+                    // Log but continue with other notifications
+                    console.error(`Failed to notify client ${clientUser.id}:`, clientNotifError);
+                }
             }
-        } else {
-            // If there is a specific client_id, notify just that client
-            notificationPromises.push(
-                this.createNotification(
-                    workOrder.client_id,
-                    workOrderId,
-                    'status-change',
-                    title,
-                    message
-                )
-            );
+        } catch (clientsError) {
+            console.error('Error fetching client users:', clientsError);
+            // Continue with other notifications
         }
 
-        // Execute all notification creation promises
-        await Promise.all(notificationPromises);
+        // Try to notify staff users as well
+        try {
+            const staffUsers = await User.findAll({
+                where: {
+                    role: ['staff', 'admin'],
+                    is_active: true,
+                    id: { [Op.ne]: updatedBy } // Don't notify the user who made the update
+                }
+            });
 
-        console.log(`Created status change notifications for work order ${workOrderId}`);
+            for (const staffUser of staffUsers) {
+                try {
+                    await this.createNotification(
+                        staffUser.id,
+                        workOrderId,
+                        'status-change',
+                        title,
+                        message
+                    );
+                } catch (staffNotifError) {
+                    // Log but continue with other notifications
+                    console.error(`Failed to notify staff ${staffUser.id}:`, staffNotifError);
+                }
+            }
+        } catch (staffError) {
+            console.error('Error fetching staff users:', staffError);
+        }
+
     } catch (error) {
-        console.error('Error creating status change notification:', error);
+        console.error('Error in notifyStatusChange:', error);
+        // Re-throw so callers can handle it if needed
         throw error;
     }
 };
