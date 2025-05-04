@@ -196,28 +196,57 @@ exports.createNotification = async (userId, workOrderId, type, title, message) =
 exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy) => {
     try {
         const workOrder = await WorkOrder.findByPk(workOrderId);
+        if (!workOrder) {
+            throw new Error('Work order not found');
+        }
+
         const title = 'Work Order Status Updated';
         const message = `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
 
         // Create notifications for relevant staff and client
-        await Promise.all([
-            // Notify staff
-            this.createNotification(
-                workOrder.assigned_to,
-                workOrderId,
-                'status-change',
-                title,
-                message
-            ),
-            // Notify client
-            this.createNotification(
-                workOrder.client_id,
-                workOrderId,
-                'status-change',
-                title,
-                message
-            )
-        ]);
+        const notificationPromises = [];
+
+        // Add staff notification if assigned_to exists
+        if (workOrder.assigned_to) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.assigned_to,
+                    workOrderId,
+                    'status-change',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Add client notification if client_id exists
+        if (workOrder.client_id) {
+            notificationPromises.push(
+                this.createNotification(
+                    workOrder.client_id,
+                    workOrderId,
+                    'status-change',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Notify the updater as well
+        if (updatedBy) {
+            notificationPromises.push(
+                this.createNotification(
+                    updatedBy,
+                    workOrderId,
+                    'status-change',
+                    title,
+                    message
+                )
+            );
+        }
+
+        // Execute all notification creation promises
+        await Promise.all(notificationPromises);
     } catch (error) {
         console.error('Error creating status change notification:', error);
         throw error;
