@@ -192,6 +192,106 @@ exports.createNotification = async (userId, workOrderId, type, title, message) =
     }
 };
 
+// Add these new helper functions
+exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy) => {
+    try {
+        const workOrder = await WorkOrder.findByPk(workOrderId);
+        const title = 'Work Order Status Updated';
+        const message = `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
+
+        // Create notifications for relevant staff and client
+        await Promise.all([
+            // Notify staff
+            this.createNotification(
+                workOrder.assigned_to,
+                workOrderId,
+                'status-change',
+                title,
+                message
+            ),
+            // Notify client
+            this.createNotification(
+                workOrder.client_id,
+                workOrderId,
+                'status-change',
+                title,
+                message
+            )
+        ]);
+    } catch (error) {
+        console.error('Error creating status change notification:', error);
+        throw error;
+    }
+};
+
+exports.notifyNewNote = async (workOrderId, noteContent, createdBy) => {
+    try {
+        const workOrder = await WorkOrder.findByPk(workOrderId);
+        const title = 'New Note Added';
+        const message = `New note added to Job #${workOrder.job_no}`;
+
+        // Create notifications for all relevant users except the creator
+        await Promise.all([
+            // Notify staff
+            this.createNotification(
+                workOrder.assigned_to,
+                workOrderId,
+                'work-order',
+                title,
+                message
+            ),
+            // Notify client
+            this.createNotification(
+                workOrder.client_id,
+                workOrderId,
+                'work-order',
+                title,
+                message
+            )
+        ]);
+    } catch (error) {
+        console.error('Error creating new note notification:', error);
+        throw error;
+    }
+};
+
+exports.notifyPhotoUpdate = async (workOrderId, action, userId, photoCount) => {
+    try {
+        const workOrder = await WorkOrder.findByPk(workOrderId);
+        if (!workOrder) {
+            throw new Error('Work order not found');
+        }
+
+        const title = `Photos ${action === 'add' ? 'Added' : 'Deleted'}`;
+        const message = `${photoCount} photo${photoCount > 1 ? 's' : ''} ${action === 'add' ? 'added to' : 'deleted from'
+            } Job #${workOrder.job_no}`;
+
+        // Create notifications for relevant users
+        await Promise.all([
+            // Notify assigned staff
+            this.createNotification(
+                workOrder.assigned_to,
+                workOrderId,
+                'photo-update',
+                title,
+                message
+            ),
+            // Notify client if applicable
+            workOrder.client_id && this.createNotification(
+                workOrder.client_id,
+                workOrderId,
+                'photo-update',
+                title,
+                message
+            )
+        ]);
+
+    } catch (error) {
+        console.error('Error creating photo update notification:', error);
+        throw error;
+    }
+};
+
 // Helper function to format relative time
 function getTimeAgo(date) {
     const now = new Date();

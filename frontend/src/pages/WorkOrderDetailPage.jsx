@@ -11,6 +11,7 @@ import DetailItem from '../components/workOrders/DetailItem';
 import StatusUpdateForm from '../components/workOrders/StatusUpdateForm';
 import Toast from '../components/common/Toast';
 import NotesHistory from '../components/workOrders/NotesHistory';
+import { useAlerts } from '../context/AlertContext';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -20,6 +21,9 @@ const WorkOrderDetailPage = () => {
     const [error, setError] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showStatusUpdate, setShowStatusUpdate] = useState(false);
+
+    // Add alerts context
+    const { refreshAlerts } = useAlerts();
 
     useEffect(() => {
         fetchWorkOrder();
@@ -44,10 +48,12 @@ const WorkOrderDetailPage = () => {
         setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
     };
 
+    // Update handlers to refresh alerts after actions
     const handleStatusChange = async (status, notes = '') => {
         try {
             await workOrderService.updateWorkOrderStatus(id, status, notes);
-            await fetchWorkOrder(); // Refresh data after status update
+            await fetchWorkOrder();
+            await refreshAlerts(); // Refresh alerts after status change
             showToast('Status updated successfully', 'success');
             setShowStatusUpdate(false); // Hide the status form
         } catch (error) {
@@ -64,7 +70,8 @@ const WorkOrderDetailPage = () => {
             }
 
             await workOrderService.addNote(id, content);
-            await fetchWorkOrder(); // Refresh to get updated notes
+            await fetchWorkOrder();
+            await refreshAlerts(); // Refresh alerts after adding note
             showToast('Note added successfully', 'success');
             return true;
         } catch (error) {

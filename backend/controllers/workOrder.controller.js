@@ -1,4 +1,5 @@
 const db = require('../models');
+const notificationController = require('./notification.controller');
 const WorkOrder = db.workOrder;
 const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
@@ -308,6 +309,15 @@ exports.createWorkOrder = async (req, res) => {
             created_by: req.userId // From auth middleware
         });
 
+        // Create notification for new work order
+        await notificationController.createNotification(
+            req.userId,
+            workOrder.id,
+            'work-order',
+            'New Work Order Created',
+            `New work order created: Job #${workOrder.job_no}`
+        );
+
         return res.status(201).json({
             success: true,
             message: 'Work order created successfully!',
@@ -342,7 +352,6 @@ exports.updateWorkOrderStatus = async (req, res) => {
 
         // Find the work order
         const workOrder = await WorkOrder.findByPk(id);
-
         if (!workOrder) {
             return res.status(404).json({
                 success: false,
@@ -358,10 +367,7 @@ exports.updateWorkOrderStatus = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: 'No changes were made to the work order.',
-                data: {
-                    id: workOrder.id,
-                    status: workOrder.status
-                }
+                data: { id: workOrder.id, status: workOrder.status }
             });
         }
 
@@ -374,16 +380,16 @@ exports.updateWorkOrderStatus = async (req, res) => {
             previous_status: previousStatus,
             new_status: status,
             notes: notes || null,
-            updated_by: req.userId // From auth middleware
+            updated_by: req.userId
         });
+
+        // Create notification
+        await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
 
         return res.status(200).json({
             success: true,
             message: 'Work order status updated successfully!',
-            data: {
-                id: workOrder.id,
-                status: workOrder.status
-            }
+            data: { id: workOrder.id, status: workOrder.status }
         });
     } catch (error) {
         console.error('Error updating work order status:', error);
@@ -428,6 +434,9 @@ exports.addWorkOrderNote = async (req, res) => {
         // Get user info
         const user = await User.findByPk(req.userId);
 
+        // Create notification
+        await notificationController.notifyNewNote(id, note, req.userId);
+
         return res.status(201).json({
             success: true,
             message: 'Note added successfully!',
@@ -460,6 +469,15 @@ exports.deleteWorkOrder = async (req, res) => {
                 message: 'Work order not found'
             });
         }
+
+        // Create notification before deletion
+        await notificationController.createNotification(
+            req.userId,
+            workOrderId,
+            'work-order',
+            'Work Order Deleted',
+            `Work order Job #${workOrder.job_no} has been deleted`
+        );
 
         // Start transaction
         const t = await db.sequelize.transaction();

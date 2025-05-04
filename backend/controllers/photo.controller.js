@@ -8,6 +8,7 @@ const { promisify } = require('util');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const unlinkAsync = promisify(fs.unlink);
+const notificationController = require('./notification.controller');
 
 // Configure AWS S3
 const s3 = new AWS.S3({
@@ -164,6 +165,14 @@ exports.uploadPhotos = async (req, res) => {
             });
         }
 
+        // After successful upload, create notification
+        await notificationController.notifyPhotoUpdate(
+            workOrderId,
+            'add',
+            req.userId,
+            uploadedPhotos.length // Pass number of photos uploaded
+        );
+
         return res.status(201).json({
             success: true,
             message: `${uploadedPhotos.length} photo(s) uploaded successfully!`,
@@ -184,14 +193,22 @@ exports.deletePhoto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Find photo
-        const photo = await Photo.findByPk(id);
+        // Find photo and work order information before deletion
+        const photo = await Photo.findByPk(id, {
+            include: [{
+                model: WorkOrder,
+                attributes: ['id', 'job_no']
+            }]
+        });
+
         if (!photo) {
             return res.status(404).json({
                 success: false,
                 message: 'Photo not found.'
             });
         }
+
+        const workOrderId = photo.work_order_id;
 
         // Extract the S3 key from the URL
         const url = new URL(photo.file_path);
@@ -210,6 +227,14 @@ exports.deletePhoto = async (req, res) => {
 
         // Delete record from database
         await photo.destroy();
+
+        // Create notification after successful deletion
+        await notificationController.notifyPhotoUpdate(
+            workOrderId,
+            'delete',
+            req.userId,
+            1 // Single photo deleted
+        );
 
         return res.status(200).json({
             success: true,
