@@ -128,8 +128,9 @@ exports.getAllWorkOrders = async (req, res) => {
 exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`Fetching work order with ID: ${id}`);
 
-        // Find the work order with all related data
+        // Find the work order first
         const workOrder = await WorkOrder.findByPk(id);
 
         if (!workOrder) {
@@ -139,42 +140,67 @@ exports.getWorkOrderById = async (req, res) => {
             });
         }
 
-        // Fetch photos separately
-        const photos = await Photo.findAll({
-            where: { work_order_id: id },
-            include: [{
-                model: User,
-                as: 'uploader',
-                attributes: ['id', 'full_name', 'email']
-            }]
-        });
+        // Then fetch related data separately with error handling
+        let photos = [];
+        let notes = [];
+        let statusUpdates = [];
+        let creator = null;
 
-        // Fetch notes separately
-        const notes = await WorkOrderNote.findAll({
-            where: { work_order_id: id },
-            include: [{
-                model: User,
-                as: 'creator',
-                attributes: ['id', 'full_name', 'email']
-            }]
-        });
+        try {
+            // Fetch photos
+            photos = await Photo.findAll({
+                where: { work_order_id: id },
+                include: [{
+                    model: User,
+                    as: 'uploader',
+                    attributes: ['id', 'full_name', 'email']
+                }]
+            });
+        } catch (photoError) {
+            console.error('Error fetching photos:', photoError);
+            photos = []; // Fail gracefully
+        }
 
-        // Fetch status updates separately
-        const statusUpdates = await StatusUpdate.findAll({
-            where: { work_order_id: id },
-            include: [{
-                model: User,
-                as: 'updater',
-                attributes: ['id', 'full_name', 'email']
-            }]
-        });
+        try {
+            // Fetch notes
+            notes = await WorkOrderNote.findAll({
+                where: { work_order_id: id },
+                include: [{
+                    model: User,
+                    as: 'creator',
+                    attributes: ['id', 'full_name', 'email']
+                }]
+            });
+        } catch (notesError) {
+            console.error('Error fetching notes:', notesError);
+            notes = []; // Fail gracefully
+        }
+
+        try {
+            // Fetch status updates
+            statusUpdates = await StatusUpdate.findAll({
+                where: { work_order_id: id },
+                include: [{
+                    model: User,
+                    as: 'updater',
+                    attributes: ['id', 'full_name', 'email']
+                }]
+            });
+        } catch (statusError) {
+            console.error('Error fetching status updates:', statusError);
+            statusUpdates = []; // Fail gracefully
+        }
 
         // Fetch creator user
-        let creator = null;
         if (workOrder.created_by) {
-            creator = await User.findByPk(workOrder.created_by, {
-                attributes: ['id', 'full_name', 'email']
-            });
+            try {
+                creator = await User.findByPk(workOrder.created_by, {
+                    attributes: ['id', 'full_name', 'email']
+                });
+            } catch (creatorError) {
+                console.error('Error fetching creator:', creatorError);
+                // Fail gracefully
+            }
         }
 
         // Format the response
@@ -250,7 +276,8 @@ exports.getWorkOrderById = async (req, res) => {
         console.error('Error fetching work order details:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching work order details.'
+            message: 'An error occurred while fetching work order details.',
+            error: error.message
         });
     }
 };
