@@ -1,14 +1,19 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { alertsService } from '../services/alertsService';
+import { useAuth } from '../hooks/useAuth'; // Import your auth hook
 
 export const AlertContext = createContext();
 
 export const AlertProvider = ({ children }) => {
     const [alerts, setAlerts] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false); // Start with false
+    const { isAuthenticated } = useAuth(); // Get authentication status
 
     const fetchAlerts = async () => {
+        // Skip API calls if not authenticated
+        if (!isAuthenticated) return;
+
         try {
             setIsLoading(true);
             const response = await alertsService.getAlerts();
@@ -22,20 +27,24 @@ export const AlertProvider = ({ children }) => {
     };
 
     const calculateUnreadCount = (alertsData) => {
+        if (!alertsData) return;
         const count = alertsData.filter(alert => !alert.read).length;
         setUnreadCount(count);
     };
 
     useEffect(() => {
-        fetchAlerts();
-
-        // Set up periodic checks for new alerts
-        const intervalId = setInterval(() => {
+        // Only fetch alerts and set up interval if authenticated
+        if (isAuthenticated) {
             fetchAlerts();
-        }, 60000); // Check every minute
 
-        return () => clearInterval(intervalId);
-    }, []);
+            const intervalId = setInterval(() => {
+                fetchAlerts();
+            }, 60000); // Check every minute
+
+            // Clean up interval when component unmounts or auth status changes
+            return () => clearInterval(intervalId);
+        }
+    }, [isAuthenticated]); // Re-run effect when auth status changes
 
     const markAsRead = async (alertId) => {
         try {
