@@ -37,6 +37,8 @@ exports.getNotifications = async (req, res) => {
             ]
         });
 
+        console.log(`Found ${notifications.count} notifications for user ${userId}`);
+
         // Format response
         const formattedNotifications = notifications.rows.map(notification => {
             // Calculate time ago string
@@ -54,16 +56,7 @@ exports.getNotifications = async (req, res) => {
             };
         });
 
-        return res.status(200).json({
-            success: true,
-            data: formattedNotifications,  // Make sure this is an array
-            pagination: {
-                total: notifications.count,
-                page,
-                limit,
-                pages: Math.ceil(notifications.count / limit)
-            }
-        });
+        return res.status(200).json(formattedNotifications);  // Send direct array instead of nested structure
     } catch (error) {
         console.error('Error fetching notifications:', error);
         return res.status(500).json({
@@ -199,7 +192,7 @@ exports.createNotification = async (userId, workOrderId, type, title, message) =
     }
 };
 
-// Add these new helper functions
+// Fix the notifyStatusChange function to properly notify client users
 exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy) => {
     try {
         const workOrder = await WorkOrder.findByPk(workOrderId);
@@ -211,65 +204,35 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
         const title = 'Work Order Status Updated';
         const message = `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
 
+        // Get all client users
+        const clientUsers = await User.findAll({
+            where: {
+                role: 'client',
+                is_active: true
+            }
+        });
+
+        console.log(`Found ${clientUsers.length} client users to notify`);
+
         // Create notifications for all client users
-        try {
-            const clientUsers = await User.findAll({
-                where: {
-                    role: 'client',
-                    is_active: true
-                }
-            });
-
-            for (const clientUser of clientUsers) {
-                try {
-                    await this.createNotification(
-                        clientUser.id,
-                        workOrderId,
-                        'status-change',
-                        title,
-                        message
-                    );
-                } catch (clientNotifError) {
-                    // Log but continue with other notifications
-                    console.error(`Failed to notify client ${clientUser.id}:`, clientNotifError);
-                }
+        for (const clientUser of clientUsers) {
+            try {
+                console.log(`Creating notification for client ${clientUser.id}`);
+                const notification = await this.createNotification(
+                    clientUser.id,
+                    workOrderId,
+                    'status-change', // Make sure this matches a valid type in your model
+                    title,
+                    message
+                );
+                console.log(`Created notification ID ${notification?.id || 'unknown'} for client user ${clientUser.id}`);
+            } catch (error) {
+                console.error(`Failed to notify client ${clientUser.id}:`, error);
             }
-        } catch (clientsError) {
-            console.error('Error fetching client users:', clientsError);
-            // Continue with other notifications
-        }
-
-        // Try to notify staff users as well
-        try {
-            const staffUsers = await User.findAll({
-                where: {
-                    role: ['staff', 'admin'],
-                    is_active: true,
-                    id: { [Op.ne]: updatedBy } // Don't notify the user who made the update
-                }
-            });
-
-            for (const staffUser of staffUsers) {
-                try {
-                    await this.createNotification(
-                        staffUser.id,
-                        workOrderId,
-                        'status-change',
-                        title,
-                        message
-                    );
-                } catch (staffNotifError) {
-                    // Log but continue with other notifications
-                    console.error(`Failed to notify staff ${staffUser.id}:`, staffNotifError);
-                }
-            }
-        } catch (staffError) {
-            console.error('Error fetching staff users:', staffError);
         }
 
     } catch (error) {
         console.error('Error in notifyStatusChange:', error);
-        // Re-throw so callers can handle it if needed
         throw error;
     }
 };

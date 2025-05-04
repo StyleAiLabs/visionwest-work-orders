@@ -9,7 +9,13 @@ export const alertsService = {
 
         try {
             const response = await api.get(`/alerts?filter=${filter}`);
-            return response;
+
+            // Handle both formats (direct array or nested in data property)
+            const alerts = Array.isArray(response.data) ? response.data : (response.data.data || []);
+
+            console.log('Fetched alerts:', alerts);
+
+            return { data: alerts };
         } catch (error) {
             console.error('Error fetching alerts:', error);
             return { data: [] };

@@ -19,7 +19,7 @@ export const AlertProvider = ({ children }) => {
             const response = await alertsService.getAlerts();
 
             // Debug logging
-            console.log('Alerts response:', response.data);
+            console.log('Alerts response:', response);
 
             // Ensure we have an array to work with
             const alertsData = Array.isArray(response.data) ? response.data : [];
@@ -31,6 +31,7 @@ export const AlertProvider = ({ children }) => {
             calculateUnreadCount(alertsData);
         } catch (error) {
             console.error('Error fetching alerts:', error);
+            setAlerts([]);
         } finally {
             setIsLoading(false);
         }
