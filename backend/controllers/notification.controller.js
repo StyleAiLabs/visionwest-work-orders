@@ -142,31 +142,71 @@ exports.markAllAsRead = async (req, res) => {
     try {
         const userId = req.userId; // From auth middleware
 
-        // Add logging to help diagnose the issue
-        console.log(`Marking all notifications as read for user ${userId}`);
+        // Add detailed logging
+        console.log(`Attempting to mark all notifications as read for user ${userId}`);
 
-        // Update all unread notifications
-        const result = await Notification.update(
-            { is_read: true },
-            {
-                where: {
-                    user_id: userId,
-                    is_read: false
-                }
+        if (!userId) {
+            console.error('Missing userId in request');
+            return res.status(401).json({
+                success: false,
+                message: 'User authentication required'
+            });
+        }
+
+        // Check if user has any unread notifications first
+        const unreadCount = await Notification.count({
+            where: {
+                user_id: userId,
+                is_read: false
             }
-        );
-
-        console.log(`Updated ${result[0]} notifications to read status`);
-
-        return res.status(200).json({
-            success: true,
-            message: 'All notifications marked as read successfully!'
         });
+
+        console.log(`Found ${unreadCount} unread notifications for user ${userId}`);
+
+        // If no unread notifications, return early
+        if (unreadCount === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No unread notifications to update.',
+                count: 0
+            });
+        }
+
+        // Use try/catch for the update operation specifically
+        try {
+            // Update all unread notifications - use a different approach
+            const result = await Notification.update(
+                { is_read: true },
+                {
+                    where: {
+                        user_id: userId,
+                        is_read: false
+                    }
+                }
+            );
+
+            console.log(`Updated ${result[0]} notifications to read status`);
+
+            return res.status(200).json({
+                success: true,
+                message: 'All notifications marked as read successfully!',
+                count: result[0]
+            });
+        } catch (updateError) {
+            console.error('Specific error during update operation:', updateError);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred during the database update operation.'
+            });
+        }
     } catch (error) {
         console.error('Error marking all notifications as read:', error);
+
+        // Send a detailed error response
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while marking all notifications as read.'
+            message: 'An error occurred while marking all notifications as read.',
+            details: error.message
         });
     }
 };
