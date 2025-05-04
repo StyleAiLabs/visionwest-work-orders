@@ -56,7 +56,7 @@ exports.getNotifications = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            data: formattedNotifications,
+            data: formattedNotifications,  // Make sure this is an array
             pagination: {
                 total: notifications.count,
                 page,
@@ -213,21 +213,29 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
         // Create notifications for relevant staff and client
         const notificationPromises = [];
 
-        // Add staff notification if assigned_to exists
-        if (workOrder.assigned_to) {
-            notificationPromises.push(
-                this.createNotification(
-                    workOrder.assigned_to,
-                    workOrderId,
-                    'status-change',
-                    title,
-                    message
-                )
-            );
-        }
+        // Get all client users if there's no specific client_id
+        if (!workOrder.client_id) {
+            const clientUsers = await User.findAll({
+                where: {
+                    role: 'client',
+                    is_active: true
+                }
+            });
 
-        // Add client notification if client_id exists
-        if (workOrder.client_id) {
+            // Create notification for each client user
+            for (const clientUser of clientUsers) {
+                notificationPromises.push(
+                    this.createNotification(
+                        clientUser.id,
+                        workOrderId,
+                        'status-change',
+                        title,
+                        message
+                    )
+                );
+            }
+        } else {
+            // If there is a specific client_id, notify just that client
             notificationPromises.push(
                 this.createNotification(
                     workOrder.client_id,
@@ -239,21 +247,10 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
             );
         }
 
-        // Notify the updater as well
-        if (updatedBy) {
-            notificationPromises.push(
-                this.createNotification(
-                    updatedBy,
-                    workOrderId,
-                    'status-change',
-                    title,
-                    message
-                )
-            );
-        }
-
         // Execute all notification creation promises
         await Promise.all(notificationPromises);
+
+        console.log(`Created status change notifications for work order ${workOrderId}`);
     } catch (error) {
         console.error('Error creating status change notification:', error);
         throw error;

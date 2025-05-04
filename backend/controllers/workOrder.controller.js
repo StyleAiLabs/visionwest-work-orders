@@ -391,7 +391,7 @@ exports.updateWorkOrderStatus = async (req, res) => {
             updated_by: req.userId
         });
 
-        // Create notification
+        // Create notification - make sure to notify current user and clients
         await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
 
         return res.status(200).json({
