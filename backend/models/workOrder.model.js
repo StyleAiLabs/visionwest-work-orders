@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             defaultValue: 'pending',
             validate: {
-                isIn: [['pending', 'in-progress', 'completed']]
+                isIn: [['pending', 'in-progress', 'completed', 'cancelled']]
             }
         },
         work_order_type: {
