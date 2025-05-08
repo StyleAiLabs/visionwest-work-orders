@@ -103,11 +103,43 @@ exports.isClient = (req, res, next) => {
 
 // Check if user has any valid role (client, staff, or admin)
 exports.isAnyValidRole = (req, res, next) => {
-    if (!['client', 'staff', 'admin'].includes(req.userRole)) {
+    if (!req.userRole) {
         return res.status(403).json({
             success: false,
-            message: 'Invalid role!'
+            message: "No role assigned!"
         });
     }
-    next();
+
+    // Get the request method and route
+    const { method, originalUrl } = req;
+
+    // Special case: Allow clients to make status update requests for cancellations
+    if (req.userRole === 'client' &&
+        method === 'PATCH' &&
+        originalUrl.match(/\/api\/work-orders\/\d+\/status/)) {
+
+        // Check if the request body contains status='cancelled'
+        if (req.body && req.body.status === 'cancelled') {
+            return next(); // Allow client to proceed with cancellation request
+        }
+    }
+
+    // Regular role-based checks for other operations
+    if (['admin', 'staff'].includes(req.userRole)) {
+        // Staff and admin can access everything
+        return next();
+    } else if (req.userRole === 'client') {
+        // Clients can only access GET endpoints and specific allowed endpoints
+        if (method === 'GET' ||
+            // Add other allowed methods for clients here
+            (method === 'PATCH' && originalUrl.includes('/api/alerts/'))) {
+            return next();
+        }
+    }
+
+    // If we get here, the user doesn't have permission
+    return res.status(403).json({
+        success: false,
+        message: "Require Williams Property Staff or Admin Role!"
+    });
 };

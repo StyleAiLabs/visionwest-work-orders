@@ -15,13 +15,15 @@ const s3 = new AWS.S3({
     region: process.env.AWS_REGION || 'us-east-1'
 });
 
-// Get work order summary for dashboard
+// Update the getSummary function
+
 exports.getSummary = async (req, res) => {
     try {
         // Count work orders by status
         const pending = await WorkOrder.count({ where: { status: 'pending' } });
         const inProgress = await WorkOrder.count({ where: { status: 'in-progress' } });
         const completed = await WorkOrder.count({ where: { status: 'completed' } });
+        const cancelled = await WorkOrder.count({ where: { status: 'cancelled' } });
         const total = await WorkOrder.count();
 
         return res.status(200).json({
@@ -30,6 +32,7 @@ exports.getSummary = async (req, res) => {
                 pending,
                 inProgress,
                 completed,
+                cancelled,
                 total
             }
         });
@@ -367,22 +370,30 @@ exports.createWorkOrder = async (req, res) => {
 // Update work order status
 exports.updateWorkOrderStatus = async (req, res) => {
     try {
-        // Check if user is client - this is a redundant safeguard
-        if (req.userRole === 'client') {
-            return res.status(403).json({
-                success: false,
-                message: 'Clients are not authorized to update work order status.'
-            });
-        }
-
         const { id } = req.params;
         const { status, notes } = req.body;
 
         // Validate status
-        if (!status || !['pending', 'in-progress', 'completed'].includes(status)) {
+        if (!status || !['pending', 'in-progress', 'completed', 'cancelled'].includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid status. Status must be one of: pending, in-progress, completed.'
+                message: 'Invalid status. Status must be one of: pending, in-progress, completed, cancelled.'
+            });
+        }
+
+        // Add special handling for client cancellation requests
+        if (req.userRole === 'client' && status !== 'cancelled') {
+            return res.status(403).json({
+                success: false,
+                message: 'Clients can only request cancellation of work orders.'
+            });
+        }
+
+        // Check if notes are required for client cancellations
+        if (req.userRole === 'client' && status === 'cancelled' && (!notes || !notes.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a reason for the cancellation request.'
             });
         }
 
@@ -422,27 +433,27 @@ exports.updateWorkOrderStatus = async (req, res) => {
         // Send successful response first
         const response = {
             success: true,
-            message: 'Work order status updated successfully!',
+            message: req.userRole === 'client' ?
+                'Cancellation request submitted successfully!' :
+                'Work order status updated successfully!',
             data: { id: workOrder.id, status: workOrder.status }
         };
 
         res.status(200).json(response);
 
         // AFTER sending response, try to create notifications
-        // This way, if notification fails, the status update is still successful
         try {
             await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
-            console.log(`Notifications sent for work order ${id} status change`);
         } catch (notificationError) {
-            // Log the error but don't affect the main flow since we've already sent the response
+            // Log the error but don't affect the main flow
             console.error('Error creating status change notification:', notificationError);
         }
-
     } catch (error) {
         console.error('Error updating work order status:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while updating the work order status.'
+            message: 'An error occurred while updating the work order status.',
+            error: error.message
         });
     }
 };

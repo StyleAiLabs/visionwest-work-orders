@@ -5,7 +5,8 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
         { id: '', label: 'All' },
         { id: 'pending', label: 'Pending' },
         { id: 'in-progress', label: 'In Progress' },
-        { id: 'completed', label: 'Completed' }
+        { id: 'completed', label: 'Completed' },
+        { id: 'cancelled', label: 'Cancelled' }
     ];
 
     return (
@@ -16,7 +17,9 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                     onClick={() => onFilterChange(filter.id)}
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                         ${activeFilter === filter.id
-                            ? 'bg-vw-green text-white'
+                            ? filter.id === 'cancelled'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-vw-green text-white'
                             : 'bg-white text-gray-600 border border-gray-300'}`}
                 >
                     {filter.label}

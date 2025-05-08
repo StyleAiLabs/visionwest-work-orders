@@ -4,13 +4,15 @@ const StatusBadge = ({ status }) => {
     const statusStyles = {
         pending: 'bg-amber-100 text-amber-800 border-amber-300',
         'in-progress': 'bg-vw-green-light text-vw-dark border-vw-green',
-        completed: 'bg-green-100 text-green-800 border-green-300'
+        completed: 'bg-green-50 text-green-800 border-green-300',
+        cancelled: 'bg-red-100 text-red-800 border-red-300'
     };
 
     const statusDisplay = {
         pending: 'Pending',
         'in-progress': 'In Progress',
-        completed: 'Completed'
+        completed: 'Completed',
+        cancelled: 'Cancelled'
     };
 
     return (

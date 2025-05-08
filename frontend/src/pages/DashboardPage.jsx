@@ -153,11 +153,11 @@ const DashboardPage = () => {
             {/* Dashboard Content */}
             <div className="flex-1 overflow-y-auto p-4">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="grid grid-cols-2 gap-4">
                     <SummaryCard title="Pending" value={summary.pending} color="orange" />
                     <SummaryCard title="In Progress" value={summary.inProgress} color="blue" />
                     <SummaryCard title="Completed" value={summary.completed} color="green" />
-                    <SummaryCard title="Total" value={summary.total} color="indigo" />
+                    <SummaryCard title="Cancelled" value={summary.cancelled} color="red" />
                 </div>
 
                 {/* Recent Activity */}

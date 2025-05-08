@@ -13,6 +13,7 @@ import Toast from '../components/common/Toast';
 import NotesHistory from '../components/workOrders/NotesHistory';
 import { useAlerts } from '../context/AlertContext';
 import { useAuth } from '../hooks/useAuth'; // Correct import path
+import ClientStatusUpdateForm from '../components/workOrders/ClientStatusUpdateForm';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -162,28 +163,50 @@ const WorkOrderDetailPage = () => {
                     <div className="bg-white rounded-lg shadow p-4 mb-4">
                         {/* Order details content... */}
 
-                        {/* Only show status update button for non-client users */}
-                        {!isClient && (
-                            <div className="mt-4">
-                                <button
-                                    onClick={() => setShowStatusUpdate(true)}
-                                    className="w-full text-center px-4 py-2 bg-vw-green hover:bg-vw-green-dark text-white rounded-md text-sm font-medium"
-                                >
-                                    Update Status
-                                </button>
-                            </div>
+                        {/* Only show status update button for appropriate users */}
+                        {!isLoading && workOrder && (
+                            <>
+                                {/* For staff/admin users */}
+                                {!isClient && (
+                                    <div className="mt-4">
+                                        <button
+                                            onClick={() => setShowStatusUpdate(true)}
+                                            className="w-full text-center px-4 py-2 bg-vw-green hover:bg-vw-green-dark text-white rounded-md text-sm font-medium"
+                                        >
+                                            Update Status
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* For client users - only show cancel button if not already completed/cancelled */}
+                                {isClient && workOrder.status !== 'completed' && workOrder.status !== 'cancelled' && (
+                                    <div className="mt-4">
+                                        <button
+                                            onClick={() => setShowStatusUpdate(true)}
+                                            className="w-full text-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium"
+                                        >
+                                            Request Cancellation
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 ))}
 
-                {/* Status Update Form - Only shown when showStatusUpdate is true and user is not client */}
+                {/* Status Update Form */}
                 {safeRender(() => (
-                    showStatusUpdate && !isClient && (
-                        <StatusUpdateForm
-                            initialStatus={workOrder.status}
-                            onSubmit={handleStatusChange} // Fixed: Use the correct function name
-                            onCancel={() => setShowStatusUpdate(false)}
-                        />
+                    showStatusUpdate && (
+                        isClient ?
+                            <ClientStatusUpdateForm
+                                onSubmit={handleStatusChange}
+                                onCancel={() => setShowStatusUpdate(false)}
+                            /> :
+                            <StatusUpdateForm
+                                initialStatus={workOrder.status}
+                                onSubmit={handleStatusChange}
+                                onCancel={() => setShowStatusUpdate(false)}
+                            />
                     )
                 ))}
 

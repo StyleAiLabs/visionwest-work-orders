@@ -247,41 +247,66 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
             return;
         }
 
-        const title = 'Work Order Status Updated';
-        const message = `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
+        const title = newStatus === 'cancelled' ?
+            'Work Order Cancellation Requested' :
+            'Work Order Status Updated';
 
-        // Get all client users
-        const clientUsers = await User.findAll({
+        const message = newStatus === 'cancelled' ?
+            `Job #${workOrder.job_no} cancellation has been requested` :
+            `Job #${workOrder.job_no} status changed from ${oldStatus} to ${newStatus}`;
+
+        // Determine notification type
+        const notificationType = newStatus === 'cancelled' ? 'urgent' : 'status-change';
+
+        // Get users to notify based on the update
+        const usersToNotify = await getRelevantUsers(newStatus, updatedBy);
+
+        // Create notifications
+        for (const user of usersToNotify) {
+            await createNotification(
+                user.id,
+                workOrderId,
+                notificationType,
+                title,
+                message
+            );
+        }
+
+        console.log(`Created status change notifications for work order ${workOrderId}`);
+    } catch (error) {
+        console.error('Error creating status change notifications:', error);
+        throw error;
+    }
+};
+
+// Helper function to get relevant users based on the status change
+async function getRelevantUsers(newStatus, updatedById) {
+    try {
+        const updatedBy = await User.findByPk(updatedById);
+        const isClientUpdate = updatedBy && updatedBy.role === 'client';
+
+        // If a client requested cancellation, notify all staff and admin users
+        if (isClientUpdate && newStatus === 'cancelled') {
+            return await User.findAll({
+                where: {
+                    role: ['staff', 'admin'],
+                    is_active: true
+                }
+            });
+        }
+
+        // For staff updates, notify client users
+        return await User.findAll({
             where: {
                 role: 'client',
                 is_active: true
             }
         });
-
-        console.log(`Found ${clientUsers.length} client users to notify`);
-
-        // Create notifications for all client users
-        for (const clientUser of clientUsers) {
-            try {
-                console.log(`Creating notification for client ${clientUser.id}`);
-                const notification = await this.createNotification(
-                    clientUser.id,
-                    workOrderId,
-                    'status-change', // Make sure this matches a valid type in your model
-                    title,
-                    message
-                );
-                console.log(`Created notification ID ${notification?.id || 'unknown'} for client user ${clientUser.id}`);
-            } catch (error) {
-                console.error(`Failed to notify client ${clientUser.id}:`, error);
-            }
-        }
-
     } catch (error) {
-        console.error('Error in notifyStatusChange:', error);
-        throw error;
+        console.error('Error getting users to notify:', error);
+        return [];
     }
-};
+}
 
 exports.notifyNewNote = async (workOrderId, noteContent, createdBy) => {
     try {
