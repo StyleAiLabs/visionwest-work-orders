@@ -1,29 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, isAdmin, isStaffOrAdmin, isAnyValidRole } = require('../middleware/auth.middleware');
 const workOrderController = require('../controllers/workOrder.controller');
-const photoController = require('../controllers/photo.controller');
+const { verifyToken, isAnyValidRole, isStaffOrAdmin } = require('../middleware/auth.middleware');
 
 // Apply auth middleware to all routes
-router.use(verifyToken, isAnyValidRole);
+router.use(verifyToken);
 
-// Routes that everyone (including clients) can access
-router.get('/summary', workOrderController.getSummary);
-router.get('/', workOrderController.getAllWorkOrders);
-router.get('/:id', workOrderController.getWorkOrderById);
+// Routes accessible to all authenticated users
+router.get('/', isAnyValidRole, workOrderController.getAllWorkOrders);
+router.get('/:id', isAnyValidRole, workOrderController.getWorkOrderById);
 
-// Add note - allowed for all roles (including clients)
-router.post('/:id/notes', workOrderController.addWorkOrderNote);
+// Status updates - use isAnyValidRole to allow client cancellations
+router.patch('/:id/status', verifyToken, authMiddleware.handleWorkOrderStatusUpdate, workOrderController.updateWorkOrderStatus);
 
-// Routes only for staff and admin
+// Routes accessible only to staff and admin
 router.post('/', isStaffOrAdmin, workOrderController.createWorkOrder);
-router.patch('/:id/status', isStaffOrAdmin, workOrderController.updateWorkOrderStatus);
-
-// Fix the method name to match what's in the controller
-router.post('/:id/photos', isStaffOrAdmin, photoController.uploadPhotos); // Changed from uploadPhoto to uploadPhotos
-router.delete('/:id/photos/:photoId', isStaffOrAdmin, photoController.deletePhoto);
-
-// Delete work order (admin only)
-router.delete('/:id', isAdmin, workOrderController.deleteWorkOrder);
+router.put('/:id', isStaffOrAdmin, workOrderController.updateWorkOrder);
+router.delete('/:id', isStaffOrAdmin, workOrderController.deleteWorkOrder);
 
 module.exports = router;

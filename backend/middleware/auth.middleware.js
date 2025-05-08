@@ -103,6 +103,13 @@ exports.isClient = (req, res, next) => {
 
 // Check if user has any valid role (client, staff, or admin)
 exports.isAnyValidRole = (req, res, next) => {
+    // Debugging logs
+    console.log('AUTH DEBUG - Request details:');
+    console.log('- User role:', req.userRole);
+    console.log('- Method:', req.method);
+    console.log('- URL:', req.originalUrl);
+    console.log('- Body:', JSON.stringify(req.body));
+
     if (!req.userRole) {
         return res.status(403).json({
             success: false,
@@ -118,9 +125,14 @@ exports.isAnyValidRole = (req, res, next) => {
         method === 'PATCH' &&
         originalUrl.match(/\/api\/work-orders\/\d+\/status/)) {
 
+        console.log('AUTH DEBUG - Client trying to update status, checking if cancellation');
+
         // Check if the request body contains status='cancelled'
         if (req.body && req.body.status === 'cancelled') {
+            console.log('AUTH DEBUG - Client cancellation request approved');
             return next(); // Allow client to proceed with cancellation request
+        } else {
+            console.log('AUTH DEBUG - Client attempted non-cancellation status update:', req.body.status);
         }
     }
 
@@ -131,7 +143,6 @@ exports.isAnyValidRole = (req, res, next) => {
     } else if (req.userRole === 'client') {
         // Clients can only access GET endpoints and specific allowed endpoints
         if (method === 'GET' ||
-            // Add other allowed methods for clients here
             (method === 'PATCH' && originalUrl.includes('/api/alerts/'))) {
             return next();
         }
@@ -141,5 +152,36 @@ exports.isAnyValidRole = (req, res, next) => {
     return res.status(403).json({
         success: false,
         message: "Require Williams Property Staff or Admin Role!"
+    });
+};
+
+// Add this new specialized middleware
+
+exports.handleWorkOrderStatusUpdate = (req, res, next) => {
+    console.log('STATUS UPDATE DEBUG - Request details:');
+    console.log('- User role:', req.userRole);
+    console.log('- Status update:', req.body?.status);
+
+    // For client users, only allow cancellation
+    if (req.userRole === 'client') {
+        if (req.body && req.body.status === 'cancelled') {
+            return next(); // Allow client cancellation
+        } else {
+            return res.status(403).json({
+                success: false,
+                message: 'Clients can only request cancellation of work orders.'
+            });
+        }
+    }
+
+    // For staff/admin, allow any status update
+    if (['admin', 'staff'].includes(req.userRole)) {
+        return next();
+    }
+
+    // Default deny
+    return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update work order status.'
     });
 };

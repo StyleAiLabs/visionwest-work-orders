@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const bodyParser = require('body-parser');
 
 // Load environment variables
 dotenv.config();
@@ -31,8 +32,10 @@ app.use(cors({
     },
     optionsSuccessStatus: 200
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// IMPORTANT: Body parser middleware must be configured before routes
+app.use(express.json());  // For parsing application/json
+app.use(express.urlencoded({ extended: true }));  // For parsing application/x-www-form-urlencoded
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
