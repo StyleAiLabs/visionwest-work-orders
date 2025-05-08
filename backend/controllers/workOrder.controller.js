@@ -622,6 +622,83 @@ exports.deleteWorkOrder = async (req, res) => {
     }
 };
 
+// Update work order (full update)
+exports.updateWorkOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            job_no,
+            date,
+            status,
+            supplier_name,
+            supplier_phone,
+            supplier_email,
+            property_name,
+            property_phone,
+            description,
+            po_number,
+            authorized_by,
+            authorized_contact,
+            authorized_email
+        } = req.body;
+
+        // Find the work order to update
+        const workOrder = await WorkOrder.findByPk(id);
+        if (!workOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Work order not found.'
+            });
+        }
+
+        // Check if job_no is being changed and if the new job_no already exists
+        if (job_no && job_no !== workOrder.job_no) {
+            const existingWorkOrder = await WorkOrder.findOne({ where: { job_no } });
+            if (existingWorkOrder) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A work order with this job number already exists.'
+                });
+            }
+        }
+
+        // Update work order fields
+        await workOrder.update({
+            job_no: job_no || workOrder.job_no,
+            date: date || workOrder.date,
+            status: status || workOrder.status,
+            supplier_name: supplier_name || workOrder.supplier_name,
+            supplier_phone: supplier_phone || workOrder.supplier_phone,
+            supplier_email: supplier_email || workOrder.supplier_email,
+            property_name: property_name || workOrder.property_name,
+            property_phone: property_phone || workOrder.property_phone,
+            description: description || workOrder.description,
+            po_number: po_number || workOrder.po_number,
+            authorized_by: authorized_by || workOrder.authorized_by,
+            authorized_contact: authorized_contact || workOrder.authorized_contact,
+            authorized_email: authorized_email || workOrder.authorized_email,
+            updated_by: req.userId
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Work order updated successfully!',
+            data: {
+                id: workOrder.id,
+                jobNo: workOrder.job_no,
+                status: workOrder.status
+            }
+        });
+    } catch (error) {
+        console.error('Error updating work order:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while updating the work order.',
+            error: error.message
+        });
+    }
+};
+
 // Helper function to format dates
 function formatDate(date) {
     if (!date) return '';
