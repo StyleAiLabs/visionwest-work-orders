@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/auth.middleware');
 // Apply auth middleware to all routes
 router.use(authMiddleware.verifyToken);
 
+
+routes.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSummary);
+
 // Routes accessible to all authenticated users
 router.get('/', authMiddleware.isAnyValidRole, workOrderController.getAllWorkOrders);
 router.get('/:id', authMiddleware.isAnyValidRole, workOrderController.getWorkOrderById);
