@@ -7,7 +7,7 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.use(authMiddleware.verifyToken);
 
 
-routes.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSummary);
+router.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSummary);
 
 // Routes accessible to all authenticated users
 router.get('/', authMiddleware.isAnyValidRole, workOrderController.getAllWorkOrders);
