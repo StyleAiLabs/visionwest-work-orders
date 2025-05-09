@@ -19,12 +19,46 @@ const s3 = new AWS.S3({
 
 exports.getSummary = async (req, res) => {
     try {
-        // Count work orders by status
-        const pending = await WorkOrder.count({ where: { status: 'pending' } });
-        const inProgress = await WorkOrder.count({ where: { status: 'in-progress' } });
-        const completed = await WorkOrder.count({ where: { status: 'completed' } });
-        const cancelled = await WorkOrder.count({ where: { status: 'cancelled' } });
-        const total = await WorkOrder.count();
+        console.log('Getting work order summary');
+
+        // Add try/catch blocks around each count operation
+        let pending = 0;
+        let inProgress = 0;
+        let completed = 0;
+        let cancelled = 0;
+        let total = 0;
+
+        try {
+            pending = await WorkOrder.count({ where: { status: 'pending' } });
+        } catch (error) {
+            console.error('Error counting pending work orders:', error);
+        }
+
+        try {
+            inProgress = await WorkOrder.count({ where: { status: 'in-progress' } });
+        } catch (error) {
+            console.error('Error counting in-progress work orders:', error);
+        }
+
+        try {
+            completed = await WorkOrder.count({ where: { status: 'completed' } });
+        } catch (error) {
+            console.error('Error counting completed work orders:', error);
+        }
+
+        try {
+            cancelled = await WorkOrder.count({ where: { status: 'cancelled' } });
+        } catch (error) {
+            console.error('Error counting cancelled work orders:', error);
+        }
+
+        try {
+            total = await WorkOrder.count();
+        } catch (error) {
+            console.error('Error counting total work orders:', error);
+            // Calculate total from individual counts as fallback
+            total = pending + inProgress + completed + cancelled;
+        }
 
         return res.status(200).json({
             success: true,
@@ -40,7 +74,8 @@ exports.getSummary = async (req, res) => {
         console.error('Error fetching work order summary:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching the work order summary.'
+            message: 'An error occurred while fetching the work order summary.',
+            error: error.message
         });
     }
 };
