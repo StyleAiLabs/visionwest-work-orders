@@ -29,13 +29,15 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
-            {/* Add a matching dark header */}
-            <div className="bg-vw-dark text-white p-4">
-                <img
-                    className="h-8"
-                    src={visionwestLogo}
-                    alt="VisionWest Logo"
-                />
+            {/* Header with same structure as AppHeader */}
+            <div className="bg-vw-dark text-white p-4 relative">
+                <div className="flex justify-center items-center">
+                    <img
+                        className="h-8"
+                        src={visionwestLogo}
+                        alt="VisionWest Logo"
+                    />
+                </div>
             </div>
 
             <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
