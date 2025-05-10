@@ -823,10 +823,15 @@ exports.getWorkOrderNotes = async (req, res) => {
         console.log('Table name:', NoteModel.tableName);
         console.log('Available attributes:', Object.keys(NoteModel.rawAttributes));
 
-        // Fetch the notes using snake_case for database query
+        // Log names to help with debugging
+        console.log('Using Sequelize timestamp mappings:');
+        console.log('- JavaScript property:', 'createdAt');
+        console.log('- Database column:', NoteModel.rawAttributes.created_at ? 'created_at' : '<not found>');
+
+        // IMPORTANT: Use camelCase (JavaScript property name) in Sequelize queries
         const notes = await NoteModel.findAll({
             where: { work_order_id: id },
-            order: [['created_at', 'DESC']],
+            order: [['createdAt', 'DESC']], // Use JavaScript property name
             include: [{
                 model: User,
                 as: 'creator',
@@ -842,7 +847,7 @@ exports.getWorkOrderNotes = async (req, res) => {
             id: note.id,
             content: note.note || '',
             createdById: note.created_by,
-            createdAt: note.createdAt, // This is the JavaScript property
+            createdAt: note.createdAt, // Use the JavaScript property
             creator: note.creator ? {
                 id: note.creator.id,
                 name: note.creator.full_name || 'Unknown',
