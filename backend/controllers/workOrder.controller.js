@@ -271,21 +271,59 @@ exports.getWorkOrderById = async (req, res) => {
             console.error('Error fetching photos:', photoError);
         }
 
-        // Try to fetch notes
+        // Try to fetch notes with improved debugging and error handling
         try {
+            console.log(`Fetching notes for work order ${id}`);
+
+            // Verify the model is available
+            if (!WorkOrderNote) {
+                console.error('WorkOrderNote model is not defined!');
+                formattedWorkOrder.notesLoadError = 'Model definition error';
+                throw new Error('WorkOrderNote model not found');
+            }
+
+            // Log the table name and key info for debugging
+            console.log('Using model:', WorkOrderNote.tableName || 'unknown table name');
+
+            // Try to get the count first - if this fails, it's likely a model/DB issue
+            const noteCount = await WorkOrderNote.count({ where: { work_order_id: id } });
+            console.log(`Found ${noteCount} notes for work order ${id}`);
+
+            // Fetch the notes with creator information to provide more complete data
             const notes = await WorkOrderNote.findAll({
                 where: { work_order_id: id },
-                attributes: ['id', 'note', 'created_by', 'createdAt']
+                attributes: ['id', 'note', 'created_by', 'createdAt'],
+                include: [{
+                    model: User,
+                    as: 'creator',
+                    attributes: ['id', 'full_name', 'email'],
+                    required: false // Use left join in case creator info is missing
+                }],
+                order: [['createdAt', 'DESC']] // Most recent notes first
             });
 
-            formattedWorkOrder.notes = notes.map(note => ({
-                id: note.id,
-                content: note.note || '',
-                createdById: note.created_by,
-                createdAt: note.createdAt
-            }));
+            console.log(`Successfully retrieved ${notes.length} notes`);
+
+            // Enhanced mapping with more complete information
+            formattedWorkOrder.notes = notes.map(note => {
+                const creator = note.creator ? {
+                    id: note.creator.id,
+                    name: note.creator.full_name || 'Unknown',
+                    email: note.creator.email || ''
+                } : null;
+
+                return {
+                    id: note.id,
+                    content: note.note || '',
+                    createdById: note.created_by,
+                    createdAt: note.createdAt,
+                    creator: creator
+                };
+            });
         } catch (notesError) {
             console.error('Error fetching notes:', notesError);
+            formattedWorkOrder.notes = [];
+            formattedWorkOrder.notesError = notesError.message || 'Unknown error fetching notes';
         }
 
         // Try to fetch status updates
