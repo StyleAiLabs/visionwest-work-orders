@@ -812,12 +812,9 @@ exports.getWorkOrderNotes = async (req, res) => {
             });
         }
 
-        // Debug model availability
-        console.log('WorkOrderNote model available:', !!db.workOrderNote);
-        console.log('WorkOrderNote model available (uppercase):', !!db.WorkOrderNote);
 
         // Get the correct model reference - try both naming conventions
-        const NoteModel = db.workOrderNote || db.WorkOrderNote;
+        const NoteModel = db.workOrderNote;
 
         if (!NoteModel) {
             throw new Error('WorkOrderNote model not properly registered in db object');

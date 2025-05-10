@@ -28,7 +28,7 @@ db.sequelize = sequelize;
 db.user = require('./user.model.js')(sequelize, Sequelize);
 db.workOrder = require('./workOrder.model.js')(sequelize, Sequelize);
 db.statusUpdate = require('./statusUpdate.model.js')(sequelize, Sequelize);
-db.WorkOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
+db.workOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
 db.notification = require('./notification.model.js')(sequelize, Sequelize);
 db.photo = require('./photo.model.js')(sequelize, Sequelize);
 
