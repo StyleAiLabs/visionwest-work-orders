@@ -590,10 +590,10 @@ exports.addWorkOrderNote = async (req, res) => {
 // Delete work order
 exports.deleteWorkOrder = async (req, res) => {
     try {
-        const { workOrderId } = req.params;
+        const { id } = req.params; // Changed from workOrderId to id
 
         // Check if work order exists
-        const workOrder = await WorkOrder.findByPk(workOrderId);
+        const workOrder = await WorkOrder.findByPk(id);
         if (!workOrder) {
             return res.status(404).json({
                 success: false,
@@ -604,7 +604,7 @@ exports.deleteWorkOrder = async (req, res) => {
         // Create notification before deletion
         await notificationController.createNotification(
             req.userId,
-            workOrderId,
+            id,
             'work-order',
             'Work Order Deleted',
             `Work order Job #${workOrder.job_no} has been deleted`
@@ -617,7 +617,7 @@ exports.deleteWorkOrder = async (req, res) => {
             // Delete photos from S3 and database
             if (db.photo) {
                 const photos = await Photo.findAll({
-                    where: { work_order_id: workOrderId }
+                    where: { work_order_id: id }
                 });
 
                 // Delete photos from S3
@@ -639,7 +639,7 @@ exports.deleteWorkOrder = async (req, res) => {
 
                 // Delete photos from database
                 await Photo.destroy({
-                    where: { work_order_id: workOrderId },
+                    where: { work_order_id: id },
                     transaction: t
                 });
             }
@@ -647,7 +647,7 @@ exports.deleteWorkOrder = async (req, res) => {
             // Delete work order notes
             if (db.workOrderNote) {
                 await WorkOrderNote.destroy({
-                    where: { work_order_id: workOrderId },
+                    where: { work_order_id: id },
                     transaction: t
                 });
             }
@@ -655,7 +655,7 @@ exports.deleteWorkOrder = async (req, res) => {
             // Delete status updates
             if (db.statusUpdate) {
                 await StatusUpdate.destroy({
-                    where: { work_order_id: workOrderId },
+                    where: { work_order_id: id },
                     transaction: t
                 });
             }
@@ -663,7 +663,7 @@ exports.deleteWorkOrder = async (req, res) => {
             // Delete notifications
             if (db.notification) {
                 await db.notification.destroy({
-                    where: { work_order_id: workOrderId },
+                    where: { work_order_id: id },
                     transaction: t
                 });
             }
