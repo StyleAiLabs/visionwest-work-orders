@@ -812,18 +812,21 @@ exports.getWorkOrderNotes = async (req, res) => {
             });
         }
 
-
-        // Get the correct model reference - try both naming conventions
+        // Get the correct model reference
         const NoteModel = db.workOrderNote;
 
         if (!NoteModel) {
             throw new Error('WorkOrderNote model not properly registered in db object');
         }
 
-        // Fetch the notes
+        // Debug table and column names
+        console.log('Table name:', NoteModel.tableName);
+        console.log('Available attributes:', Object.keys(NoteModel.rawAttributes));
+
+        // Fetch the notes using snake_case for database query
         const notes = await NoteModel.findAll({
             where: { work_order_id: id },
-            order: [['createdAt', 'DESC']],
+            order: [['created_at', 'DESC']],
             include: [{
                 model: User,
                 as: 'creator',
@@ -834,12 +837,12 @@ exports.getWorkOrderNotes = async (req, res) => {
 
         console.log(`Found ${notes.length} notes for work order ${id}`);
 
-        // Format the response
+        // Format the response using the JavaScript attribute names (camelCase)
         const formattedNotes = notes.map(note => ({
             id: note.id,
             content: note.note || '',
             createdById: note.created_by,
-            createdAt: note.createdAt,
+            createdAt: note.createdAt, // This is the JavaScript property
             creator: note.creator ? {
                 id: note.creator.id,
                 name: note.creator.full_name || 'Unknown',

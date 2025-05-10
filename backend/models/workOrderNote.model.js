@@ -16,19 +16,11 @@ module.exports = (sequelize, Sequelize) => {
         created_by: {
             type: Sequelize.INTEGER,
             allowNull: false
-        },
-        created_at: {
-            type: Sequelize.DATE,
-            defaultValue: Sequelize.NOW
-        },
-        updated_at: {
-            type: Sequelize.DATE,
-            defaultValue: Sequelize.NOW
         }
     }, {
         timestamps: true,
-        createdAt: 'created_at',
-        updatedAt: 'updated_at'
+        createdAt: 'created_at', // Map JavaScript createdAt to DB created_at
+        updatedAt: 'updated_at'  // Map JavaScript updatedAt to DB updated_at
     });
 
     return WorkOrderNote;
