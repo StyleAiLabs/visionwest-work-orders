@@ -1,8 +1,8 @@
 const db = require('../models');
 const Note = db.note;
 const WorkOrder = db.workOrder;
-const WorkOrderNote = db.WorkOrderNote;
-const User = db.User;
+const WorkOrderNote = db.workOrderNote;
+const User = db.user;
 
 exports.getAllNotes = async (req, res) => {
     try {
