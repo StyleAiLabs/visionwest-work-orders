@@ -53,6 +53,12 @@ app.use('/api/alerts', require('./routes/notification.routes'));
 app.use('/api/photos', require('./routes/photo.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
 
+// Import routes
+const notesRoutes = require('./routes/notes.routes');
+
+// Use routes
+app.use('/api', notesRoutes);  // This will make the routes available at /api/work-orders/:workOrderId/notes
+
 // Error handling middleware
 app.use(require('./middleware/error.middleware'));
 
