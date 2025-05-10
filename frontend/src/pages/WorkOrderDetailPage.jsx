@@ -14,6 +14,7 @@ import NotesHistory from '../components/workOrders/NotesHistory';
 import { useAlerts } from '../context/AlertContext';
 import { useAuth } from '../hooks/useAuth'; // Correct import path
 import ClientStatusUpdateForm from '../components/workOrders/ClientStatusUpdateForm';
+import WorkOrderSummary from '../components/workOrders/WorkOrderSummary';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -155,10 +156,59 @@ const WorkOrderDetailPage = () => {
                 title={`Job #${workOrder?.jobNo || 'Unknown'}`}
                 showBackButton={true}
                 onBackClick={() => navigate('/work-orders')}
+                rightContent={headerRightContent}
             />
+
+            {/* Work Order Summary - Using the new component */}
+            {safeRender(() => (
+                workOrder && (
+                    <div className="p-4">
+                        <WorkOrderSummary workOrder={workOrder} />
+                    </div>
+                )
+            ))}
 
             {/* Work Order Details */}
             <div className="flex-1 p-4">
+
+                {/* Notes/Status History */}
+                <NotesHistory
+                    notes={workOrder.notes}
+                    statusUpdates={workOrder.statusUpdates}
+                />
+
+                {/* Notes Section - Available to all users including clients */}
+                <NotesSection
+                    workOrderId={id}
+                    onSaveNotes={handleSaveNotes} // Change to match the expected prop name
+                />
+
+                {/* Status Update Form */}
+                {safeRender(() => (
+                    showStatusUpdate && (
+                        isClient ?
+                            <ClientStatusUpdateForm
+                                onSubmit={handleStatusChange}
+                                onCancel={() => setShowStatusUpdate(false)}
+                            /> :
+                            <StatusUpdateForm
+                                initialStatus={workOrder.status}
+                                onSubmit={handleStatusChange}
+                                onCancel={() => setShowStatusUpdate(false)}
+                            />
+                    )
+                ))}
+
+                {/* Photo Gallery - Only allow uploads for non-client users */}
+                {safeRender(() => (
+                    <PhotoGallery
+                        photos={workOrder.photos || []}
+                        workOrderId={id}
+                        onPhotoDeleted={handlePhotoDeleted}
+                        canUpload={!isClient} // Pass this prop to control upload button visibility
+                    />
+                ))}
+
                 {safeRender(() => (
                     <div className="bg-white rounded-lg shadow p-4 mb-4">
                         {/* Order details content... */}
@@ -194,43 +244,6 @@ const WorkOrderDetailPage = () => {
                     </div>
                 ))}
 
-                {/* Status Update Form */}
-                {safeRender(() => (
-                    showStatusUpdate && (
-                        isClient ?
-                            <ClientStatusUpdateForm
-                                onSubmit={handleStatusChange}
-                                onCancel={() => setShowStatusUpdate(false)}
-                            /> :
-                            <StatusUpdateForm
-                                initialStatus={workOrder.status}
-                                onSubmit={handleStatusChange}
-                                onCancel={() => setShowStatusUpdate(false)}
-                            />
-                    )
-                ))}
-
-                {/* Photo Gallery - Only allow uploads for non-client users */}
-                {safeRender(() => (
-                    <PhotoGallery
-                        photos={workOrder.photos || []}
-                        workOrderId={id}
-                        onPhotoDeleted={handlePhotoDeleted}
-                        canUpload={!isClient} // Pass this prop to control upload button visibility
-                    />
-                ))}
-
-                {/* Notes Section - Available to all users including clients */}
-                <NotesSection
-                    workOrderId={id}
-                    onSaveNotes={handleSaveNotes} // Change to match the expected prop name
-                />
-
-                {/* Notes/Status History */}
-                <NotesHistory
-                    notes={workOrder.notes}
-                    statusUpdates={workOrder.statusUpdates}
-                />
             </div>
 
             <MobileNavigation />
