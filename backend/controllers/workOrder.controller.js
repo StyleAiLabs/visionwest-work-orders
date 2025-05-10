@@ -297,7 +297,7 @@ exports.getWorkOrderById = async (req, res) => {
                     model: User,
                     as: 'creator',
                     attributes: ['id', 'full_name', 'email'],
-                    required: false // Use left join in case creator info is missing
+                    required: false
                 }],
                 order: [['createdAt', 'DESC']] // Most recent notes first
             });
@@ -823,7 +823,7 @@ exports.getWorkOrderNotes = async (req, res) => {
         // Fetch the notes
         const notes = await NoteModel.findAll({
             where: { work_order_id: id },
-            order: [['created_at', 'DESC']],
+            order: [['createdAt', 'DESC']],
             include: [{
                 model: User,
                 as: 'creator',
@@ -839,7 +839,7 @@ exports.getWorkOrderNotes = async (req, res) => {
             id: note.id,
             content: note.note || '',
             createdById: note.created_by,
-            createdAt: note.created_at,
+            createdAt: note.createdAt,
             creator: note.creator ? {
                 id: note.creator.id,
                 name: note.creator.full_name || 'Unknown',
