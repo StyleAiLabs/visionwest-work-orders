@@ -1,5 +1,5 @@
 import React from 'react';
-import visionwestLogo from '../../assets/visionwest-logo.png';
+import visionwestLogo from '../../assets/visionwest-logo-header.png';
 
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     return (
@@ -18,7 +18,7 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
             )}
 
             {/* Centered title/logo */}
-            <div className="flex justify-center items-center">
+            <div className="flex justify-left items-left">
                 {title === "Dashboard" ? (
                     <img src={visionwestLogo} alt="VisionWest Logo" className="h-8" />
                 ) : (
