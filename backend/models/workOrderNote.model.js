@@ -26,9 +26,7 @@ module.exports = (sequelize, Sequelize) => {
             defaultValue: Sequelize.NOW
         }
     }, {
-        timestamps: true,
-        createdAt: 'created_at',
-        updatedAt: 'updated_at'
+        timestamps: true
     });
 
     return WorkOrderNote;
