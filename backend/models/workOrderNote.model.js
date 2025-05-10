@@ -19,8 +19,6 @@ module.exports = (sequelize, Sequelize) => {
         }
     }, {
         timestamps: true,
-        createdAt: 'created_at', // Map JavaScript createdAt to DB created_at
-        updatedAt: 'updated_at'  // Map JavaScript updatedAt to DB updated_at
     });
 
     return WorkOrderNote;
