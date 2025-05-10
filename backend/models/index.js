@@ -28,12 +28,9 @@ db.sequelize = sequelize;
 db.user = require('./user.model.js')(sequelize, Sequelize);
 db.workOrder = require('./workOrder.model.js')(sequelize, Sequelize);
 db.statusUpdate = require('./statusUpdate.model.js')(sequelize, Sequelize);
-const WorkOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
+db.WorkOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
 db.notification = require('./notification.model.js')(sequelize, Sequelize);
 db.photo = require('./photo.model.js')(sequelize, Sequelize);
-
-// Make sure both capitalizations are available
-db.WorkOrderNote = WorkOrderNote;
 
 // Define relationships
 // User to WorkOrder relationship
