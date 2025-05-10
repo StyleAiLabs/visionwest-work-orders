@@ -1,3 +1,4 @@
+// -- Staging --
 // module.exports = {
 //     HOST: process.env.DB_HOST || '35.213.224.151',
 //     USER: process.env.DB_USER || 'uhex928pteytg',
@@ -24,3 +25,4 @@ module.exports = {
         idle: 10000
     }
 };
+

@@ -27,7 +27,7 @@ const SettingsPage = () => {
                     <h2 className="text-lg font-medium mb-2">Account</h2>
                     {user && (
                         <div className="text-gray-600">
-                            <p>Name: {user.name || 'User'}</p>
+                            <p>Name: {user.full_name || 'User'}</p>
                             <p>Email: {user.email || 'user@example.com'}</p>
                         </div>
                     )}

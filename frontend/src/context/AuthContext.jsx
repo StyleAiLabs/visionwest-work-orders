@@ -8,13 +8,23 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    const normalizeUser = (apiUser) => {
+        return {
+            id: apiUser.id,
+            name: apiUser.full_name || apiUser.name || 'Unknown',
+            email: apiUser.email || '',
+            role: apiUser.role || 'user',
+            // add other fields as needed
+        };
+    };
+
     useEffect(() => {
         // Check if user is already logged in
         const checkAuthStatus = async () => {
             try {
                 const userData = await authService.getCurrentUser();
                 if (userData) {
-                    setUser(userData);
+                    setUser(normalizeUser(userData));
                     setIsAuthenticated(true);
                 }
             } catch (error) {
@@ -29,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const userData = await authService.login(email, password);
-        setUser(userData);
+        setUser(normalizeUser(userData));
         setIsAuthenticated(true);
         return userData;
     };
