@@ -11,6 +11,7 @@ router.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSum
 
 // Routes accessible to all authenticated users
 router.get('/', authMiddleware.isAnyValidRole, workOrderController.getAllWorkOrders);
+router.get('/:id/notes', authMiddleware.isAnyValidRole, workOrderController.getWorkOrderNotes);
 router.get('/:id', authMiddleware.isAnyValidRole, workOrderController.getWorkOrderById);
 
 // Status updates - use the specialized middleware for client cancellations

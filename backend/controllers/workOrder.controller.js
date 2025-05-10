@@ -783,3 +783,83 @@ function formatDate(date) {
 
     return `${day} ${month} ${year}`;
 }
+
+// Add this function to your controller
+
+// Get notes for a specific work order
+exports.getWorkOrderNotes = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`Fetching notes for work order ID: ${id}`);
+
+        // Validate work order ID
+        if (!id || isNaN(parseInt(id))) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid work order ID'
+            });
+        }
+
+        // Ensure the work order exists
+        const workOrderExists = await WorkOrder.findByPk(id, {
+            attributes: ['id']
+        });
+
+        if (!workOrderExists) {
+            return res.status(404).json({
+                success: false,
+                message: 'Work order not found'
+            });
+        }
+
+        // Debug model availability
+        console.log('WorkOrderNote model available:', !!db.workOrderNote);
+        console.log('WorkOrderNote model available (uppercase):', !!db.WorkOrderNote);
+
+        // Get the correct model reference - try both naming conventions
+        const NoteModel = db.workOrderNote || db.WorkOrderNote;
+
+        if (!NoteModel) {
+            throw new Error('WorkOrderNote model not properly registered in db object');
+        }
+
+        // Fetch the notes
+        const notes = await NoteModel.findAll({
+            where: { work_order_id: id },
+            order: [['created_at', 'DESC']],
+            include: [{
+                model: User,
+                as: 'creator',
+                attributes: ['id', 'full_name', 'email'],
+                required: false
+            }]
+        });
+
+        console.log(`Found ${notes.length} notes for work order ${id}`);
+
+        // Format the response
+        const formattedNotes = notes.map(note => ({
+            id: note.id,
+            content: note.note || '',
+            createdById: note.created_by,
+            createdAt: note.created_at,
+            creator: note.creator ? {
+                id: note.creator.id,
+                name: note.creator.full_name || 'Unknown',
+                email: note.creator.email || ''
+            } : null
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data: formattedNotes
+        });
+    } catch (error) {
+        console.error('Error fetching work order notes:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching notes.',
+            error: error.message
+        });
+    }
+};
