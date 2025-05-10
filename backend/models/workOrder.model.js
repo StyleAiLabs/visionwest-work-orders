@@ -98,8 +98,6 @@ module.exports = (sequelize, DataTypes) => {
         }
     }, {
         timestamps: true,
-        createdAt: 'created_at', // snake_case in DB
-        updatedAt: 'updated_at'  // snake_case in DB
     });
 
     return WorkOrder;
