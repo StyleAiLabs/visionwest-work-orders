@@ -185,3 +185,33 @@ exports.handleWorkOrderStatusUpdate = (req, res, next) => {
         message: 'Unauthorized to update work order status.'
     });
 };
+
+exports.canViewWorkOrderNotes = async (req, res, next) => {
+    try {
+        // Allow staff and admin by default
+        if (['staff', 'admin'].includes(req.userRole)) {
+            return next();
+        }
+
+        // For clients, check if they're associated with the work order
+        if (req.userRole === 'client') {
+            const workOrderId = req.params.workOrderId;
+            const workOrder = await WorkOrder.findByPk(workOrderId);
+
+            if (workOrder && workOrder.clientId === req.userId) {
+                return next();
+            }
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "You don't have permission to view these notes"
+        });
+    } catch (error) {
+        console.error("Error checking work order permissions:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while checking permissions"
+        });
+    }
+};
