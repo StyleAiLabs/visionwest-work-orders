@@ -7,10 +7,10 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.use(authMiddleware.verifyToken);
 
 // GET notes for a specific work order
-router.get('/work-orders/:workOrderId/notes', authMiddleware.canViewWorkOrderNotes, notesController.getNotesByWorkOrderId);
+router.get('/work-orders/:workOrderId/notes', authMiddleware.isAnyValidRole, notesController.getNotesByWorkOrderId);
 
 // Add a note to a work order
-router.post('/work-orders/:workOrderId/notes', authMiddleware.canViewWorkOrderNotes, notesController.addNote);
+router.post('/work-orders/:workOrderId/notes', authMiddleware.isAnyValidRole, notesController.addNote);
 
 // Delete a specific note
 router.delete('/notes/:id', authMiddleware.isStaffOrAdmin, notesController.deleteNote);
