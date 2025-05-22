@@ -85,7 +85,7 @@ exports.addNote = async (req, res) => {
 
         // Fetch the user who created the note
         const creator = await User.findByPk(userId, {
-            attributes: ['id', 'name', 'role']
+            attributes: ['id', 'full_name', 'role']
         });
 
         return res.status(201).json({
@@ -98,7 +98,7 @@ exports.addNote = async (req, res) => {
                 createdAt: newNote.createdAt,
                 createdBy: creator ? {
                     id: creator.id,
-                    name: creator.name,
+                    name: creator.full_name,
                     role: creator.role
                 } : null
             }
