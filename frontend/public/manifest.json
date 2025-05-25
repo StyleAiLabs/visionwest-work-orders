@@ -1,6 +1,6 @@
 {
     "name": "Williams Work Order Management System",
-    "short_name": "WOMS",
+    "short_name": "WOMS (Live)",
     "description": "VisionWest * Williams Work Orders Management System",
     "start_url": "/",
     "display": "standalone",
