@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const db = require('../models');
 const notificationController = require('./notification.controller');
 const WorkOrder = db.workOrder;
@@ -5,7 +6,6 @@ const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
 const Photo = db.photo;
 const User = db.user;
-const { Op } = db.Sequelize;
 const AWS = require('aws-sdk');
 
 // Configure AWS S3 client
@@ -87,17 +87,22 @@ exports.getAllWorkOrders = async (req, res) => {
         const userId = req.userId;
         const userRole = req.userRole;
 
+        console.log('GET WORK ORDERS DEBUG:');
+        console.log('- User ID:', userId);
+        console.log('- User Role:', userRole);
+        console.log('- Query params:', req.query);
+
         let whereClause = {};
         let includeClause = [];
 
         // Apply role-based filtering
         if (userRole === 'client') {
-            // Individual account managers only see their assigned work orders
-            const user = await User.findByPk(userId);
-            whereClause.account_manager_id = userId;
+            // For now, VisionWest clients can see all work orders
+            // Later we can implement more specific filtering
+            console.log('- VisionWest client access - showing all work orders');
         } else if (userRole === 'client_admin') {
-            // VisionWest admins see all VisionWest work orders
-            whereClause.property_name = 'VisionWest Community Trust';
+            // VisionWest admins see all work orders
+            console.log('- VisionWest admin access - showing all work orders');
         }
         // staff and admin roles see everything (no additional filtering)
 
@@ -111,7 +116,7 @@ exports.getAllWorkOrders = async (req, res) => {
             today.setHours(0, 0, 0, 0);
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
-            
+
             whereClause.date = {
                 [Op.gte]: today,
                 [Op.lt]: tomorrow
@@ -126,13 +131,15 @@ exports.getAllWorkOrders = async (req, res) => {
             ];
         }
 
-        // Rest of your existing getAllWorkOrders logic...
         const offset = (page - 1) * limit;
-        let orderClause = [['created_at', 'DESC']];
+        let orderClause = [['createdAt', 'DESC']]; // Use default Sequelize timestamp
 
         if (sort === 'latest') {
-            orderClause = [['created_at', 'DESC']];
+            orderClause = [['createdAt', 'DESC']];
         }
+
+        console.log('- Where clause:', JSON.stringify(whereClause));
+        console.log('- Order clause:', orderClause);
 
         const workOrders = await WorkOrder.findAndCountAll({
             where: whereClause,
@@ -142,11 +149,13 @@ exports.getAllWorkOrders = async (req, res) => {
             offset: parseInt(offset)
         });
 
-        // Format and return response...
+        console.log('- Found work orders:', workOrders.count);
+
+        // Format the response
         const formattedWorkOrders = workOrders.rows.map(workOrder => ({
             id: workOrder.id,
             jobNo: workOrder.job_no,
-            date: formatDate(workOrder.date),
+            date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
             status: workOrder.status,
             supplierName: workOrder.supplier_name,
             propertyName: workOrder.property_name,
@@ -164,11 +173,14 @@ exports.getAllWorkOrders = async (req, res) => {
                 pages: Math.ceil(workOrders.count / limit)
             }
         });
+
     } catch (error) {
         console.error('Error fetching work orders:', error);
+        console.error('Error stack:', error.stack);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching work orders.'
+            message: 'An error occurred while fetching work orders.',
+            error: error.message
         });
     }
 };
