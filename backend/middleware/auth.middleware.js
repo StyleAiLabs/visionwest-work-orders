@@ -112,20 +112,29 @@ exports.isAnyValidRole = (req, res, next) => {
         });
     }
 
-    // Allow VisionWest users (both client and client_admin) to access notes
-    if (['client', 'client_admin'].includes(req.userRole)) {
-        return next();
-    }
+    next();
+};
 
-    // Staff and admin access everything
-    if (['staff', 'admin'].includes(req.userRole)) {
-        return next();
+// Add new middleware for VisionWest admin only
+exports.isVisionWestAdmin = (req, res, next) => {
+    if (req.userRole !== 'client_admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Require VisionWest Admin Role!'
+        });
     }
+    next();
+};
 
-    return res.status(403).json({
-        success: false,
-        message: "Insufficient permissions!"
-    });
+// Add middleware for any VisionWest user
+exports.isVisionWestUser = (req, res, next) => {
+    if (!['client', 'client_admin'].includes(req.userRole)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Require VisionWest User Access!'
+        });
+    }
+    next();
 };
 
 // Add this to auth.middleware.js

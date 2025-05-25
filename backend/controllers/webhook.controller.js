@@ -207,7 +207,7 @@ exports.addNoteToWorkOrder = async (req, res) => {
     }
 };
 
-// Helper function to create notifications for the new note
+// Update notifyUsersAboutNote function
 async function notifyUsersAboutNote(workOrderId, noteId, createdById) {
     try {
         const staffUsers = await User.findAll({
@@ -217,6 +217,15 @@ async function notifyUsersAboutNote(workOrderId, noteId, createdById) {
             }
         });
 
+        // Include VisionWest admin users
+        const visionwestUsers = await User.findAll({
+            where: {
+                role: ['client', 'client_admin'],
+                is_active: true
+            }
+        });
+
+        // Notify staff users
         for (const user of staffUsers) {
             await notificationController.createNotification(
                 user.id,
@@ -224,6 +233,17 @@ async function notifyUsersAboutNote(workOrderId, noteId, createdById) {
                 'note',
                 'New Note Added',
                 `A new note has been added to work order #${workOrderId} via webhook.`
+            );
+        }
+
+        // Notify VisionWest users
+        for (const user of visionwestUsers) {
+            await notificationController.createNotification(
+                user.id,
+                workOrderId,
+                'note',
+                'New Note Added',
+                `A new note has been added to work order #${workOrderId}.`
             );
         }
     } catch (error) {
