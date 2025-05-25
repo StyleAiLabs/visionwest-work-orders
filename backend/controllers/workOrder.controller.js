@@ -83,32 +83,41 @@ exports.getSummary = async (req, res) => {
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search } = req.query;
-        const whereClause = {};
-        const orderClause = [];
+        const { status, date, sort, search, page = 1, limit = 10 } = req.query;
+        const userId = req.userId;
+        const userRole = req.userRole;
 
-        // Apply status filter
-        if (status && ['pending', 'in-progress', 'completed'].includes(status)) {
+        let whereClause = {};
+        let includeClause = [];
+
+        // Apply role-based filtering
+        if (userRole === 'client') {
+            // Individual account managers only see their assigned work orders
+            const user = await User.findByPk(userId);
+            whereClause.account_manager_id = userId;
+        } else if (userRole === 'client_admin') {
+            // VisionWest admins see all VisionWest work orders
+            whereClause.property_name = 'VisionWest Community Trust';
+        }
+        // staff and admin roles see everything (no additional filtering)
+
+        // Apply other filters (status, date, search)
+        if (status && status !== 'all') {
             whereClause.status = status;
         }
 
-        // Apply date filter
-        // if (date === 'today') {
-        //     const today = new Date();
-        //     today.setHours(0, 0, 0, 0);
-        //     whereClause.date = {
-        //         [Op.gte]: today
-        //     };
-        // }
-
-        // Apply sort
-        if (sort === 'latest') {
-            orderClause.push(['createdAt', 'DESC']);
-        } else {
-            orderClause.push(['date', 'DESC']);
+        if (date === 'today') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            whereClause.date = {
+                [Op.gte]: today,
+                [Op.lt]: tomorrow
+            };
         }
 
-        // Apply search
         if (search) {
             whereClause[Op.or] = [
                 { job_no: { [Op.iLike]: `%${search}%` } },
@@ -117,39 +126,41 @@ exports.getAllWorkOrders = async (req, res) => {
             ];
         }
 
-        // Get work orders with pagination
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        // Rest of your existing getAllWorkOrders logic...
         const offset = (page - 1) * limit;
+        let orderClause = [['created_at', 'DESC']];
+
+        if (sort === 'latest') {
+            orderClause = [['created_at', 'DESC']];
+        }
 
         const workOrders = await WorkOrder.findAndCountAll({
             where: whereClause,
+            include: includeClause,
             order: orderClause,
-            limit,
-            offset,
-            attributes: ['id', 'job_no', 'date', 'status', 'property_name', 'description', 'authorized_by', 'createdAt']
+            limit: parseInt(limit),
+            offset: parseInt(offset)
         });
 
-        // Format the response data
-        const formattedWorkOrders = workOrders.rows.map(wo => {
-            return {
-                id: wo.id,
-                jobNo: wo.job_no,
-                date: formatDate(wo.date),
-                status: wo.status,
-                property: wo.property_name,
-                description: wo.description,
-                authorizedBy: wo.authorized_by
-            };
-        });
+        // Format and return response...
+        const formattedWorkOrders = workOrders.rows.map(workOrder => ({
+            id: workOrder.id,
+            jobNo: workOrder.job_no,
+            date: formatDate(workOrder.date),
+            status: workOrder.status,
+            supplierName: workOrder.supplier_name,
+            propertyName: workOrder.property_name,
+            description: workOrder.description,
+            poNumber: workOrder.po_number
+        }));
 
         return res.status(200).json({
             success: true,
             data: formattedWorkOrders,
             pagination: {
                 total: workOrders.count,
-                page,
-                limit,
+                page: parseInt(page),
+                limit: parseInt(limit),
                 pages: Math.ceil(workOrders.count / limit)
             }
         });
