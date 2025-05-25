@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const db = require('../models');
 const notificationController = require('./notification.controller');
 const WorkOrder = db.workOrder;
@@ -5,7 +6,6 @@ const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
 const Photo = db.photo;
 const User = db.user;
-const { Op } = db.Sequelize;
 const AWS = require('aws-sdk');
 
 // Configure AWS S3 client
@@ -19,9 +19,39 @@ const s3 = new AWS.S3({
 
 exports.getSummary = async (req, res) => {
     try {
-        console.log('Getting work order summary');
+        const userId = req.userId;
+        const userRole = req.userRole;
 
-        // Add try/catch blocks around each count operation
+        console.log('=== DASHBOARD SUMMARY DEBUG ===');
+        console.log('User ID:', userId);
+        console.log('User Role:', userRole);
+
+        // APPLY THE SAME ROLE-BASED FILTERING AS getAllWorkOrders
+        let whereClause = {};
+
+        if (userRole === 'client') {
+            // Get the current user's email for filtering
+            const user = await User.findByPk(userId);
+            console.log('Found user:', user ? user.email : 'NOT FOUND');
+
+            if (user) {
+                // Filter work orders where authorized_email matches user's email
+                whereClause.authorized_email = user.email;
+                console.log(`Filtering dashboard summary for authorized email: ${user.email}`);
+            } else {
+                console.log('User not found, returning empty summary');
+                whereClause.id = -1; // No work orders will match this
+            }
+        } else if (userRole === 'client_admin') {
+            // VisionWest housing admin sees all VisionWest work orders
+            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
+            console.log('VisionWest admin - filtering summary for @visionwest.org.nz emails');
+        }
+        // staff and admin roles see everything (no additional filtering)
+
+        console.log('Dashboard summary whereClause:', JSON.stringify(whereClause));
+
+        // Apply the whereClause to all count operations
         let pending = 0;
         let inProgress = 0;
         let completed = 0;
@@ -29,36 +59,46 @@ exports.getSummary = async (req, res) => {
         let total = 0;
 
         try {
-            pending = await WorkOrder.count({ where: { status: 'pending' } });
+            pending = await WorkOrder.count({
+                where: { ...whereClause, status: 'pending' }
+            });
         } catch (error) {
             console.error('Error counting pending work orders:', error);
         }
 
         try {
-            inProgress = await WorkOrder.count({ where: { status: 'in-progress' } });
+            inProgress = await WorkOrder.count({
+                where: { ...whereClause, status: 'in-progress' }
+            });
         } catch (error) {
             console.error('Error counting in-progress work orders:', error);
         }
 
         try {
-            completed = await WorkOrder.count({ where: { status: 'completed' } });
+            completed = await WorkOrder.count({
+                where: { ...whereClause, status: 'completed' }
+            });
         } catch (error) {
             console.error('Error counting completed work orders:', error);
         }
 
         try {
-            cancelled = await WorkOrder.count({ where: { status: 'cancelled' } });
+            cancelled = await WorkOrder.count({
+                where: { ...whereClause, status: 'cancelled' }
+            });
         } catch (error) {
             console.error('Error counting cancelled work orders:', error);
         }
 
         try {
-            total = await WorkOrder.count();
+            total = await WorkOrder.count({ where: whereClause });
         } catch (error) {
             console.error('Error counting total work orders:', error);
             // Calculate total from individual counts as fallback
             total = pending + inProgress + completed + cancelled;
         }
+
+        console.log('Dashboard summary counts:', { pending, inProgress, completed, cancelled, total });
 
         return res.status(200).json({
             success: true,
@@ -83,32 +123,52 @@ exports.getSummary = async (req, res) => {
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search } = req.query;
-        const whereClause = {};
-        const orderClause = [];
+        const { status, date, sort, search, page = 1, limit = 10 } = req.query;
+        const userId = req.userId;
+        const userRole = req.userRole;
 
-        // Apply status filter
-        if (status && ['pending', 'in-progress', 'completed'].includes(status)) {
+        console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}`);
+
+        let whereClause = {};
+        let includeClause = []; // Fix: this was missing
+
+        // Apply role-based filtering based on email matching
+        if (userRole === 'client') {
+            // Get the current user's email for filtering
+            const user = await User.findByPk(userId);
+            if (user) {
+                // Filter work orders where authorized_email matches user's email
+                whereClause.authorized_email = user.email;
+                console.log(`Filtering work orders for authorized email: ${user.email}`);
+            } else {
+                console.log('User not found, returning empty results');
+                whereClause.id = -1; // No work orders will match this
+            }
+        } else if (userRole === 'client_admin') {
+            // VisionWest housing admin sees all VisionWest work orders
+            // Optionally filter by VisionWest domain
+            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
+            console.log('VisionWest admin - showing all VisionWest work orders');
+        }
+        // staff and admin roles see everything (no additional filtering)
+
+        // Apply other filters (status, date, search)
+        if (status && status !== 'all') {
             whereClause.status = status;
         }
 
-        // Apply date filter
-        // if (date === 'today') {
-        //     const today = new Date();
-        //     today.setHours(0, 0, 0, 0);
-        //     whereClause.date = {
-        //         [Op.gte]: today
-        //     };
-        // }
+        if (date === 'today') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // Apply sort
-        if (sort === 'latest') {
-            orderClause.push(['createdAt', 'DESC']);
-        } else {
-            orderClause.push(['date', 'DESC']);
+            whereClause.date = {
+                [Op.gte]: today,
+                [Op.lt]: tomorrow
+            };
         }
 
-        // Apply search
         if (search) {
             whereClause[Op.or] = [
                 { job_no: { [Op.iLike]: `%${search}%` } },
@@ -117,47 +177,55 @@ exports.getAllWorkOrders = async (req, res) => {
             ];
         }
 
-        // Get work orders with pagination
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
+        let orderClause = [['createdAt', 'DESC']];
+
+        if (sort === 'latest') {
+            orderClause = [['createdAt', 'DESC']];
+        }
+
+        console.log('Where clause:', JSON.stringify(whereClause));
 
         const workOrders = await WorkOrder.findAndCountAll({
             where: whereClause,
+            include: includeClause,
             order: orderClause,
-            limit,
-            offset,
-            attributes: ['id', 'job_no', 'date', 'status', 'property_name', 'description', 'authorized_by', 'createdAt']
+            limit: parseInt(limit),
+            offset: parseInt(offset)
         });
 
-        // Format the response data
-        const formattedWorkOrders = workOrders.rows.map(wo => {
-            return {
-                id: wo.id,
-                jobNo: wo.job_no,
-                date: formatDate(wo.date),
-                status: wo.status,
-                property: wo.property_name,
-                description: wo.description,
-                authorizedBy: wo.authorized_by
-            };
-        });
+        console.log(`Found ${workOrders.count} work orders`);
+
+        // Format the response
+        const formattedWorkOrders = workOrders.rows.map(workOrder => ({
+            id: workOrder.id,
+            jobNo: workOrder.job_no,
+            date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
+            status: workOrder.status,
+            supplierName: workOrder.supplier_name,
+            propertyName: workOrder.property_name,
+            description: workOrder.description,
+            poNumber: workOrder.po_number
+        }));
 
         return res.status(200).json({
             success: true,
             data: formattedWorkOrders,
             pagination: {
                 total: workOrders.count,
-                page,
-                limit,
+                page: parseInt(page),
+                limit: parseInt(limit),
                 pages: Math.ceil(workOrders.count / limit)
             }
         });
+
     } catch (error) {
         console.error('Error fetching work orders:', error);
+        console.error('Error stack:', error.stack);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while fetching work orders.'
+            message: 'An error occurred while fetching work orders.',
+            error: error.message
         });
     }
 };

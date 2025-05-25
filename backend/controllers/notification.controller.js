@@ -279,13 +279,13 @@ exports.notifyStatusChange = async (workOrderId, oldStatus, newStatus, updatedBy
     }
 };
 
-// Helper function to get relevant users based on the status change
+// Update the getRelevantUsers function
 async function getRelevantUsers(newStatus, updatedById) {
     try {
         const updatedBy = await User.findByPk(updatedById);
-        const isClientUpdate = updatedBy && updatedBy.role === 'client';
+        const isClientUpdate = updatedBy && ['client', 'client_admin'].includes(updatedBy.role);
 
-        // If a client requested cancellation, notify all staff and admin users
+        // If a VisionWest user requested cancellation, notify all staff and admin users
         if (isClientUpdate && newStatus === 'cancelled') {
             return await User.findAll({
                 where: {
@@ -295,10 +295,10 @@ async function getRelevantUsers(newStatus, updatedById) {
             });
         }
 
-        // For staff updates, notify client users
+        // For staff updates, notify VisionWest users (both client and client_admin)
         return await User.findAll({
             where: {
-                role: 'client',
+                role: ['client', 'client_admin'],
                 is_active: true
             }
         });

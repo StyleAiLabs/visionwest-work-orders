@@ -1,17 +1,17 @@
-module.exports = (sequelize, Sequelize) => {
-    const User = sequelize.define('users', {
+module.exports = (sequelize, DataTypes) => {
+    const User = sequelize.define("user", {
         id: {
-            type: Sequelize.INTEGER,
+            type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
         username: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
             unique: true
         },
         email: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
             unique: true,
             validate: {
@@ -19,29 +19,43 @@ module.exports = (sequelize, Sequelize) => {
             }
         },
         password: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false
         },
         role: {
-            type: Sequelize.STRING,
+            type: DataTypes.ENUM('client', 'client_admin', 'staff', 'admin'),
             allowNull: false,
-            defaultValue: 'staff',
-            validate: {
-                isIn: [['client', 'admin', 'staff']]
-            }
+            defaultValue: 'client'
         },
         full_name: {
-            type: Sequelize.STRING,
-            allowNull: true
+            type: DataTypes.STRING,
+            allowNull: false
         },
         phone_number: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: true
         },
+        organization: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: 'VisionWest Community Trust'
+        },
         is_active: {
-            type: Sequelize.BOOLEAN,
+            type: DataTypes.BOOLEAN,
             defaultValue: true
+        },
+        // Add field to track which account manager this user belongs to
+        account_manager_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'users',
+                key: 'id'
+            }
         }
+    }, {
+        timestamps: true,
+
     });
 
     return User;

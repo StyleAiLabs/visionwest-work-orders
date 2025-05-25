@@ -11,6 +11,7 @@ import StatusUpdatePage from './pages/StatusUpdatePage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './hooks/useAuth';
+import InstallPrompt from './components/common/InstallPrompt';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -34,6 +35,7 @@ const App = () => {
     <AuthProvider>
       <AlertProvider>
         <Router>
+          <InstallPrompt />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 

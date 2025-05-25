@@ -144,8 +144,9 @@ exports.updateNote = async (req, res) => {
             });
         }
 
-        // Check if user has permission (only note creator or admin can update)
-        if (note.created_by !== req.userId && req.userRole !== 'admin') {
+        // Check if user has permission (only note creator, VisionWest admin, or system admin can update)
+        if (note.created_by !== req.userId &&
+            !['admin', 'client_admin'].includes(req.userRole)) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to update this note'

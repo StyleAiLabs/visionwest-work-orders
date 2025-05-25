@@ -5,6 +5,7 @@ const WorkOrder = db.workOrder;
 const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
 const Notification = db.notification;
+const seedVisionWestUsers = require('./visionwest-users-seeder');
 
 const seedDatabase = async () => {
     try {
@@ -219,6 +220,8 @@ const seedDatabase = async () => {
         } else {
             console.log('Database already has users, skipping seeding');
         }
+
+        await seedVisionWestUsers();
 
         console.log('Database seeding completed successfully!');
     } catch (error) {

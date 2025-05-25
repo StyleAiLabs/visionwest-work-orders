@@ -103,64 +103,49 @@ exports.isClient = (req, res, next) => {
 
 // Check if user has any valid role (client, staff, or admin)
 exports.isAnyValidRole = (req, res, next) => {
-    // Debugging logs
-    console.log('AUTH DEBUG - Request details:');
-    console.log('- User role:', req.userRole);
-    console.log('- Method:', req.method);
-    console.log('- URL:', req.originalUrl);
-    console.log('- Body:', JSON.stringify(req.body));
+    const validRoles = ['client', 'client_admin', 'staff', 'admin'];
 
-    if (!req.userRole) {
+    if (!validRoles.includes(req.userRole)) {
         return res.status(403).json({
             success: false,
-            message: "No role assigned!"
+            message: 'Invalid user role!'
         });
     }
 
-    // Get the request method and route
-    const { method, originalUrl } = req;
+    next();
+};
 
-    // Special case: Allow clients to make status update requests for cancellations
-    if (req.userRole === 'client' &&
-        method === 'PATCH' &&
-        originalUrl.match(/\/api\/work-orders\/\d+\/status/)) {
-
-        console.log('AUTH DEBUG - Client trying to update status, checking if cancellation');
-
-        // Check if the request body contains status='cancelled'
-        if (req.body && req.body.status === 'cancelled') {
-            console.log('AUTH DEBUG - Client cancellation request approved');
-            return next(); // Allow client to proceed with cancellation request
-        } else {
-            console.log('AUTH DEBUG - Client attempted non-cancellation status update:', req.body.status);
-        }
+// Add new middleware for VisionWest admin only
+exports.isVisionWestAdmin = (req, res, next) => {
+    if (req.userRole !== 'client_admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Require VisionWest Admin Role!'
+        });
     }
+    next();
+};
 
-    if (req.userRole === 'client' &&
-        (method === 'POST' || method === 'GET') &&
-        originalUrl.match(/\/api\/work-orders\/\d+\/notes/)) {
-
-        console.log('AUTH DEBUG - Client trying to update Notes');
-        return next(); // Allow client to proceed with adding notes
+// Add middleware for any VisionWest user
+exports.isVisionWestUser = (req, res, next) => {
+    if (!['client', 'client_admin'].includes(req.userRole)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Require VisionWest User Access!'
+        });
     }
+    next();
+};
 
-    // Regular role-based checks for other operations
-    if (['admin', 'staff'].includes(req.userRole)) {
-        // Staff and admin can access everything
-        return next();
-    } else if (req.userRole === 'client') {
-        // Clients can only access GET endpoints and specific allowed endpoints
-        if (method === 'GET' ||
-            (method === 'PATCH' && originalUrl.includes('/api/alerts/'))) {
-            return next();
-        }
+// Add this to auth.middleware.js
+exports.isClientAdmin = (req, res, next) => {
+    if (req.userRole !== 'client_admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Require VisionWest Admin Role!'
+        });
     }
-
-    // If we get here, the user doesn't have permission
-    return res.status(403).json({
-        success: false,
-        message: "Require Williams Property Staff or Admin Role!"
-    });
+    next();
 };
 
 // Add this new specialized middleware
