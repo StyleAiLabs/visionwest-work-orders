@@ -86,14 +86,6 @@ module.exports = (sequelize, DataTypes) => {
                 key: 'id'
             }
         },
-        account_manager_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'users',
-                key: 'id'
-            }
-        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
