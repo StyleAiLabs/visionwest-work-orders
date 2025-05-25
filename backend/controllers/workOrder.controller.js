@@ -19,9 +19,39 @@ const s3 = new AWS.S3({
 
 exports.getSummary = async (req, res) => {
     try {
-        console.log('Getting work order summary');
+        const userId = req.userId;
+        const userRole = req.userRole;
 
-        // Add try/catch blocks around each count operation
+        console.log('=== DASHBOARD SUMMARY DEBUG ===');
+        console.log('User ID:', userId);
+        console.log('User Role:', userRole);
+
+        // APPLY THE SAME ROLE-BASED FILTERING AS getAllWorkOrders
+        let whereClause = {};
+
+        if (userRole === 'client') {
+            // Get the current user's email for filtering
+            const user = await User.findByPk(userId);
+            console.log('Found user:', user ? user.email : 'NOT FOUND');
+
+            if (user) {
+                // Filter work orders where authorized_email matches user's email
+                whereClause.authorized_email = user.email;
+                console.log(`Filtering dashboard summary for authorized email: ${user.email}`);
+            } else {
+                console.log('User not found, returning empty summary');
+                whereClause.id = -1; // No work orders will match this
+            }
+        } else if (userRole === 'client_admin') {
+            // VisionWest housing admin sees all VisionWest work orders
+            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
+            console.log('VisionWest admin - filtering summary for @visionwest.org.nz emails');
+        }
+        // staff and admin roles see everything (no additional filtering)
+
+        console.log('Dashboard summary whereClause:', JSON.stringify(whereClause));
+
+        // Apply the whereClause to all count operations
         let pending = 0;
         let inProgress = 0;
         let completed = 0;
@@ -29,36 +59,46 @@ exports.getSummary = async (req, res) => {
         let total = 0;
 
         try {
-            pending = await WorkOrder.count({ where: { status: 'pending' } });
+            pending = await WorkOrder.count({
+                where: { ...whereClause, status: 'pending' }
+            });
         } catch (error) {
             console.error('Error counting pending work orders:', error);
         }
 
         try {
-            inProgress = await WorkOrder.count({ where: { status: 'in-progress' } });
+            inProgress = await WorkOrder.count({
+                where: { ...whereClause, status: 'in-progress' }
+            });
         } catch (error) {
             console.error('Error counting in-progress work orders:', error);
         }
 
         try {
-            completed = await WorkOrder.count({ where: { status: 'completed' } });
+            completed = await WorkOrder.count({
+                where: { ...whereClause, status: 'completed' }
+            });
         } catch (error) {
             console.error('Error counting completed work orders:', error);
         }
 
         try {
-            cancelled = await WorkOrder.count({ where: { status: 'cancelled' } });
+            cancelled = await WorkOrder.count({
+                where: { ...whereClause, status: 'cancelled' }
+            });
         } catch (error) {
             console.error('Error counting cancelled work orders:', error);
         }
 
         try {
-            total = await WorkOrder.count();
+            total = await WorkOrder.count({ where: whereClause });
         } catch (error) {
             console.error('Error counting total work orders:', error);
             // Calculate total from individual counts as fallback
             total = pending + inProgress + completed + cancelled;
         }
+
+        console.log('Dashboard summary counts:', { pending, inProgress, completed, cancelled, total });
 
         return res.status(200).json({
             success: true,
