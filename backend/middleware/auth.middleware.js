@@ -103,19 +103,8 @@ exports.isClient = (req, res, next) => {
 
 // Check if user has any valid role (client, staff, or admin)
 exports.isAnyValidRole = (req, res, next) => {
-    console.log('AUTH DEBUG - Request details:');
-    console.log('- User role:', req.userRole);
-    console.log('- Method:', req.method);
-    console.log('- URL:', req.originalUrl);
-
-    if (!req.userRole) {
-        return res.status(401).json({
-            success: false,
-            message: 'User role not found. Please login again.'
-        });
-    }
-
     const validRoles = ['client', 'client_admin', 'staff', 'admin'];
+
     if (!validRoles.includes(req.userRole)) {
         return res.status(403).json({
             success: false,
@@ -123,27 +112,14 @@ exports.isAnyValidRole = (req, res, next) => {
         });
     }
 
-    // Handle role-specific access
-    const { method, originalUrl } = req;
-
-    // Allow notes creation for all VisionWest users (client and client_admin)
-    if (method === 'POST' && originalUrl.match(/\/api\/work-orders\/\d+\/notes/)) {
-        if (['client', 'client_admin'].includes(req.userRole)) {
-            console.log('AUTH DEBUG - VisionWest user adding note');
-            return next();
-        }
+    // Allow VisionWest users (both client and client_admin) to access notes
+    if (['client', 'client_admin'].includes(req.userRole)) {
+        return next();
     }
 
-    // Staff and admin can access everything
-    if (['admin', 'staff'].includes(req.userRole)) {
+    // Staff and admin access everything
+    if (['staff', 'admin'].includes(req.userRole)) {
         return next();
-    } 
-    // VisionWest users (client and client_admin) have read access and specific write permissions
-    else if (['client', 'client_admin'].includes(req.userRole)) {
-        if (method === 'GET' || 
-            (method === 'PATCH' && originalUrl.includes('/api/alerts/'))) {
-            return next();
-        }
     }
 
     return res.status(403).json({
@@ -152,7 +128,7 @@ exports.isAnyValidRole = (req, res, next) => {
     });
 };
 
-// Add this new middleware function
+// Add this to auth.middleware.js
 exports.isClientAdmin = (req, res, next) => {
     if (req.userRole !== 'client_admin') {
         return res.status(403).json({

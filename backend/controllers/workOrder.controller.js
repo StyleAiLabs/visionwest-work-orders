@@ -87,22 +87,28 @@ exports.getAllWorkOrders = async (req, res) => {
         const userId = req.userId;
         const userRole = req.userRole;
 
-        console.log('GET WORK ORDERS DEBUG:');
-        console.log('- User ID:', userId);
-        console.log('- User Role:', userRole);
-        console.log('- Query params:', req.query);
+        console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}`);
 
         let whereClause = {};
-        let includeClause = [];
+        let includeClause = []; // Fix: this was missing
 
-        // Apply role-based filtering
+        // Apply role-based filtering based on email matching
         if (userRole === 'client') {
-            // For now, VisionWest clients can see all work orders
-            // Later we can implement more specific filtering
-            console.log('- VisionWest client access - showing all work orders');
+            // Get the current user's email for filtering
+            const user = await User.findByPk(userId);
+            if (user) {
+                // Filter work orders where authorized_email matches user's email
+                whereClause.authorized_email = user.email;
+                console.log(`Filtering work orders for authorized email: ${user.email}`);
+            } else {
+                console.log('User not found, returning empty results');
+                whereClause.id = -1; // No work orders will match this
+            }
         } else if (userRole === 'client_admin') {
-            // VisionWest admins see all work orders
-            console.log('- VisionWest admin access - showing all work orders');
+            // VisionWest housing admin sees all VisionWest work orders
+            // Optionally filter by VisionWest domain
+            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
+            console.log('VisionWest admin - showing all VisionWest work orders');
         }
         // staff and admin roles see everything (no additional filtering)
 
@@ -132,14 +138,13 @@ exports.getAllWorkOrders = async (req, res) => {
         }
 
         const offset = (page - 1) * limit;
-        let orderClause = [['createdAt', 'DESC']]; // Use default Sequelize timestamp
+        let orderClause = [['createdAt', 'DESC']];
 
         if (sort === 'latest') {
             orderClause = [['createdAt', 'DESC']];
         }
 
-        console.log('- Where clause:', JSON.stringify(whereClause));
-        console.log('- Order clause:', orderClause);
+        console.log('Where clause:', JSON.stringify(whereClause));
 
         const workOrders = await WorkOrder.findAndCountAll({
             where: whereClause,
@@ -149,7 +154,7 @@ exports.getAllWorkOrders = async (req, res) => {
             offset: parseInt(offset)
         });
 
-        console.log('- Found work orders:', workOrders.count);
+        console.log(`Found ${workOrders.count} work orders`);
 
         // Format the response
         const formattedWorkOrders = workOrders.rows.map(workOrder => ({
