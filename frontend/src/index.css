@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VisionWest Theme Variables */
+:root {
+    /* VisionWest Color Palette */
+    --vw-green: #99ca3f;
+    --vw-green-dark: #7fb834;
+    --vw-green-light: #b3d669;
+    --vw-gray-50: #f8fafc;
+    --vw-gray-100: #f1f5f9;
+    --vw-gray-200: #e2e8f0;
+    --vw-gray-300: #cbd5e1;
+    --vw-gray-400: #94a3b8;
+    --vw-gray-500: #64748b;
+    --vw-gray-600: #475569;
+    --vw-gray-700: #334155;
+    --vw-gray-800: #1e293b;
+    --vw-gray-900: #0f172a;
+
+    /* PWA Theme Colors */
+    --pwa-theme-color: var(--vw-green);
+    --pwa-background-color: var(--vw-gray-50);
+    --pwa-splash-background: linear-gradient(135deg, var(--vw-green) 0%, var(--vw-green-dark) 100%);
+}
+
 /* Custom Loading Spinner */
 @layer components {
     .vw-spinner {
@@ -37,6 +60,10 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+
+    /* Background and text color */
+    background-color: var(--vw-gray-50);
+    color: var(--vw-gray-900);
 }
 
 /* Root container fixes for Android */
@@ -323,4 +350,9 @@ body {
         min-height: 48px !important;
         min-width: 48px !important;
     }
+}
+
+/* Ensure splash screen matches theme */
+.splash-screen {
+    background: var(--pwa-splash-background) !important;
 }

@@ -4,25 +4,47 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120x120.png" />
+  <link rel="apple-touch-icon" sizes="114x114" href="/icons/icon-114x114.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-76x76.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png" />
+  <link rel="apple-touch-icon" sizes="60x60" href="/icons/icon-60x60.png" />
+  <link rel="apple-touch-icon" sizes="57x57" href="/icons/icon-57x57.png" />
 
   <!-- CRITICAL: Android PWA viewport -->
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no" />
 
-  <!-- Android PWA Meta Tags -->
+  <!-- VisionWest Theme Colors for PWA Splash Screen -->
   <meta name="theme-color" content="#99ca3f" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#99ca3f" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#7fb834" />
+
+  <!-- Android PWA Meta Tags -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-title" content="Work Orders" />
 
-  <!-- Force Android Chrome to use app mode -->
+  <!-- Force Android Chrome to use app mode with VisionWest colors -->
   <meta name="application-name" content="Work Orders" />
   <meta name="msapplication-TileColor" content="#99ca3f" />
+  <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+  <meta name="msapplication-navbutton-color" content="#99ca3f" />
 
-  <!-- Apple Meta Tags (for iOS) -->
+  <!-- Apple Meta Tags with VisionWest theme -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Work Orders" />
+
+  <!-- Apple splash screen colors -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <!-- Prevent automatic detection and formatting -->
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
@@ -35,7 +57,7 @@
   <title>VisionWest Work Orders</title>
 
   <style>
-    /* Inline critical CSS for Android PWA */
+    /* Inline critical CSS for Android PWA with VisionWest theme */
     html,
     body {
       width: 100vw !important;
@@ -43,22 +65,114 @@
       overflow-x: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
+      /* VisionWest background color for splash */
+      background-color: #f8fafc !important;
     }
 
     #root {
       width: 100vw !important;
       max-width: 100vw !important;
       overflow-x: hidden !important;
+      /* VisionWest background */
+      background-color: #f8fafc !important;
+    }
+
+    /* Custom splash screen for better control */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #99ca3f 0%, #7fb834 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+    }
+
+    .splash-logo {
+      width: 120px;
+      height: 120px;
+      background: white;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #99ca3f;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .splash-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .splash-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .splash-loading {
+      margin-top: 40px;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Hide splash screen when app loads */
+    .splash-hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
     }
   </style>
 </head>
 
 <body>
+  <!-- Custom Splash Screen -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-logo">VW</div>
+    <div class="splash-title">VisionWest</div>
+    <div class="splash-subtitle">Work Orders</div>
+    <div class="splash-loading"></div>
+  </div>
+
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 
   <script>
-    // Enhanced Android PWA viewport and scaling fix
+    // Hide splash screen when app loads
+    window.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+          splash.classList.add('splash-hidden');
+          setTimeout(() => {
+            splash.remove();
+          }, 300);
+        }
+      }, 1500); // Show for 1.5 seconds
+    });
+
+    // Your existing Android PWA viewport and scaling fix
     (function () {
       const isAndroid = /Android/.test(navigator.userAgent);
       const isPWA = window.matchMedia('(display-mode: standalone)').matches;
