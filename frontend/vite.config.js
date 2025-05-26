@@ -15,45 +15,19 @@ export default defineConfig({
         description: 'VisionWest Work Orders Management System',
         theme_color: '#99ca3f',
         background_color: '#ffffff',
-        display: 'standalone', // Key for Android
-        orientation: 'portrait-primary', // Lock orientation
-        start_url: '/',
+        display: 'standalone',
+        display_override: ['window-controls-overlay', 'standalone'], // Android preference
+        orientation: 'portrait-primary',
+        start_url: '/?utm_source=pwa',
         scope: '/',
         categories: ['productivity', 'business'],
+        // Critical: Android viewport settings
+        prefer_related_applications: false,
+        edge_side_panel: {},
         icons: [
-          {
-            src: '/icons/icon-72x72.png',
-            sizes: '72x72',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-96x96.png',
-            sizes: '96x96',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-128x128.png',
-            sizes: '128x128',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-144x144.png',
-            sizes: '144x144',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-152x152.png',
-            sizes: '152x152',
-            type: 'image/png',
-          },
           {
             src: '/icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-384x384.png',
-            sizes: '384x384',
             type: 'image/png',
           },
           {
@@ -90,5 +64,13 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-  }
+    host: true, // Important for testing on Android devices
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined, // Better for PWA caching
+      },
+    },
+  },
 })
