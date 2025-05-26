@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AlertProvider } from './context/AlertContext';
@@ -31,83 +31,113 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
+  useEffect(() => {
+    // Android PWA fixes
+    const handleResize = () => {
+      // Fix for Android keyboard resize issues
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Set initial viewport height
+    handleResize();
+
+    // Listen for resize events (keyboard open/close on Android)
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Prevent zoom on double tap for Android
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <AlertProvider>
         <Router>
           <InstallPrompt />
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
+          <div className="app-container">
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/work-orders"
-              element={
-                <ProtectedRoute>
-                  <WorkOrdersPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/work-orders"
+                element={
+                  <ProtectedRoute>
+                    <WorkOrdersPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/work-orders/:id"
-              element={
-                <ProtectedRoute>
-                  <WorkOrderDetailPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/work-orders/:id"
+                element={
+                  <ProtectedRoute>
+                    <WorkOrderDetailPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/work-orders/:id/photos/add"
-              element={
-                <ProtectedRoute>
-                  <PhotoUploadPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/work-orders/:id/photos/add"
+                element={
+                  <ProtectedRoute>
+                    <PhotoUploadPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/alerts"
-              element={
-                <ProtectedRoute>
-                  <AlertsPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <AlertsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/work-orders/:id/update-status"
-              element={
-                <ProtectedRoute>
-                  <StatusUpdatePage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/work-orders/:id/update-status"
+                element={
+                  <ProtectedRoute>
+                    <StatusUpdatePage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Redirect to dashboard by default */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-            {/* Catch-all route for 404 */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </div>
         </Router>
       </AlertProvider>
     </AuthProvider>

@@ -8,3 +8,78 @@
         @apply animate-spin rounded-full border-t-2 border-b-2 border-vw-green;
     }
 }
+
+/* Add to your index.css or main CSS file */
+
+/* Android PWA fixes */
+@media screen and (display-mode: standalone) {
+
+    /* Hide address bar remnants on Android */
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* Prevent zoom on input focus (Android Chrome issue) */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+    font-size: 16px !important;
+    /* Prevents zoom on Android */
+}
+
+/* Android PWA specific fixes */
+@supports (-webkit-touch-callout: none) {
+    /* iOS specific styles if needed */
+}
+
+/* Android Chrome PWA styles */
+@media screen and (display-mode: standalone) and (orientation: portrait) {
+    .min-h-screen {
+        min-height: 100vh;
+        min-height: calc(100vh - env(safe-area-inset-top));
+    }
+}
+
+/* Fix for Android status bar overlap */
+.app-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Ensure mobile navigation doesn't get cut off */
+.mobile-nav {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Add to your index.css */
+:root {
+    --vh: 1vh;
+}
+
+/* Use custom vh for full height on Android */
+.min-h-screen {
+    min-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Android PWA safe area handling */
+.safe-area-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent text scaling on Android */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
