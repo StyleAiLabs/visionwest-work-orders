@@ -127,17 +127,66 @@ body {
     }
 }
 
-/* Emergency Android fix - add to index.css */
+/* Dynamic Android PWA scaling based on screen size */
 @media screen and (max-width: 768px) {
     html {
-        zoom: 0.8 !important;
-        /* Force smaller scale on Android */
-        -webkit-zoom: 0.8 !important;
+        /* Remove fixed zoom - we'll use JavaScript for dynamic scaling */
+        zoom: 1 !important;
+        -webkit-zoom: 1 !important;
+        transform: scale(1);
+        transform-origin: 0 0;
     }
 
     body {
-        zoom: 0.8 !important;
-        -webkit-zoom: 0.8 !important;
+        zoom: 1 !important;
+        -webkit-zoom: 1 !important;
+        transform: scale(1);
+        transform-origin: 0 0;
+    }
+}
+
+/* Android PWA dynamic viewport classes */
+.android-scaled {
+    transform-origin: 0 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+}
+
+/* Ensure content fits within scaled viewport */
+.android-content {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Android-specific container adjustments */
+@media screen and (max-width: 768px) {
+
+    .container,
+    .max-w-7xl,
+    .max-w-6xl,
+    .max-w-5xl,
+    .max-w-4xl {
+        max-width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* Ensure all content respects viewport */
+    .p-4,
+    .px-4,
+    .py-4 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .p-6,
+    .px-6,
+    .py-6 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 }
 
@@ -216,5 +265,62 @@ body {
     .mobile-nav {
         display: none;
         /* Hide nav when keyboard is open */
+    }
+}
+
+/* Add these responsive utilities after your existing CSS */
+
+/* Android PWA responsive breakpoints */
+@media screen and (max-width: 360px) {
+
+    /* Small Android phones */
+    .android-scaled {
+        font-size: 14px;
+    }
+
+    .p-4 {
+        padding: 0.5rem !important;
+    }
+
+    .text-lg {
+        font-size: 1rem !important;
+    }
+
+    .text-xl {
+        font-size: 1.125rem !important;
+    }
+}
+
+@media screen and (min-width: 361px) and (max-width: 412px) {
+
+    /* Medium Android phones */
+    .android-scaled {
+        font-size: 15px;
+    }
+}
+
+@media screen and (min-width: 413px) and (max-width: 768px) {
+
+    /* Large Android phones and small tablets */
+    .android-scaled {
+        font-size: 16px;
+    }
+}
+
+/* Ensure buttons and touch targets are appropriately sized on Android */
+@media screen and (max-width: 768px) {
+
+    button,
+    .btn,
+    input[type="submit"] {
+        min-height: 44px !important;
+        /* Apple's recommended touch target size */
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Ensure navigation items are touch-friendly */
+    .mobile-nav button {
+        min-height: 48px !important;
+        min-width: 48px !important;
     }
 }

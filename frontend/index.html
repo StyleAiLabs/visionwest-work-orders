@@ -58,22 +58,102 @@
   <script type="module" src="/src/main.jsx"></script>
 
   <script>
-    // Critical: Android viewport fix
+    // Enhanced Android PWA viewport and scaling fix
     (function () {
-      function setViewportHeight() {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', vh + 'px');
+      const isAndroid = /Android/.test(navigator.userAgent);
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
 
-        // Force proper scaling on Android
-        if (/Android/.test(navigator.userAgent)) {
-          document.documentElement.style.zoom = 1;
-          document.body.style.zoom = 1;
+      function calculateOptimalScale() {
+        if (!isAndroid || !isPWA) return 1;
+
+        const screenWidth = screen.width;
+        const viewportWidth = window.innerWidth;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+
+        console.log('Android PWA Debug:', {
+          screenWidth,
+          viewportWidth,
+          devicePixelRatio,
+          userAgent: navigator.userAgent
+        });
+
+        // Calculate optimal scale based on screen characteristics
+        let scale = 1;
+
+        // Handle different Android screen densities
+        if (devicePixelRatio >= 3) {
+          // High DPI devices (like Samsung, Pixel)
+          scale = 0.85;
+        } else if (devicePixelRatio >= 2) {
+          // Medium DPI devices
+          scale = 0.9;
+        } else {
+          // Lower DPI devices
+          scale = 0.95;
         }
+
+        // Adjust based on screen width
+        if (screenWidth <= 360) {
+          scale = Math.max(scale - 0.1, 0.75); // Smaller screens need more scaling
+        } else if (screenWidth >= 412) {
+          scale = Math.min(scale + 0.05, 1); // Larger screens need less scaling
+        }
+
+        return scale;
       }
 
-      setViewportHeight();
-      window.addEventListener('resize', setViewportHeight);
-      window.addEventListener('orientationchange', setViewportHeight);
+      function applyAndroidPWAFix() {
+        if (!isAndroid) return;
+
+        const scale = calculateOptimalScale();
+        const html = document.documentElement;
+        const body = document.body;
+        const root = document.getElementById('root');
+
+        console.log('Applying Android PWA scale:', scale);
+
+        // Apply scaling
+        if (isPWA && scale !== 1) {
+          html.style.transform = `scale(${scale})`;
+          html.style.transformOrigin = '0 0';
+          html.style.width = `${100 / scale}vw`;
+          html.style.height = `${100 / scale}vh`;
+
+          body.style.transform = `scale(${scale})`;
+          body.style.transformOrigin = '0 0';
+          body.style.width = `${100 / scale}vw`;
+          body.style.height = `${100 / scale}vh`;
+
+          // Add classes for CSS targeting
+          html.classList.add('android-scaled');
+          body.classList.add('android-scaled');
+          if (root) root.classList.add('android-content');
+        }
+
+        // Set viewport height variable
+        const vh = window.innerHeight * 0.01;
+        html.style.setProperty('--vh', vh + 'px');
+
+        // Force proper viewport width
+        html.style.setProperty('--vw', window.innerWidth + 'px');
+      }
+
+      // Apply fixes immediately
+      applyAndroidPWAFix();
+
+      // Reapply on orientation change and resize
+      let resizeTimeout;
+      function handleResize() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          applyAndroidPWAFix();
+        }, 100);
+      }
+
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(applyAndroidPWAFix, 300); // Delay for orientation change
+      });
 
       // Prevent double-tap zoom on Android
       let lastTouchEnd = 0;
@@ -84,6 +164,19 @@
         }
         lastTouchEnd = now;
       }, false);
+
+      // Debug info (remove in production)
+      if (isAndroid && isPWA) {
+        console.log('Android PWA detected - applying optimizations');
+        setTimeout(() => {
+          console.log('Final viewport:', {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scale: calculateOptimalScale(),
+            devicePixelRatio: window.devicePixelRatio
+          });
+        }, 1000);
+      }
     })();
   </script>
 </body>
