@@ -3,7 +3,7 @@ const db = require('../models');
 const User = db.user;
 
 // Verify JWT token
-exports.verifyToken = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
     try {
         // Get token from header
         const authHeader = req.headers.authorization;
@@ -68,23 +68,23 @@ exports.verifyToken = async (req, res, next) => {
     }
 };
 
-// Check if user has admin role
-exports.isAdmin = (req, res, next) => {
-    if (req.userRole !== 'admin') {
+// Check if user has staff role or higher (admin)
+const isStaff = (req, res, next) => {
+    if (req.userRole !== 'staff' && req.userRole !== 'admin') {
         return res.status(403).json({
             success: false,
-            message: 'Require Admin Role!'
+            message: 'Require Williams Property Staff or Admin Role!'
         });
     }
     next();
 };
 
-// Check if user has staff role or higher (admin)
-exports.isStaffOrAdmin = (req, res, next) => {
-    if (req.userRole !== 'staff' && req.userRole !== 'admin') {
+// Check if user has admin role
+const isAdmin = (req, res, next) => {
+    if (req.userRole !== 'admin') {
         return res.status(403).json({
             success: false,
-            message: 'Require Williams Property Staff or Admin Role!'
+            message: 'Require Admin Role!'
         });
     }
     next();
@@ -177,4 +177,11 @@ exports.handleWorkOrderStatusUpdate = (req, res, next) => {
         success: false,
         message: 'Unauthorized to update work order status.'
     });
+};
+
+// Make sure exports are correct
+module.exports = {
+    verifyToken,
+    isStaff,
+    isAdmin
 };
