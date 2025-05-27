@@ -52,13 +52,42 @@ app.use('/api/notes', require('./routes/notes.routes'));
 app.use('/api/alerts', require('./routes/notification.routes'));
 app.use('/api/photos', require('./routes/photo.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
-app.use('/api/sms', require('./routes/sms.routes')); // Add this line with your other route imports in server.js
 
 // Import routes
 const notesRoutes = require('./routes/notes.routes');
 
 // Use routes
 app.use('/api', notesRoutes);  // This will make the routes available at /api/work-orders/:workOrderId/notes
+
+// Test SMS webhook endpoint
+app.post('/api/webhook/test-sms', async (req, res) => {
+    try {
+        const { phoneNumber, message } = req.body;
+
+        if (!phoneNumber || !message) {
+            return res.status(400).json({
+                success: false,
+                message: 'Phone number and message are required'
+            });
+        }
+
+        const smsService = require('./services/smsService');
+        const result = await smsService.sendSMS(phoneNumber, message);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+            message: result.success ? 'SMS webhook sent successfully' : 'SMS webhook failed'
+        });
+    } catch (error) {
+        console.error('Error testing SMS webhook:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error testing SMS webhook',
+            error: error.message
+        });
+    }
+});
 
 // Error handling middleware
 app.use(require('./middleware/error.middleware'));

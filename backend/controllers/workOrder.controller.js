@@ -583,12 +583,13 @@ exports.updateWorkOrderStatus = async (req, res) => {
 
         res.status(200).json(response);
 
-        // AFTER sending response, try to create notifications AND send SMS
+        // AFTER sending response, try to create notifications AND send SMS webhook
         try {
             // Create in-app notifications
             await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
 
-            // Send SMS notification
+            // Send SMS webhook
+            const smsService = require('../services/smsService');
             const smsResult = await smsService.sendWorkOrderStatusSMS(
                 workOrder,
                 previousStatus,
@@ -597,14 +598,14 @@ exports.updateWorkOrderStatus = async (req, res) => {
             );
 
             if (smsResult.success) {
-                console.log(`✅ SMS sent for work order ${workOrder.job_no} status change`);
+                console.log(`✅ SMS webhook sent for work order ${workOrder.job_no} status change`);
             } else {
-                console.log(`⚠️  SMS failed for work order ${workOrder.job_no}:`, smsResult.reason || smsResult.error);
+                console.log(`⚠️  SMS webhook failed for work order ${workOrder.job_no}:`, smsResult.reason || smsResult.error);
             }
 
         } catch (notificationError) {
             // Log the error but don't affect the main flow
-            console.error('Error creating notifications or sending SMS:', notificationError);
+            console.error('Error creating notifications or sending SMS webhook:', notificationError);
         }
     } catch (error) {
         console.error('Error updating work order status:', error);
