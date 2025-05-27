@@ -5,8 +5,8 @@
     "main": "server.js",
     "scripts": {
         "start": "npm run migrate && npm run setup && node server.js",
+        "migrate": "node scripts/add-user-columns.js",
         "setup": "node scripts/create-visionwest-users.js",
-        "test-sms": "node scripts/test-sms.js",
         "dev": "nodemon server.js",
         "test": "echo \"Error: no test specified\" && exit 1",
         "seed": "node utils/seeder.js"
