@@ -5,7 +5,7 @@
     "main": "server.js",
     "scripts": {
         "start": "npm run migrate && npm run setup && node server.js",
-        "migrate": "node scripts/add-user-columns.js && node scripts/create-sms-table.js",
+        "migrate": "node scripts/create-sms-table.js",
         "setup": "node scripts/create-visionwest-users.js",
         "test-sms": "node scripts/test-sms.js",
         "dev": "nodemon server.js",
