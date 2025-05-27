@@ -52,6 +52,7 @@ app.use('/api/notes', require('./routes/notes.routes'));
 app.use('/api/alerts', require('./routes/notification.routes'));
 app.use('/api/photos', require('./routes/photo.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
+app.use('/api/sms', require('./routes/sms.routes')); // Add this line with your other route imports in server.js
 
 // Import routes
 const notesRoutes = require('./routes/notes.routes');

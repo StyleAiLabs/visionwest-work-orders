@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const db = require('../models');
 const notificationController = require('./notification.controller');
+const smsService = require('../services/smsService');
 const WorkOrder = db.workOrder;
 const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
@@ -582,12 +583,28 @@ exports.updateWorkOrderStatus = async (req, res) => {
 
         res.status(200).json(response);
 
-        // AFTER sending response, try to create notifications
+        // AFTER sending response, try to create notifications AND send SMS
         try {
+            // Create in-app notifications
             await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
+
+            // Send SMS notification
+            const smsResult = await smsService.sendWorkOrderStatusSMS(
+                workOrder,
+                previousStatus,
+                status,
+                req.userRole
+            );
+
+            if (smsResult.success) {
+                console.log(`✅ SMS sent for work order ${workOrder.job_no} status change`);
+            } else {
+                console.log(`⚠️  SMS failed for work order ${workOrder.job_no}:`, smsResult.reason || smsResult.error);
+            }
+
         } catch (notificationError) {
             // Log the error but don't affect the main flow
-            console.error('Error creating status change notification:', notificationError);
+            console.error('Error creating notifications or sending SMS:', notificationError);
         }
     } catch (error) {
         console.error('Error updating work order status:', error);
