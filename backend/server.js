@@ -45,23 +45,12 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to VisionWest Work Order Management System API' });
 });
 
-// Routes
-app.use('/api/auth', require('./routes/auth.routes'));
-app.use('/api/work-orders', require('./routes/workOrder.routes'));
-app.use('/api/notes', require('./routes/notes.routes'));
-app.use('/api/alerts', require('./routes/notification.routes'));
-app.use('/api/photos', require('./routes/photo.routes'));
-app.use('/api/webhook', require('./routes/webhook.routes'));
-
-// Import routes
-const notesRoutes = require('./routes/notes.routes');
-
-// Use routes
-app.use('/api', notesRoutes);  // This will make the routes available at /api/work-orders/:workOrderId/notes
-
-// Test SMS webhook endpoint
+// Public webhook test endpoint (no authentication required)
 app.post('/api/webhook/test-sms', async (req, res) => {
     try {
+        console.log('📱 Webhook SMS test endpoint called');
+        console.log('Request body:', req.body);
+
         const { phoneNumber, message } = req.body;
 
         if (!phoneNumber || !message) {
@@ -88,6 +77,84 @@ app.post('/api/webhook/test-sms', async (req, res) => {
         });
     }
 });
+
+// Public SMS webhook test (for testing only)
+app.post('/api/public/test-sms', async (req, res) => {
+    try {
+        // Add basic security check (optional)
+        const testKey = req.headers['x-test-key'];
+        if (testKey !== 'visionwest-test-2024') {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid test key. Use header: x-test-key: visionwest-test-2024'
+            });
+        }
+
+        console.log('📱 Public SMS test endpoint called');
+        console.log('Request body:', req.body);
+
+        const { phoneNumber, message } = req.body;
+
+        if (!phoneNumber || !message) {
+            return res.status(400).json({
+                success: false,
+                message: 'Phone number and message are required'
+            });
+        }
+
+        const smsService = require('./services/smsService');
+        const result = await smsService.sendSMS(phoneNumber, message);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+            message: result.success ? 'SMS webhook sent successfully' : 'SMS webhook failed',
+            webhook_url: smsService.webhookUrl || 'https://autopilot-prod.thesafetycabinetwarehouse.com/webhook-test/17345d58-c722-451c-9917-d48b7cd04cbf'
+        });
+    } catch (error) {
+        console.error('Error testing SMS webhook:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error testing SMS webhook',
+            error: error.message
+        });
+    }
+});
+
+// Public endpoint info
+app.get('/api/public/sms-info', (req, res) => {
+    res.json({
+        success: true,
+        message: 'SMS webhook service info',
+        endpoints: {
+            test: '/api/public/test-sms',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-test-key': 'visionwest-test-2024'
+            },
+            body: {
+                phoneNumber: '+64211234567',
+                message: 'Your test message'
+            }
+        },
+        webhook_url: 'https://autopilot-prod.thesafetycabinetwarehouse.com/webhook-test/17345d58-c722-451c-9917-d48b7cd04cbf'
+    });
+});
+
+// Routes
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/work-orders', require('./routes/workOrder.routes'));
+app.use('/api/notes', require('./routes/notes.routes'));
+app.use('/api/alerts', require('./routes/notification.routes'));
+app.use('/api/photos', require('./routes/photo.routes'));
+app.use('/api/webhook', require('./routes/webhook.routes'));
+
+// Import routes
+const notesRoutes = require('./routes/notes.routes');
+
+// Use routes
+app.use('/api', notesRoutes);  // This will make the routes available at /api/work-orders/:workOrderId/notes
 
 // Error handling middleware
 app.use(require('./middleware/error.middleware'));
