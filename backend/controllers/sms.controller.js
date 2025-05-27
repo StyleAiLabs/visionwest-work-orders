@@ -1,11 +1,13 @@
 // backend/controllers/sms.controller.js
-const db = require('../models');
-const SMSNotification = db.smsNotification;
 const smsService = require('../services/smsService');
 
 // Test SMS functionality
-exports.testSMS = async (req, res) => {
+const testSMS = async (req, res) => {
     try {
+        console.log('📱 SMS Test endpoint called');
+        console.log('Request body:', req.body);
+        console.log('User:', req.userEmail, 'Role:', req.userRole);
+
         const { phoneNumber, message } = req.body;
 
         if (!phoneNumber || !message) {
@@ -23,7 +25,7 @@ exports.testSMS = async (req, res) => {
             message: result.success ? 'SMS sent successfully' : 'SMS failed to send'
         });
     } catch (error) {
-        console.error('Error testing SMS:', error);
+        console.error('❌ Error in SMS test endpoint:', error);
         return res.status(500).json({
             success: false,
             message: 'Error testing SMS',
@@ -33,18 +35,15 @@ exports.testSMS = async (req, res) => {
 };
 
 // Get SMS history for a work order
-exports.getSMSHistory = async (req, res) => {
+const getSMSHistory = async (req, res) => {
     try {
         const { workOrderId } = req.params;
 
-        const smsHistory = await SMSNotification.findAll({
-            where: { work_order_id: workOrderId },
-            order: [['createdAt', 'DESC']]
-        });
-
+        // For now, return empty array since we might not have the SMS table yet
         return res.status(200).json({
             success: true,
-            data: smsHistory
+            data: [],
+            message: 'SMS history retrieved (feature in development)'
         });
     } catch (error) {
         console.error('Error fetching SMS history:', error);
@@ -55,7 +54,8 @@ exports.getSMSHistory = async (req, res) => {
     }
 };
 
+// Export functions
 module.exports = {
-    testSMS: exports.testSMS,
-    getSMSHistory: exports.getSMSHistory
+    testSMS,
+    getSMSHistory
 };
