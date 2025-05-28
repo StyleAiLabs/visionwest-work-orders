@@ -4,7 +4,7 @@ const http = require('http'); // Add this for HTTP fallback
 
 class WebhookSMSService {
     constructor() {
-        this.webhookUrl = 'https://autopilot-prod.thesafetycabinetwarehouse.com/webhook-test/17345d58-c722-451c-9917-d48b7cd04cbf';
+        this.webhookUrl = 'https://autopilot-prod.thesafetycabinetwarehouse.com/webhook-test/ca02d55f-f9a1-40e9-8b5c-e75fdaf0bc13';
         this.enabled = process.env.SMS_ENABLED !== 'false'; // Default to enabled
 
         console.log('📱 Webhook SMS Service initialized');
