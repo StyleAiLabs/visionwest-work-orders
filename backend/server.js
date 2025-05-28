@@ -82,13 +82,13 @@ app.post('/api/webhook/test-sms', async (req, res) => {
 app.post('/api/public/test-sms', async (req, res) => {
     try {
         // Add basic security check (optional)
-        const testKey = req.headers['x-test-key'];
-        if (testKey !== 'visionwest-test-2024') {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid test key. Use header: x-test-key: visionwest-test-2024'
-            });
-        }
+        // const testKey = req.headers['x-test-key'];
+        // if (testKey !== 'visionwest-test-2024') {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: 'Invalid test key. Use header: x-test-key: visionwest-test-2024'
+        //     });
+        // }
 
         console.log('📱 Public SMS test endpoint called');
         console.log('Request body:', req.body);
@@ -134,7 +134,7 @@ app.get('/api/public/sms-info', (req, res) => {
                 'x-test-key': 'visionwest-test-2024'
             },
             body: {
-                phoneNumber: '+64211234567',
+                phoneNumber: '+64225710164',
                 message: 'Your test message'
             }
         },
