@@ -4,7 +4,7 @@ const http = require('http');
 
 class WebhookSMSService {
     constructor() {
-        this.webhookUrl = SMS_WEBHOOK_URL;
+        this.webhookUrl = process.env.SMS_WEBHOOK_URL;
         this.enabled = process.env.SMS_ENABLED !== 'false';
 
         console.log('📱 Webhook SMS Service initialized');
