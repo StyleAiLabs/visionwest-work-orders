@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const db = require('../models');
 const notificationController = require('./notification.controller');
+const smsService = require('../services/smsService');
 const WorkOrder = db.workOrder;
 const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
@@ -563,15 +564,19 @@ exports.updateWorkOrderStatus = async (req, res) => {
         await workOrder.update({ status });
 
         // Create status update record
-        await StatusUpdate.create({
-            work_order_id: id,
-            previous_status: previousStatus,
-            new_status: status,
-            notes: notes || null,
-            updated_by: req.userId
-        });
+        try {
+            await StatusUpdate.create({
+                work_order_id: id,
+                previous_status: previousStatus,
+                new_status: status,
+                notes: notes || null,
+                updated_by: req.userId
+            });
+        } catch (statusError) {
+            console.error('Error creating status update:', statusError);
+        }
 
-        // Send successful response first
+        // Send response first
         const response = {
             success: true,
             message: req.userRole === 'client' ?
@@ -582,15 +587,48 @@ exports.updateWorkOrderStatus = async (req, res) => {
 
         res.status(200).json(response);
 
-        // AFTER sending response, try to create notifications
-        try {
-            await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
-        } catch (notificationError) {
-            // Log the error but don't affect the main flow
-            console.error('Error creating status change notification:', notificationError);
-        }
+        // AFTER response, try SMS webhook (asynchronously)
+        setImmediate(async () => {
+            try {
+                console.log('🚀 Attempting SMS webhook for status change:', {
+                    jobNo: workOrder.job_no,
+                    oldStatus: previousStatus,
+                    newStatus: status
+                });
+
+                const smsResult = await smsService.sendWorkOrderStatusSMS(
+                    workOrder,
+                    previousStatus,
+                    status,
+                    req.userRole
+                );
+
+                if (smsResult.success) {
+                    console.log(`✅ SMS webhook sent for work order ${workOrder.job_no}`);
+                } else {
+                    console.log(`⚠️ SMS webhook failed for work order ${workOrder.job_no}:`, smsResult.reason || smsResult.error);
+                }
+
+            } catch (smsError) {
+                console.error('❌ Error in SMS webhook:', smsError);
+            }
+        });
+
+        // Try notifications (also asynchronously)
+        setImmediate(async () => {
+            try {
+                const notificationController = require('./notification.controller');
+                if (notificationController && notificationController.notifyStatusChange) {
+                    await notificationController.notifyStatusChange(id, previousStatus, status, req.userId);
+                    console.log('✅ In-app notification created');
+                }
+            } catch (notificationError) {
+                console.error('Error creating notification:', notificationError);
+            }
+        });
+
     } catch (error) {
-        console.error('Error updating work order status:', error);
+        console.error('❌ Error updating work order status:', error);
         return res.status(500).json({
             success: false,
             message: 'An error occurred while updating the work order status.',

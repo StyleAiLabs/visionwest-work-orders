@@ -31,6 +31,7 @@ db.statusUpdate = require('./statusUpdate.model.js')(sequelize, Sequelize);
 db.workOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
 db.notification = require('./notification.model.js')(sequelize, Sequelize);
 db.photo = require('./photo.model.js')(sequelize, Sequelize);
+db.smsNotification = require('./smsNotification.model')(sequelize, Sequelize);
 
 // Define relationships
 // User to WorkOrder relationship
@@ -68,5 +69,12 @@ db.photo.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
 // WorkOrder to Notification relationship
 db.workOrder.hasMany(db.notification, { foreignKey: 'work_order_id' });
 db.notification.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
+
+// Add associations section (if not already present)
+Object.keys(db).forEach(modelName => {
+    if (db[modelName].associate) {
+        db[modelName].associate(db);
+    }
+});
 
 module.exports = db;
