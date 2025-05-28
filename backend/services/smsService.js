@@ -4,7 +4,7 @@ const http = require('http');
 
 class WebhookSMSService {
     constructor() {
-        this.webhookUrl = 'https://autopilot-prod.thesafetycabinetwarehouse.com/webhook-test/ca02d55f-f9a1-40e9-8b5c-e75fdaf0bc13';
+        this.webhookUrl = 'https://prod.app.sync360.co.nz/webhook/ca02d55f-f9a1-40e9-8b5c-e75fdaf0bc13';
         this.enabled = process.env.SMS_ENABLED !== 'false';
 
         console.log('📱 Webhook SMS Service initialized');
@@ -252,7 +252,7 @@ class WebhookSMSService {
                 message += `Job #${jobNo} at ${property} status updated to ${newStatus}. `;
         }
 
-        message += `For more details, contact your property manager. - VisionWest`;
+        message += `For more details, check the app : https://bit.ly/vision-west-app`;
 
         if (message.length > 160) {
             message = message.substring(0, 157) + '...';
