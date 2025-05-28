@@ -252,7 +252,7 @@ class WebhookSMSService {
                 message += `Job #${jobNo} at ${property} status updated to ${newStatus}. `;
         }
 
-        message += `For more details, check the app : https://bit.ly/vision-west-app`;
+        message += `For more details, check the app.`;
 
         if (message.length > 160) {
             message = message.substring(0, 157) + '...';
