@@ -4,7 +4,7 @@ const http = require('http');
 
 class WebhookSMSService {
     constructor() {
-        this.webhookUrl = 'https://prod.app.sync360.co.nz/webhook/ca02d55f-f9a1-40e9-8b5c-e75fdaf0bc13';
+        this.webhookUrl = SMS_WEBHOOK_URL;
         this.enabled = process.env.SMS_ENABLED !== 'false';
 
         console.log('📱 Webhook SMS Service initialized');
