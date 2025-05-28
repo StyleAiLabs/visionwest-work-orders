@@ -11,28 +11,98 @@ class WebhookSMSService {
         console.log('SMS Enabled:', this.enabled);
     }
 
+    async sendWorkOrderStatusSMS(workOrder, oldStatus, newStatus, userRole = 'staff') {
+        console.log('🔔 sendWorkOrderStatusSMS called with:', {
+            jobNo: workOrder.job_no,
+            oldStatus,
+            newStatus,
+            userRole,
+            hasAuthorizedEmail: !!workOrder.authorized_email,
+            hasAuthorizedContact: !!workOrder.authorized_contact,
+            hasPropertyPhone: !!workOrder.property_phone,
+            hasSupplierPhone: !!workOrder.supplier_phone
+        });
+
+        try {
+            // Determine recipient phone number
+            let recipientPhone = null;
+            let recipientName = 'Team';
+
+            // For VisionWest work orders, send to authorized contact
+            if (workOrder.authorized_email && workOrder.authorized_email.includes('@visionwest.org.nz')) {
+                recipientPhone = workOrder.authorized_contact || workOrder.property_phone;
+                recipientName = workOrder.authorized_by || 'VisionWest Team';
+                console.log('📞 VisionWest work order - using authorized contact');
+            } else {
+                // For other work orders, send to supplier
+                recipientPhone = workOrder.supplier_phone;
+                recipientName = workOrder.supplier_name || 'Supplier';
+                console.log('📞 External work order - using supplier phone');
+            }
+
+            console.log('📞 Recipient details:', {
+                phone: recipientPhone,
+                name: recipientName,
+                cleanedPhone: this.cleanPhoneNumber(recipientPhone)
+            });
+
+            if (!recipientPhone) {
+                console.log(`⚠️  No phone number available for work order ${workOrder.job_no}`);
+                return { success: false, reason: 'No phone number available' };
+            }
+
+            // Create status-specific message
+            const message = this.createStatusChangeMessage(workOrder, oldStatus, newStatus, recipientName);
+
+            console.log('📱 SMS Message created:', message);
+
+            // Send SMS via webhook
+            const result = await this.sendSMS(recipientPhone, message, {
+                job_no: workOrder.job_no,
+                property_name: workOrder.property_name,
+                status: newStatus,
+                old_status: oldStatus
+            });
+
+            console.log('📱 SMS webhook result:', result);
+            return result;
+
+        } catch (error) {
+            console.error('❌ Error in sendWorkOrderStatusSMS:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     async sendSMS(phoneNumber, message, workOrderData = null) {
+        console.log('📱 sendSMS called:', {
+            phoneNumber,
+            message,
+            workOrderData,
+            enabled: this.enabled
+        });
+
         if (!this.enabled) {
-            console.log('SMS service disabled - would have sent:', { phoneNumber, message });
+            console.log('📱 SMS service disabled - would have sent:', { phoneNumber, message });
             return { success: false, reason: 'SMS service disabled' };
         }
 
         try {
-            console.log(`📱 Sending SMS via webhook to ${phoneNumber}: ${message}`);
+            const cleanPhone = this.cleanPhoneNumber(phoneNumber);
+            console.log(`📱 Sending SMS via webhook to ${cleanPhone}: ${message}`);
 
             const payload = {
-                phone_number: this.cleanPhoneNumber(phoneNumber),
+                phone_number: cleanPhone,
                 message: message,
                 timestamp: new Date().toISOString(),
                 source: 'visionwest-work-orders',
-                work_order: workOrderData ? {
-                    job_no: workOrderData.job_no,
-                    property_name: workOrderData.property_name,
-                    status: workOrderData.status
-                } : null
+                work_order: workOrderData
             };
 
+            console.log('📤 Webhook payload:', JSON.stringify(payload, null, 2));
+
             const result = await this.sendWebhookRequest(payload);
+
+            console.log('📥 Webhook response:', result);
 
             if (result.success) {
                 console.log('✅ SMS webhook sent successfully');
@@ -65,6 +135,9 @@ class WebhookSMSService {
         return new Promise((resolve) => {
             const postData = JSON.stringify(payload);
 
+            console.log('🔗 Making webhook request to:', this.webhookUrl);
+            console.log('📦 Request payload size:', postData.length, 'bytes');
+
             const options = {
                 method: 'POST',
                 headers: {
@@ -72,37 +145,45 @@ class WebhookSMSService {
                     'Content-Length': Buffer.byteLength(postData),
                     'User-Agent': 'VisionWest-WorkOrders/1.0'
                 },
-                timeout: 10000 // 10 second timeout
+                timeout: 15000 // 15 second timeout
             };
 
             const req = https.request(this.webhookUrl, options, (res) => {
                 let data = '';
+
+                console.log('📡 Webhook response status:', res.statusCode);
+                console.log('📡 Webhook response headers:', res.headers);
 
                 res.on('data', (chunk) => {
                     data += chunk;
                 });
 
                 res.on('end', () => {
+                    console.log('📡 Webhook response body:', data);
+
                     try {
                         const responseData = data ? JSON.parse(data) : {};
                         resolve({
                             success: res.statusCode >= 200 && res.statusCode < 300,
                             statusCode: res.statusCode,
-                            data: responseData
+                            data: responseData,
+                            rawResponse: data
                         });
                     } catch (parseError) {
+                        console.error('❌ Error parsing webhook response:', parseError);
                         resolve({
                             success: res.statusCode >= 200 && res.statusCode < 300,
                             statusCode: res.statusCode,
                             data: data,
-                            parseError: parseError.message
+                            parseError: parseError.message,
+                            rawResponse: data
                         });
                     }
                 });
             });
 
             req.on('error', (error) => {
-                console.error('Webhook request error:', error);
+                console.error('❌ Webhook request error:', error);
                 resolve({
                     success: false,
                     error: error.message
@@ -110,7 +191,7 @@ class WebhookSMSService {
             });
 
             req.on('timeout', () => {
-                console.error('Webhook request timeout');
+                console.error('❌ Webhook request timeout');
                 req.destroy();
                 resolve({
                     success: false,
@@ -118,6 +199,7 @@ class WebhookSMSService {
                 });
             });
 
+            console.log('📤 Sending webhook request...');
             req.write(postData);
             req.end();
         });
@@ -140,46 +222,6 @@ class WebhookSMSService {
         }
 
         return cleaned;
-    }
-
-    async sendWorkOrderStatusSMS(workOrder, oldStatus, newStatus, userRole = 'staff') {
-        try {
-            // Determine recipient phone number
-            let recipientPhone = null;
-            let recipientName = 'Team';
-
-            // For VisionWest work orders, send to authorized contact
-            if (workOrder.authorized_email && workOrder.authorized_email.includes('@visionwest.org.nz')) {
-                recipientPhone = workOrder.authorized_contact || workOrder.property_phone;
-                recipientName = workOrder.authorized_by || 'VisionWest Team';
-            } else {
-                // For other work orders, send to supplier
-                recipientPhone = workOrder.supplier_phone;
-                recipientName = workOrder.supplier_name || 'Supplier';
-            }
-
-            if (!recipientPhone) {
-                console.log(`⚠️  No phone number available for work order ${workOrder.job_no}`);
-                return { success: false, reason: 'No phone number available' };
-            }
-
-            // Create status-specific message
-            const message = this.createStatusChangeMessage(workOrder, oldStatus, newStatus, recipientName);
-
-            // Send SMS via webhook
-            const result = await this.sendSMS(recipientPhone, message, {
-                job_no: workOrder.job_no,
-                property_name: workOrder.property_name,
-                status: newStatus,
-                old_status: oldStatus
-            });
-
-            return result;
-
-        } catch (error) {
-            console.error('Error sending work order status SMS:', error);
-            return { success: false, error: error.message };
-        }
     }
 
     createStatusChangeMessage(workOrder, oldStatus, newStatus, recipientName) {

@@ -198,3 +198,36 @@ process.on('unhandledRejection', (err) => {
     console.log(err.name, err.message);
     process.exit(1);
 });
+
+// Add this to your backend/server.js for testing
+app.post('/api/test-sms-manual', async (req, res) => {
+    try {
+        const smsService = require('./services/smsService');
+
+        // Test with a sample work order
+        const testWorkOrder = {
+            job_no: 'TEST123',
+            property_name: '123 Test Street',
+            authorized_email: 'test@visionwest.org.nz',
+            authorized_contact: '+64211234567',
+            authorized_by: 'Test User'
+        };
+
+        const result = await smsService.sendWorkOrderStatusSMS(
+            testWorkOrder,
+            'pending',
+            'in-progress',
+            'staff'
+        );
+
+        res.json({
+            success: true,
+            result: result
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
