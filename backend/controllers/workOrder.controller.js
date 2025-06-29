@@ -207,9 +207,9 @@ exports.getAllWorkOrders = async (req, res) => {
             status: workOrder.status,
             supplierName: workOrder.supplier_name,
             propertyName: workOrder.property_name,
-            propertyAddress: workOrder.property_address, // Add property address
+            propertyAddress: workOrder.property_address, // Fix: Use actual property_address field
             description: workOrder.description,
-            workDescription: workOrder.work_description, // Add work description
+            workDescription: workOrder.description,
             poNumber: workOrder.po_number
         }));
 
