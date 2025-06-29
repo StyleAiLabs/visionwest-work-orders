@@ -174,7 +174,9 @@ exports.getAllWorkOrders = async (req, res) => {
             whereClause[Op.or] = [
                 { job_no: { [Op.iLike]: `%${search}%` } },
                 { property_name: { [Op.iLike]: `%${search}%` } },
-                { description: { [Op.iLike]: `%${search}%` } }
+                { property_address: { [Op.iLike]: `%${search}%` } }, // Include address in search
+                { description: { [Op.iLike]: `%${search}%` } },
+                { work_description: { [Op.iLike]: `%${search}%` } } // Include work description in search
             ];
         }
 
@@ -205,7 +207,9 @@ exports.getAllWorkOrders = async (req, res) => {
             status: workOrder.status,
             supplierName: workOrder.supplier_name,
             propertyName: workOrder.property_name,
+            propertyAddress: workOrder.property_address, // Add property address
             description: workOrder.description,
+            workDescription: workOrder.work_description, // Add work description
             poNumber: workOrder.po_number
         }));
 

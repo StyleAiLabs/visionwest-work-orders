@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import StatusBadge from './StatusBadge';
+import StatusBadge from '../common/StatusBadge';
 import DetailItem from './DetailItem';
 
 const WorkOrderSummary = ({ workOrder }) => {

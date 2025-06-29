@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { workOrderService } from '../services/workOrderService';
 import AppHeader from '../components/layout/AppHeader';
 import MobileNavigation from '../components/layout/MobileNavigation';
-import StatusBadge from '../components/workOrders/StatusBadge';
+import StatusBadge from '../components/common/StatusBadge';
 import PhotoGallery from '../components/workOrders/PhotoGallery';
 import NotesSection from '../components/workOrders/NotesSection';
 import DetailItem from '../components/workOrders/DetailItem';
