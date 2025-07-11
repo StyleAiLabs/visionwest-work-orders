@@ -5,7 +5,13 @@ import StatusBadge from '../common/StatusBadge';
 const WorkOrderCard = ({ workOrder, onClick }) => {
     // Format address into a single line
     const formatAddress = (workOrder) => {
-        const address = workOrder.property_address || workOrder.propertyAddress;
+        // Check for address in multiple possible locations
+        const address = workOrder.property_address ||
+            workOrder.propertyAddress ||
+            workOrder.property?.address ||
+            workOrder.property_name ||
+            workOrder.propertyName;
+
         if (!address) return 'Address not available';
 
         // If address is too long, truncate it

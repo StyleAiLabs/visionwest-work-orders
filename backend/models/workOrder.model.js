@@ -46,6 +46,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
         },
+        property_address: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
         property_phone: {
             type: DataTypes.STRING,
             allowNull: true
