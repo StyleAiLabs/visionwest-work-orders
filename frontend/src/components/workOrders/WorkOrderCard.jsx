@@ -5,12 +5,10 @@ import StatusBadge from '../common/StatusBadge';
 const WorkOrderCard = ({ workOrder, onClick }) => {
     // Format address into a single line
     const formatAddress = (workOrder) => {
-        // Check for address in multiple possible locations
+        // Only check for actual address fields, not property name
         const address = workOrder.property_address ||
             workOrder.propertyAddress ||
-            workOrder.property?.address ||
-            workOrder.property_name ||
-            workOrder.propertyName;
+            workOrder.property?.address;
 
         if (!address) return 'Address not available';
 
