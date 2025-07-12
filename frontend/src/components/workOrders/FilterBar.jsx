@@ -2,8 +2,8 @@ import React from 'react';
 
 const FilterBar = ({ activeFilter, onFilterChange }) => {
     const filters = [
-        { 
-            id: '', 
+        {
+            id: '',
             label: 'All',
             icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,8 +11,8 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                 </svg>
             )
         },
-        { 
-            id: 'pending', 
+        {
+            id: 'pending',
             label: 'Pending',
             icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,8 +20,8 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                 </svg>
             )
         },
-        { 
-            id: 'in-progress', 
+        {
+            id: 'in-progress',
             label: 'In Progress',
             icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,8 +29,8 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                 </svg>
             )
         },
-        { 
-            id: 'completed', 
+        {
+            id: 'completed',
             label: 'Completed',
             icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,8 +38,8 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                 </svg>
             )
         },
-        { 
-            id: 'cancelled', 
+        {
+            id: 'cancelled',
             label: 'Cancelled',
             icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
