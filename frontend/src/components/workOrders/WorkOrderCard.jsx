@@ -5,10 +5,12 @@ import StatusBadge from '../common/StatusBadge';
 const WorkOrderCard = ({ workOrder, onClick }) => {
     // Format address into a single line
     const formatAddress = (workOrder) => {
-        // Only check for actual address fields, not property name
+        // Check for actual address fields, fallback to property name if needed
         const address = workOrder.property_address ||
             workOrder.propertyAddress ||
-            workOrder.property?.address;
+            workOrder.property?.address ||
+            workOrder.property_name ||
+            workOrder.propertyName;
 
         if (!address) return 'Address not available';
 
@@ -32,9 +34,6 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
             {/* Property Info */}
             <div className="space-y-2 mb-3">
                 <div>
-                    <h4 className="font-medium text-gray-800 text-base">
-                        {workOrder.property_name || workOrder.propertyName}
-                    </h4>
                     <p className="text-sm text-gray-600 flex items-center">
                         <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
