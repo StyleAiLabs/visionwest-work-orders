@@ -153,7 +153,7 @@ const DashboardPage = () => {
             {/* Dashboard Content */}
             <div className="flex-1 overflow-y-auto p-4">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4" style={{ paddingTop: '70px' }}>
                     <SummaryCard title="Pending" value={summary.pending} color="orange" />
                     <SummaryCard title="In Progress" value={summary.inProgress} color="blue" />
                     <SummaryCard title="Completed" value={summary.completed} color="green" />

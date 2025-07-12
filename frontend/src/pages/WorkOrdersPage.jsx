@@ -59,10 +59,12 @@ const WorkOrdersPage = () => {
             />
 
             <div className="pt-16 p-4">
-                <SearchBar
-                    onSearch={handleSearch}
-                    placeholder="Search work orders..."
-                />
+                <div className="mt-4">
+                    <SearchBar
+                        onSearch={handleSearch}
+                        placeholder="Search work orders..."
+                    />
+                </div>
 
                 <FilterBar
                     activeFilter={filters.status}
