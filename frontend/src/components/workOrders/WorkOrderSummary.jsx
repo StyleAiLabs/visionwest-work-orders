@@ -20,12 +20,12 @@ const WorkOrderSummary = ({ workOrder }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Header Section */}
             <div className="p-4 border-b border-gray-100">
-                <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Summary</h2>
-                        <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description}</p>
-                    </div>
+                <div className="flex items-start justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">Summary</h2>
                     <StatusBadge status={workOrder.status} />
+                </div>
+                <div className="pr-0">
+                    <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description}</p>
                 </div>
             </div>
 
