@@ -3,7 +3,7 @@ import visionwestLogo from '../../assets/visionwest-logo-header.png';
 
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     return (
-        <div className="bg-vw-dark text-white p-4 relative">
+        <div className="bg-vw-dark text-white p-4 relative fixed top-0 left-0 right-0 z-50 shadow-md">
             {/* Left-aligned back button */}
             {showBackButton && (
                 <button
