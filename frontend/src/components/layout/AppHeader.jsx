@@ -17,8 +17,8 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                 </button>
             )}
 
-            {/* Title with proper spacing for back button */}
-            <div className={`flex justify-left items-center ${showBackButton ? 'ml-10' : ''}`}>
+            {/* Title - centered when back button is present, left-aligned otherwise */}
+            <div className={`flex items-center ${showBackButton ? 'justify-center' : 'justify-left'}`}>
                 {title === "Dashboard" ? (
                     <img src={visionwestLogo} alt="VisionWest Logo" className="h-8" />
                 ) : (
