@@ -159,91 +159,122 @@ const WorkOrderDetailPage = () => {
                 rightContent={headerRightContent}
             />
 
-            {/* Work Order Summary - Using the new component */}
-            {safeRender(() => (
-                workOrder && (
-                    <div className="p-4">
-                        <WorkOrderSummary workOrder={workOrder} />
-                    </div>
-                )
-            ))}
+            {/* Main Content Container */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="max-w-4xl mx-auto p-4 space-y-4">
 
-            {/* Work Order Details */}
-            <div className="flex-1 p-4">
+                    {/* Work Order Summary */}
+                    {safeRender(() => (
+                        workOrder && <WorkOrderSummary workOrder={workOrder} />
+                    ))}
 
-                {/* Notes/Status History */}
-                <NotesHistory
-                    notes={workOrder.notes}
-                    statusUpdates={workOrder.statusUpdates}
-                />
-
-                {/* Notes Section - Available to all users including clients */}
-                <NotesSection
-                    workOrderId={id}
-                    onSaveNotes={handleSaveNotes} // Change to match the expected prop name
-                />
-
-                {/* Status Update Form */}
-                {safeRender(() => (
-                    showStatusUpdate && (
-                        isClient ?
-                            <ClientStatusUpdateForm
-                                onSubmit={handleStatusChange}
-                                onCancel={() => setShowStatusUpdate(false)}
-                            /> :
-                            <StatusUpdateForm
-                                initialStatus={workOrder.status}
-                                onSubmit={handleStatusChange}
-                                onCancel={() => setShowStatusUpdate(false)}
-                            />
-                    )
-                ))}
-
-                {/* Photo Gallery - Only allow uploads for non-client users */}
-                {safeRender(() => (
-                    <PhotoGallery
-                        photos={workOrder.photos || []}
-                        workOrderId={id}
-                        onPhotoDeleted={handlePhotoDeleted}
-                        canUpload={!isClient} // Pass this prop to control upload button visibility
-                    />
-                ))}
-
-                {safeRender(() => (
-                    <div className="bg-white rounded-lg shadow p-4 mb-4">
-                        {/* Order details content... */}
-
-                        {/* Only show status update button for appropriate users */}
-                        {!isLoading && workOrder && (
-                            <>
+                    {/* Action Buttons Section */}
+                    {!isLoading && workOrder && (
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Actions</h3>
+                            <div className="space-y-3">
                                 {/* For staff/admin users */}
                                 {!isClient && (
-                                    <div className="mt-4">
-                                        <button
-                                            onClick={() => setShowStatusUpdate(true)}
-                                            className="w-full text-center px-4 py-2 bg-vw-green hover:bg-vw-green-dark text-white rounded-md text-sm font-medium"
-                                        >
-                                            Update Status
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => setShowStatusUpdate(true)}
+                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>Update Status</span>
+                                    </button>
                                 )}
 
                                 {/* For client users - only show cancel button if not already completed/cancelled */}
                                 {isClient && workOrder.status !== 'completed' && workOrder.status !== 'cancelled' && (
-                                    <div className="mt-4">
-                                        <button
-                                            onClick={() => setShowStatusUpdate(true)}
-                                            className="w-full text-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium"
-                                        >
-                                            Request Cancellation
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => setShowStatusUpdate(true)}
+                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        <span>Request Cancellation</span>
+                                    </button>
                                 )}
-                            </>
-                        )}
-                    </div>
-                ))}
+                            </div>
+                        </div>
+                    )}
 
+                    {/* Status Update Form */}
+                    {safeRender(() => (
+                        showStatusUpdate && (
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                                <div className="p-4 border-b border-gray-100">
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        {isClient ? 'Request Cancellation' : 'Update Status'}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                        {isClient ? 'Provide a reason for cancellation request' : 'Change the work order status and add notes'}
+                                    </p>
+                                </div>
+                                <div className="p-4">
+                                    {isClient ?
+                                        <ClientStatusUpdateForm
+                                            onSubmit={handleStatusChange}
+                                            onCancel={() => setShowStatusUpdate(false)}
+                                        /> :
+                                        <StatusUpdateForm
+                                            initialStatus={workOrder.status}
+                                            onSubmit={handleStatusChange}
+                                            onCancel={() => setShowStatusUpdate(false)}
+                                        />
+                                    }
+                                </div>
+                            </div>
+                        )
+                    ))}
+
+                    {/* Photo Gallery */}
+                    {safeRender(() => (
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                            <div className="p-4 border-b border-gray-100">
+                                <h3 className="text-lg font-semibold text-gray-900">Photos</h3>
+                                <p className="text-sm text-gray-600">Work order documentation and progress photos</p>
+                            </div>
+                            <div className="p-4">
+                                <PhotoGallery
+                                    photos={workOrder.photos || []}
+                                    workOrderId={id}
+                                    onPhotoDeleted={handlePhotoDeleted}
+                                    canUpload={!isClient}
+                                />
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Notes & Communication */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className="p-4 border-b border-gray-100">
+                            <h3 className="text-lg font-semibold text-gray-900">Notes & Communication</h3>
+                            <p className="text-sm text-gray-600">Track progress, updates, and communication history</p>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                            {/* Add Notes Section */}
+                            <div className="p-4">
+                                <NotesSection
+                                    workOrderId={id}
+                                    onSaveNotes={handleSaveNotes}
+                                />
+                            </div>
+                            {/* Notes History */}
+                            <div className="p-4">
+                                <NotesHistory
+                                    notes={workOrder.notes}
+                                    statusUpdates={workOrder.statusUpdates}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <MobileNavigation />
