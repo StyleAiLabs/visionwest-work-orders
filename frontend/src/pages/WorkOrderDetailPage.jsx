@@ -151,7 +151,7 @@ const WorkOrderDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-20 pt-16">
+        <div className="min-h-screen flex flex-col bg-gray-50 pb-20">
             <AppHeader
                 title={`Job #${workOrder?.jobNo || 'Unknown'}`}
                 showBackButton={true}

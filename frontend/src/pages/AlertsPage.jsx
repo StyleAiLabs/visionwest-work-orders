@@ -47,7 +47,7 @@ const AlertsPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16 pt-16">
+        <div className="min-h-screen flex flex-col bg-gray-50 pb-16">
             <AppHeader
                 title={`Alerts ${unreadCount > 0 ? `(${unreadCount})` : ''}`}
                 showBackButton={true}
