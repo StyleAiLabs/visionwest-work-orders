@@ -17,8 +17,10 @@ const WorkOrdersPage = () => {
         status: '',
         search: '',
         page: 1,
-        limit: 10
+        limit: 2
     });
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
     useEffect(() => {
         fetchWorkOrders();
@@ -28,8 +30,16 @@ const WorkOrdersPage = () => {
         try {
             setIsLoading(true);
             const response = await workOrderService.getWorkOrders(filters);
-            //console.log('Fetched work orders:', response.data);
+            console.log('Fetched work orders response:', response);
             setWorkOrders(response.data);
+            // Handle pagination data from backend response structure
+            if (response.pagination) {
+                setTotalPages(response.pagination.pages || 1);
+                setTotalCount(response.pagination.total || 0);
+            } else {
+                setTotalPages(1);
+                setTotalCount(response.data.length);
+            }
             setError(null);
         } catch (error) {
             setError('Failed to load work orders. Please try again.');
@@ -51,8 +61,14 @@ const WorkOrdersPage = () => {
         navigate(`/work-orders/${id}`);
     };
 
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setFilters(prev => ({ ...prev, page: newPage }));
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 pb-20">
             <AppHeader
                 title="Work Orders"
                 showBackButton={false}
@@ -92,6 +108,82 @@ const WorkOrdersPage = () => {
                                 onClick={() => handleWorkOrderClick(workOrder.id)}
                             />
                         ))}
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="bg-white p-4 rounded-lg shadow mt-6">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="text-sm text-gray-700">
+                                        Page {filters.page} of {totalPages}
+                                        {totalCount > 0 && ` • ${totalCount} total`}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-center space-x-1">
+                                    {/* Previous Arrow */}
+                                    <button
+                                        onClick={() => handlePageChange(filters.page - 1)}
+                                        disabled={filters.page === 1}
+                                        className={`p-2 rounded-md ${filters.page === 1
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-vw-green text-white hover:bg-vw-green-dark'
+                                            }`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Page Numbers */}
+                                    <div className="flex items-center space-x-1 overflow-x-auto max-w-48">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => {
+                                            // Show first, last, current, and adjacent pages
+                                            const showPage = pageNum === 1 ||
+                                                pageNum === totalPages ||
+                                                Math.abs(pageNum - filters.page) <= 1;
+
+                                            if (!showPage && pageNum !== 2 && pageNum !== totalPages - 1) {
+                                                // Show ellipsis for gaps
+                                                if (pageNum === Math.min(filters.page - 2, totalPages - 2) && filters.page > 4) {
+                                                    return <span key={pageNum} className="px-2 text-gray-400">...</span>;
+                                                }
+                                                if (pageNum === Math.max(filters.page + 2, 3) && filters.page < totalPages - 3) {
+                                                    return <span key={pageNum} className="px-2 text-gray-400">...</span>;
+                                                }
+                                                return null;
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => handlePageChange(pageNum)}
+                                                    className={`px-3 py-1 rounded-md text-sm font-medium min-w-8 ${pageNum === filters.page
+                                                            ? 'bg-vw-green text-white'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Next Arrow */}
+                                    <button
+                                        onClick={() => handlePageChange(filters.page + 1)}
+                                        disabled={filters.page === totalPages}
+                                        className={`p-2 rounded-md ${filters.page === totalPages
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-vw-green text-white hover:bg-vw-green-dark'
+                                            }`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
