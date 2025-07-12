@@ -158,8 +158,8 @@ const WorkOrdersPage = () => {
                                                     key={pageNum}
                                                     onClick={() => handlePageChange(pageNum)}
                                                     className={`px-3 py-1 rounded-md text-sm font-medium min-w-8 ${pageNum === filters.page
-                                                            ? 'bg-vw-green text-white'
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        ? 'bg-vw-green text-white'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                 >
                                                     {pageNum}
