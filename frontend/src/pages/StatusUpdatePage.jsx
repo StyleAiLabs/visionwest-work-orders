@@ -116,7 +116,7 @@ const StatusUpdatePage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="min-h-screen flex flex-col bg-gray-50 pt-16">
             <AppHeader
                 title={isClient ? "Request Cancellation" : "Update Status"}
                 showBackButton={true}
