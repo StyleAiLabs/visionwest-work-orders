@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatDate } from '../../utils/dateHelpers';
 import StatusBadge from '../common/StatusBadge';
+import CompactExportButton from '../common/CompactExportButton';
 
 const WorkOrderCard = ({ workOrder, onClick }) => {
     // Format address into a single line
@@ -28,7 +29,10 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
                 <h3 className="text-lg font-semibold text-gray-900">
                     #{workOrder.job_no || workOrder.jobNo}
                 </h3>
-                <StatusBadge status={workOrder.status} />
+                <div className="flex items-center gap-2">
+                    <CompactExportButton workOrderId={workOrder.id} />
+                    <StatusBadge status={workOrder.status} />
+                </div>
             </div>
 
             {/* Property Info */}

@@ -15,6 +15,7 @@ import { useAlerts } from '../context/AlertContext';
 import { useAuth } from '../hooks/useAuth'; // Correct import path
 import ClientStatusUpdateForm from '../components/workOrders/ClientStatusUpdateForm';
 import WorkOrderSummary from '../components/workOrders/WorkOrderSummary';
+import ExportButton from '../components/common/ExportButton';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -173,6 +174,14 @@ const WorkOrderDetailPage = () => {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <h3 className="text-lg font-semibold text-gray-900 mb-3">Actions</h3>
                             <div className="space-y-3">
+                                {/* Export PDF Button - Available to all users */}
+                                <ExportButton
+                                    workOrderId={workOrder.id}
+                                    size="default"
+                                    variant="outline"
+                                    className="w-full"
+                                />
+
                                 {/* For staff/admin users */}
                                 {!isClient && (
                                     <button
