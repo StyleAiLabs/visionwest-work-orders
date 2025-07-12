@@ -151,7 +151,7 @@ const WorkOrderDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-20 pt-16">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title={`Job #${workOrder?.jobNo || 'Unknown'}`}
                 showBackButton={true}
@@ -159,8 +159,8 @@ const WorkOrderDetailPage = () => {
                 rightContent={headerRightContent}
             />
 
-            {/* Main Content Container */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Main Content Container with top padding for fixed header */}
+            <div className="pt-16 pb-20 min-h-screen overflow-y-auto">
                 <div className="max-w-4xl mx-auto p-4 space-y-4">
 
                     {/* Work Order Summary */}

@@ -15,14 +15,14 @@ const SettingsPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16 pt-16">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title="Settings"
                 showBackButton={true}
                 onBackClick={() => navigate(-1)}
             />
 
-            <div className="flex-1 p-4">
+            <div className="pt-16 pb-16 p-4">
                 <div className="bg-white rounded-lg shadow p-4 mb-4">
                     <h2 className="text-lg font-medium mb-2">Account</h2>
                     {user && (

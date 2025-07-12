@@ -52,13 +52,13 @@ const WorkOrdersPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pt-16">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title="Work Orders"
                 showBackButton={false}
             />
 
-            <div className="flex-1 p-4">
+            <div className="pt-16 p-4">
                 <SearchBar
                     onSearch={handleSearch}
                     placeholder="Search work orders..."

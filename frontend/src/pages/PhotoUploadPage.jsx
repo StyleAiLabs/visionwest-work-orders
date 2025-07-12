@@ -148,7 +148,7 @@ const PhotoUploadPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pt-16">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title="Add Photos"
                 showBackButton={true}
@@ -157,7 +157,7 @@ const PhotoUploadPage = () => {
             />
 
             {/* Upload Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="pt-16 overflow-y-auto p-4">
                 <div className="bg-white rounded-lg shadow p-4 mb-4">
                     <h3 className="text-sm font-medium text-gray-700 mb-1">Job #{workOrder.jobNo}</h3>
                     <p className="text-xs text-gray-500">{workOrder.property}</p>
