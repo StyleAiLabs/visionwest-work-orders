@@ -174,7 +174,9 @@ exports.getAllWorkOrders = async (req, res) => {
             whereClause[Op.or] = [
                 { job_no: { [Op.iLike]: `%${search}%` } },
                 { property_name: { [Op.iLike]: `%${search}%` } },
-                { description: { [Op.iLike]: `%${search}%` } }
+                { property_address: { [Op.iLike]: `%${search}%` } }, // Include address in search
+                { description: { [Op.iLike]: `%${search}%` } },
+                { work_description: { [Op.iLike]: `%${search}%` } } // Include work description in search
             ];
         }
 
@@ -205,7 +207,9 @@ exports.getAllWorkOrders = async (req, res) => {
             status: workOrder.status,
             supplierName: workOrder.supplier_name,
             propertyName: workOrder.property_name,
+            propertyAddress: workOrder.property_address, // Fix: Use actual property_address field
             description: workOrder.description,
+            workDescription: workOrder.description,
             poNumber: workOrder.po_number
         }));
 
@@ -277,6 +281,7 @@ exports.getWorkOrderById = async (req, res) => {
             };
             formattedWorkOrder.property = {
                 name: workOrder.property_name || '',
+                address: workOrder.property_address || '',
                 phone: workOrder.property_phone || ''
             };
             formattedWorkOrder.poNumber = workOrder.po_number || '';
@@ -439,6 +444,7 @@ exports.createWorkOrder = async (req, res) => {
             supplier_phone,
             supplier_email,
             property_name,
+            property_address,
             property_phone,
             description,
             po_number,
@@ -473,6 +479,7 @@ exports.createWorkOrder = async (req, res) => {
             supplier_phone,
             supplier_email,
             property_name,
+            property_address,
             property_phone,
             description,
             po_number,
@@ -813,6 +820,7 @@ exports.updateWorkOrder = async (req, res) => {
             supplier_phone,
             supplier_email,
             property_name,
+            property_address,
             property_phone,
             description,
             po_number,
@@ -850,6 +858,7 @@ exports.updateWorkOrder = async (req, res) => {
             supplier_phone: supplier_phone || workOrder.supplier_phone,
             supplier_email: supplier_email || workOrder.supplier_email,
             property_name: property_name || workOrder.property_name,
+            property_address: property_address || workOrder.property_address,
             property_phone: property_phone || workOrder.property_phone,
             description: description || workOrder.description,
             po_number: po_number || workOrder.po_number,
