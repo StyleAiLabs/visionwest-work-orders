@@ -98,6 +98,23 @@ class PDFService {
 
             console.log(`Found work order: ${workOrder.job_no}`);
 
+            // Debug: Log the work order data structure
+            console.log('Work order data for PDF:', {
+                id: workOrder.id,
+                job_no: workOrder.job_no,
+                photos: workOrder.photos ? workOrder.photos.length : 0,
+                notes: workOrder.notes ? workOrder.notes.length : 0,
+                statusUpdates: workOrder.statusUpdates ? workOrder.statusUpdates.length : 0
+            });
+
+            if (workOrder.notes && workOrder.notes.length > 0) {
+                console.log('Sample note structure:', workOrder.notes[0]);
+            }
+
+            if (workOrder.statusUpdates && workOrder.statusUpdates.length > 0) {
+                console.log('Sample status update structure:', workOrder.statusUpdates[0]);
+            }
+
             // Create PDF document
             const doc = new PDFDocument({
                 margin: 50,
@@ -420,7 +437,18 @@ class PDFService {
             currentY = addSection(`Notes & Comments (${workOrder.notes.length})`, currentY);
 
             workOrder.notes.forEach((note, index) => {
-                const noteHeight = Math.max(60, doc.heightOfString(note.content, { width: 480 }) + 40);
+                console.log(`Processing note ${index + 1}:`, {
+                    id: note.id,
+                    content: note.content,
+                    note: note.note, // Check if it's in note field instead
+                    createdAt: note.createdAt
+                });
+
+                // Try multiple possible content fields
+                const noteText = note.content || note.note || note.text || 'No content available';
+                console.log(`Note ${index + 1} text:`, noteText);
+
+                const noteHeight = Math.max(60, doc.heightOfString(noteText, { width: 480 }) + 40);
 
                 if (currentY + noteHeight > 700) { // Start new page if needed
                     doc.addPage();
@@ -438,7 +466,7 @@ class PDFService {
 
                 doc.fontSize(10)
                     .fillColor('#1f2937')
-                    .text(note.content, 60, currentY + 30, { width: 480 });
+                    .text(noteText, 60, currentY + 30, { width: 480 });
 
                 currentY += noteHeight + 10;
             });
@@ -455,8 +483,21 @@ class PDFService {
             currentY = addSection(`Status History (${workOrder.statusUpdates.length})`, currentY);
 
             workOrder.statusUpdates.forEach((update, index) => {
-                const updateText = update.notes || '';
-                const updateHeight = Math.max(50, doc.heightOfString(updateText, { width: 480 }) + 40);
+                console.log(`Processing status update ${index + 1}:`, {
+                    id: update.id,
+                    new_status: update.new_status,
+                    newStatus: update.newStatus,
+                    notes: update.notes,
+                    createdAt: update.createdAt,
+                    updatedAt: update.updatedAt
+                });
+
+                // Try multiple possible status and notes fields
+                const statusText = update.new_status || update.newStatus || 'Unknown';
+                const updateNotes = update.notes || '';
+                console.log(`Status update ${index + 1} - Status: ${statusText}, Notes: ${updateNotes}`);
+
+                const updateHeight = Math.max(50, updateNotes ? doc.heightOfString(updateNotes, { width: 480 }) + 40 : 30);
 
                 if (currentY + updateHeight > 700) { // Start new page if needed
                     doc.addPage();
@@ -470,12 +511,12 @@ class PDFService {
 
                 doc.fontSize(11)
                     .fillColor('#374151')
-                    .text(`Status changed to "${update.new_status}" • ${formatDate(update.createdAt)}`, 60, currentY + 10);
+                    .text(`Status changed to "${statusText}" • ${formatDate(update.createdAt || update.updatedAt)}`, 60, currentY + 10);
 
-                if (update.notes) {
+                if (updateNotes) {
                     doc.fontSize(10)
                         .fillColor('#1f2937')
-                        .text(update.notes, 60, currentY + 30, { width: 480 });
+                        .text(updateNotes, 60, currentY + 30, { width: 480 });
                 }
 
                 currentY += updateHeight + 10;
