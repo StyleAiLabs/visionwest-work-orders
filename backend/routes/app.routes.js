@@ -18,7 +18,8 @@ router.get('/info', (req, res) => {
                 realTimeNotifications: true,
                 photoCountIndicators: true,
                 enhancedNavigation: true,
-                poNumberTracking: true
+                poNumberTracking: true,
+                improvedPagination: true
             }
         };
 
