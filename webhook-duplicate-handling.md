@@ -1,3 +1,67 @@
+# Release Notes - VisionWest Work Orders v2.3.0
+*Released: July 13, 2025*
+
+## 🚀 Major Features
+
+### PDF Export Functionality
+- **Complete work order export to PDF** with comprehensive data including:
+  - Work order details, history, and timeline
+  - Image thumbnails for visual documentation
+  - Notes and comments with full text content
+  - Status updates and audit trail
+  - Professional formatting with Williams Property Services branding
+- **Export options available from**:
+  - Individual work order detail pages
+  - Bulk export from work orders list view
+  - Compact export buttons on work order cards
+
+### Intelligent Webhook Duplicate Handling
+- **Smart duplicate detection** - Webhooks now update existing work orders instead of failing on duplicate job numbers
+- **Seamless data merging** - New information automatically updates existing records while preserving audit trails
+- **Enhanced n8n integration** - Workflow automations can now send updates without error handling complexity
+- **Comprehensive audit logging** - All webhook updates tracked with detailed change history
+
+## 🎨 User Interface Improvements
+
+### Enhanced Navigation & Filters
+- **Icon-based filter system** - Replaced text filters with intuitive, color-coded icons across work orders and alerts
+- **Improved pagination** - Clean arrow navigation with smart page number display (5 records per page)
+- **Updated mobile navigation** - Replaced Alerts with new Quotes section featuring "NEW" notification bubble
+- **Responsive design** - All filter chips now fit properly on single row for mobile devices
+
+### Visual Enhancements
+- **Status-specific colors** - Filter icons now use meaningful colors (orange for pending, blue for in-progress, green for completed, red for cancelled)
+- **Better spacing** - Improved header clearance and content positioning across all pages
+- **Professional branding** - Updated supplier references to "Williams Property Services Group"
+
+## 🔧 Technical Improvements
+
+### Data Display Fixes
+- **Resolved date formatting issues** - Work order creation dates now display correctly from database timestamps
+- **Enhanced summary layout** - Improved text flow and reduced whitespace in work order detail screens
+- **Image handling** - Better thumbnail processing and fallback displays for missing images
+
+### Backend Enhancements
+- **Robust error handling** - Improved webhook processing with comprehensive logging
+- **API endpoint expansion** - New dedicated endpoints for work order updates and note additions
+- **Performance optimizations** - Enhanced data fetching and PDF generation processes
+
+## 📱 Mobile Experience
+- **Touch-friendly controls** - Larger, more accessible buttons and navigation elements
+- **Optimized layouts** - Better content arrangement for mobile screen sizes
+- **Improved scrolling** - Fixed bottom padding issues preventing content from being hidden behind navigation
+
+## 🛠 Developer Notes
+- **Backward compatibility maintained** - All existing integrations continue to work without changes
+- **Enhanced documentation** - Comprehensive webhook handling guide and testing scripts included
+- **Production ready** - All features tested and deployed with proper error handling
+
+---
+
+*For technical support or questions about these new features, please refer to the updated documentation or contact the development team.*
+
+---
+
 # Webhook Duplicate Handling Documentation
 
 ## Overview

@@ -1,6 +1,6 @@
 {
-    "name": "visionwest-backend",
-    "version": "1.0.0",
+    "name": "visionwest-work-orders-backend",
+    "version": "2.3.0",
     "description": "VisionWest Work Orders Backend API",
     "main": "server.js",
     "scripts": {
