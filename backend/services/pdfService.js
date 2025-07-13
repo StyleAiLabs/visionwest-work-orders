@@ -3,10 +3,11 @@ const axios = require('axios');
 const sharp = require('sharp');
 const db = require('../models');
 
-class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 150, maxHeight = 150) {
+class PDFService {
+    static async downloadAndResizeImage(imageUrl, maxWidth = 150, maxHeight = 150) {
         try {
             console.log('Downloading image:', imageUrl);
-            
+
             // Validate URL
             if (!imageUrl || typeof imageUrl !== 'string') {
                 console.log('Invalid image URL provided');
@@ -18,7 +19,7 @@ class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 1
                 console.log('Image URL does not start with http/https:', imageUrl);
                 return null;
             }
-            
+
             // Download image with better error handling
             const response = await axios({
                 method: 'GET',
@@ -290,7 +291,7 @@ class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 1
                     // Try to download and embed the actual image
                     let imageBuffer = null;
                     const imageUrl = photo.url || photo.file_path || photo.image_url || photo.imageUrl;
-                    
+
                     console.log(`Processing photo ${i + 1}:`, {
                         id: photo.id,
                         url: photo.url,
@@ -298,7 +299,7 @@ class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 1
                         description: photo.description,
                         imageUrl: imageUrl
                     });
-                    
+
                     if (imageUrl) {
                         console.log(`Attempting to download image: ${imageUrl}`);
                         imageBuffer = await this.downloadAndResizeImage(imageUrl, 120, 120);
@@ -366,12 +367,12 @@ class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 1
                             .text(formatDate(photo.createdAt), 210, currentY + 80);                        // Show image URL if available
                         if (imageUrl) {
                             doc.fontSize(8)
-                               .fillColor('#9ca3af')
-                               .text(`URL: ${imageUrl.substring(0, 60)}${imageUrl.length > 60 ? '...' : ''}`, 210, currentY + 100, { width: 280 });
+                                .fillColor('#9ca3af')
+                                .text(`URL: ${imageUrl.substring(0, 60)}${imageUrl.length > 60 ? '...' : ''}`, 210, currentY + 100, { width: 280 });
                         } else {
                             doc.fontSize(8)
-                               .fillColor('#9ca3af')
-                               .text('No image URL found', 210, currentY + 100, { width: 280 });
+                                .fillColor('#9ca3af')
+                                .text('No image URL found', 210, currentY + 100, { width: 280 });
                         }
                     }
                 } catch (error) {
