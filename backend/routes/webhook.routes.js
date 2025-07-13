@@ -10,6 +10,9 @@ router.get('/verify', webhookController.verifyWebhook);
 // Create work order from email (protected with API key)
 router.post('/work-orders', validateWebhookApiKey, webhookController.createWorkOrderFromEmail);
 
+// Update existing work order from email (protected with API key)
+router.put('/work-orders', validateWebhookApiKey, webhookController.updateWorkOrderFromEmail);
+
 // Add note to work order (protected with API key)
 router.post('/work-orders/notes', validateWebhookApiKey, webhookController.addNoteToWorkOrder);
 

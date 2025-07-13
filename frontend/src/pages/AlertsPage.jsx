@@ -47,7 +47,7 @@ const AlertsPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16">
+        <div className="min-h-screen bg-gray-50 pb-20">
             <AppHeader
                 title={`Alerts ${unreadCount > 0 ? `(${unreadCount})` : ''}`}
                 showBackButton={true}
@@ -64,7 +64,7 @@ const AlertsPage = () => {
                 }
             />
 
-            <div className="bg-white p-3 shadow">
+            <div className="bg-white p-3 shadow" style={{ paddingTop: '70px' }}>
                 <AlertFilter
                     activeFilter={activeFilter}
                     onFilterChange={setActiveFilter}

@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "visionwest-work-orders-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,6 +14,7 @@
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
+    "file-saver": "^2.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",
@@ -32,7 +33,7 @@
     "globals": "^15.15.0",
     "postcss": "^8.4.28",
     "tailwindcss": "^3.3.3",
-    "vite": "^6.2.0",
+    "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.0"
   },
   "resolutions": {

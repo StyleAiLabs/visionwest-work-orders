@@ -10,6 +10,7 @@ import PhotoUploadPage from './pages/PhotoUploadPage';
 import StatusUpdatePage from './pages/StatusUpdatePage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
+import ReleaseNotesPage from './pages/ReleaseNotesPage';
 import { useAuth } from './hooks/useAuth';
 import InstallPrompt from './components/common/InstallPrompt';
 
@@ -121,6 +122,15 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/release-notes"
+                element={
+                  <ProtectedRoute>
+                    <ReleaseNotesPage />
                   </ProtectedRoute>
                 }
               />

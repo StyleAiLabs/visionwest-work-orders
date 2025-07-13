@@ -151,6 +151,8 @@ app.use('/api/notes', require('./routes/notes.routes'));
 app.use('/api/alerts', require('./routes/notification.routes'));
 app.use('/api/photos', require('./routes/photo.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
+app.use('/api/export', require('./routes/export.routes'));
+app.use('/api/app', require('./routes/app.routes'));
 
 // Import routes
 const notesRoutes = require('./routes/notes.routes');
