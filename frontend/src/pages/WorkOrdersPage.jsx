@@ -72,7 +72,8 @@ const WorkOrdersPage = () => {
         <div className="min-h-screen bg-gray-50 pb-20">
             <AppHeader
                 title="Work Orders"
-                showBackButton={false}
+                showBackButton={true}
+                onBackClick={() => navigate('/dashboard')}
             />
 
             <div className="pt-16 p-4">

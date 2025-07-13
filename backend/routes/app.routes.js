@@ -15,7 +15,10 @@ router.get('/info', (req, res) => {
                 pdfExport: true,
                 webhookDuplicateHandling: true,
                 mobileOptimized: true,
-                realTimeNotifications: true
+                realTimeNotifications: true,
+                photoCountIndicators: true,
+                enhancedNavigation: true,
+                poNumberTracking: true
             }
         };
 

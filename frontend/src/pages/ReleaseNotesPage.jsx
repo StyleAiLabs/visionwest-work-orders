@@ -9,8 +9,42 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
-            version: '2.3.0',
+            version: '2.4.0',
             date: 'July 13, 2025',
+            title: 'Photo Management & Navigation Enhancements',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Photo count indicators on all work order cards - shows number of uploaded photos at a glance',
+                        'PO Number display on work order cards instead of supplier name for better tracking',
+                        'Enhanced navigation with back buttons from work orders list to dashboard',
+                        'Streamlined photo count display - clean camera icon with count, no borders or backgrounds'
+                    ]
+                },
+                {
+                    category: 'Improvements',
+                    items: [
+                        'Fixed photo count discrepancy between card view and detail view',
+                        'Improved API response to include accurate photo counts in work order lists',
+                        'Better visual hierarchy with darker text for photo counts when photos are available',
+                        'Enhanced user experience with consistent navigation patterns'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'Optimized database queries to include photo associations in work order list endpoint',
+                        'Added debugging capabilities for photo count troubleshooting',
+                        'Improved data consistency between frontend and backend photo counting',
+                        'Enhanced work order card component with better field name compatibility'
+                    ]
+                }
+            ]
+        },
+        {
+            version: '2.3.0',
+            date: 'July 09, 2025',
             title: 'PDF Export & Webhook Enhancements',
             features: [
                 {
@@ -44,7 +78,7 @@ const ReleaseNotesPage = () => {
         },
         {
             version: '2.2.0',
-            date: 'July 12, 2025',
+            date: 'July 02, 2025',
             title: 'UI/UX Improvements',
             features: [
                 {
@@ -69,7 +103,7 @@ const ReleaseNotesPage = () => {
         },
         {
             version: '2.1.0',
-            date: 'July 10, 2025',
+            date: 'June 26, 2025',
             title: 'Authentication & Security',
             features: [
                 {
