@@ -124,7 +124,7 @@ exports.getSummary = async (req, res) => {
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search, page = 1, limit = 10 } = req.query;
+        const { status, date, sort, search, page = 1, limit = 5 } = req.query;
         const userId = req.userId;
         const userRole = req.userRole;
 

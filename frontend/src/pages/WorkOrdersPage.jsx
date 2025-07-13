@@ -17,7 +17,7 @@ const WorkOrdersPage = () => {
         status: '',
         search: '',
         page: 1,
-        limit: 2
+        limit: 5
     });
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
