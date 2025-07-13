@@ -7,7 +7,7 @@ class PDFService {
         let browser = null;
         try {
             console.log(`Generating PDF for work order ID: ${workOrderId}`);
-            
+
             // Fetch all work order data with related tables
             const workOrder = await db.workOrder.findByPk(workOrderId, {
                 include: [
@@ -56,9 +56,9 @@ class PDFService {
                 console.log('Puppeteer browser launched successfully');
 
                 const page = await browser.newPage();
-                await page.setContent(htmlContent, { 
+                await page.setContent(htmlContent, {
                     waitUntil: 'networkidle0',
-                    timeout: 30000 
+                    timeout: 30000
                 });
                 console.log('HTML content loaded into page');
 
