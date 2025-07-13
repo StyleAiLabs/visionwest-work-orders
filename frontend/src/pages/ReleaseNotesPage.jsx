@@ -9,6 +9,40 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.4.1',
+            date: 'July 13, 2025',
+            title: 'Pagination Improvements',
+            features: [
+                {
+                    category: 'Bug Fixes',
+                    items: [
+                        'Fixed pagination displaying too many page numbers - now shows appropriate pages based on records',
+                        'Improved work orders list pagination to show 5 records per page instead of 2',
+                        'Better pagination calculation that matches user expectations',
+                        'More intuitive navigation through work orders with cleaner page number display'
+                    ]
+                },
+                {
+                    category: 'User Experience',
+                    items: [
+                        'Optimal balance between page load performance and content visibility',
+                        'Cleaner pagination interface with fewer unnecessary page buttons',
+                        'Easier browsing through work orders list',
+                        'Consistent pagination behavior across different data sizes'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'Updated frontend pagination limit from 2 to 5 records per page',
+                        'Maintained compatibility with existing backend pagination logic',
+                        'Improved pagination calculation: Math.ceil(totalRecords / 5)',
+                        'Version bump for minor release (2.4.0 → 2.4.1)'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.4.0',
             date: 'July 13, 2025',
             title: 'Photo Management & Navigation Enhancements',
