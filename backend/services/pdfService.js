@@ -3,35 +3,65 @@ const axios = require('axios');
 const sharp = require('sharp');
 const db = require('../models');
 
-class PDFService {
-    static async downloadAndResizeImage(imageUrl, maxWidth = 150, maxHeight = 150) {
+class PDFService {    static async downloadAndResizeImage(imageUrl, maxWidth = 150, maxHeight = 150) {
         try {
             console.log('Downloading image:', imageUrl);
+            
+            // Validate URL
+            if (!imageUrl || typeof imageUrl !== 'string') {
+                console.log('Invalid image URL provided');
+                return null;
+            }
 
-            // Download image
+            // Check if URL is accessible
+            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                console.log('Image URL does not start with http/https:', imageUrl);
+                return null;
+            }
+            
+            // Download image with better error handling
             const response = await axios({
                 method: 'GET',
                 url: imageUrl,
                 responseType: 'arraybuffer',
-                timeout: 10000, // 10 second timeout
+                timeout: 15000, // 15 second timeout
                 headers: {
-                    'User-Agent': 'VisionWest-PDF-Generator/1.0'
+                    'User-Agent': 'VisionWest-PDF-Generator/1.0',
+                    'Accept': 'image/*'
+                },
+                maxRedirects: 5,
+                validateStatus: function (status) {
+                    return status >= 200 && status < 300;
                 }
             });
+
+            console.log(`Image downloaded successfully. Size: ${response.data.length} bytes, Content-Type: ${response.headers['content-type']}`);
+
+            // Check if we got valid image data
+            if (!response.data || response.data.length === 0) {
+                console.log('No image data received');
+                return null;
+            }
 
             // Resize image to thumbnail
             const resizedImage = await sharp(response.data)
                 .resize(maxWidth, maxHeight, {
                     fit: 'inside',
-                    withoutEnlargement: true
+                    withoutEnlargement: true,
+                    background: { r: 255, g: 255, b: 255, alpha: 1 }
                 })
                 .jpeg({ quality: 80 })
                 .toBuffer();
 
-            console.log('Image processed successfully');
+            console.log(`Image resized successfully. Final size: ${resizedImage.length} bytes`);
             return resizedImage;
         } catch (error) {
-            console.error('Error processing image:', error.message);
+            console.error('Error processing image:', {
+                url: imageUrl,
+                error: error.message,
+                status: error.response?.status,
+                statusText: error.response?.statusText
+            });
             return null;
         }
     }
@@ -259,9 +289,21 @@ class PDFService {
                 try {
                     // Try to download and embed the actual image
                     let imageBuffer = null;
-                    if (photo.url || photo.image_url || photo.imageUrl) {
-                        const imageUrl = photo.url || photo.image_url || photo.imageUrl;
+                    const imageUrl = photo.url || photo.file_path || photo.image_url || photo.imageUrl;
+                    
+                    console.log(`Processing photo ${i + 1}:`, {
+                        id: photo.id,
+                        url: photo.url,
+                        file_path: photo.file_path,
+                        description: photo.description,
+                        imageUrl: imageUrl
+                    });
+                    
+                    if (imageUrl) {
+                        console.log(`Attempting to download image: ${imageUrl}`);
                         imageBuffer = await this.downloadAndResizeImage(imageUrl, 120, 120);
+                    } else {
+                        console.log(`No image URL found for photo ${i + 1}`);
                     }
 
                     if (imageBuffer) {
@@ -321,14 +363,15 @@ class PDFService {
 
                         doc.fontSize(9)
                             .fillColor('#9ca3af')
-                            .text(formatDate(photo.createdAt), 210, currentY + 80);
-
-                        // Show image URL if available
-                        if (photo.url || photo.image_url || photo.imageUrl) {
-                            const imageUrl = photo.url || photo.image_url || photo.imageUrl;
+                            .text(formatDate(photo.createdAt), 210, currentY + 80);                        // Show image URL if available
+                        if (imageUrl) {
                             doc.fontSize(8)
-                                .fillColor('#9ca3af')
-                                .text(`URL: ${imageUrl.substring(0, 60)}${imageUrl.length > 60 ? '...' : ''}`, 210, currentY + 100, { width: 280 });
+                               .fillColor('#9ca3af')
+                               .text(`URL: ${imageUrl.substring(0, 60)}${imageUrl.length > 60 ? '...' : ''}`, 210, currentY + 100, { width: 280 });
+                        } else {
+                            doc.fontSize(8)
+                               .fillColor('#9ca3af')
+                               .text('No image URL found', 210, currentY + 100, { width: 280 });
                         }
                     }
                 } catch (error) {
