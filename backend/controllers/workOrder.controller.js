@@ -191,27 +191,48 @@ exports.getAllWorkOrders = async (req, res) => {
 
         const workOrders = await WorkOrder.findAndCountAll({
             where: whereClause,
-            include: includeClause,
+            include: [
+                ...includeClause,
+                {
+                    model: Photo,
+                    as: 'photos',
+                    attributes: ['id'], // Only get the id to count photos, not full data
+                    required: false
+                }
+            ],
             order: orderClause,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
 
         console.log(`Found ${workOrders.count} work orders`);
+        console.log('Sample work order with photos:', JSON.stringify(workOrders.rows[0], null, 2));
 
         // Format the response
-        const formattedWorkOrders = workOrders.rows.map(workOrder => ({
-            id: workOrder.id,
-            jobNo: workOrder.job_no,
-            date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
-            status: workOrder.status,
-            supplierName: workOrder.supplier_name,
-            propertyName: workOrder.property_name,
-            propertyAddress: workOrder.property_address, // Fix: Use actual property_address field
-            description: workOrder.description,
-            workDescription: workOrder.description,
-            poNumber: workOrder.po_number
-        }));
+        const formattedWorkOrders = workOrders.rows.map(workOrder => {
+            const photoCount = workOrder.photos ? workOrder.photos.length : 0;
+            console.log(`Work Order ${workOrder.id} photo count: ${photoCount}`, workOrder.photos);
+
+            return {
+                id: workOrder.id,
+                jobNo: workOrder.job_no,
+                job_no: workOrder.job_no, // Include both formats for compatibility
+                date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
+                status: workOrder.status,
+                supplierName: workOrder.supplier_name,
+                supplier_name: workOrder.supplier_name, // Include both formats
+                propertyName: workOrder.property_name,
+                propertyAddress: workOrder.property_address, // Fix: Use actual property_address field
+                property_name: workOrder.property_name, // Include both formats
+                property_address: workOrder.property_address,
+                description: workOrder.description,
+                workDescription: workOrder.description,
+                work_description: workOrder.description, // Include both formats
+                poNumber: workOrder.po_number,
+                photoCount: photoCount, // Add photo count
+                photos: workOrder.photos || [] // Include photos array for debugging
+            };
+        });
 
         return res.status(200).json({
             success: true,

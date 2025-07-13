@@ -94,7 +94,40 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
                     #{workOrder.job_no || workOrder.jobNo}
                 </h3>
                 <div className="flex items-center gap-2">
-                    <CompactExportButton workOrderId={workOrder.id} />
+                    <div className="flex items-center gap-1">
+                        <CompactExportButton workOrderId={workOrder.id} />
+                        {/* Photo count indicator */}
+                        {(() => {
+                            // Get photo count from multiple possible sources
+                            const photoCount = workOrder.photoCount ||
+                                workOrder.photos?.length ||
+                                0;
+
+                            console.log('WorkOrder photo debug:', {
+                                id: workOrder.id,
+                                photoCount: workOrder.photoCount,
+                                photosLength: workOrder.photos?.length,
+                                finalCount: photoCount,
+                                photos: workOrder.photos
+                            });
+
+                            return photoCount > 0 ? (
+                                <div className="flex items-center text-xs text-gray-700">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    {photoCount}
+                                </div>
+                            ) : (
+                                <div className="flex items-center text-xs text-gray-500">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    0
+                                </div>
+                            );
+                        })()}
+                    </div>
                     <StatusBadge status={workOrder.status} />
                 </div>
             </div>
@@ -131,7 +164,9 @@ const WorkOrderCard = ({ workOrder, onClick }) => {
                     {formatWorkOrderDate(workOrder)}
                 </div>
                 <div className="flex items-center">
-                    <span className="mr-2">{workOrder.supplier_name || workOrder.supplierName || 'Williams Property Services Group'}</span>
+                    <span className="mr-2">
+                        {workOrder.poNumber || workOrder.po_number || 'No PO Number'}
+                    </span>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
