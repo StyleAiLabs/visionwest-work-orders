@@ -31,6 +31,7 @@ const WorkOrdersPage = () => {
             setIsLoading(true);
             const response = await workOrderService.getWorkOrders(filters);
             console.log('Fetched work orders response:', response);
+            console.log('Individual work order sample:', response.data[0]);
             setWorkOrders(response.data);
             // Handle pagination data from backend response structure
             if (response.pagination) {
