@@ -1,11 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import AlertCounter from '../alerts/AlertCounter';
-import { useAlerts } from '../../context/AlertContext';
 
 const MobileNavigation = () => {
     const location = useLocation();
-    const { unreadCount } = useAlerts();
 
     const isActive = (path) => {
         return location.pathname.startsWith(path);
@@ -36,12 +33,15 @@ const MobileNavigation = () => {
                 <span className="text-xs mt-1">Orders</span>
             </Link>
 
-            <Link to="/alerts" className={`flex flex-col items-center relative ${isActive('/alerts') ? 'text-vw-green' : 'text-gray-500'}`}>
+            <Link to="/quotes" className={`flex flex-col items-center relative ${isActive('/quotes') ? 'text-vw-green' : 'text-gray-500'}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <AlertCounter count={unreadCount} />
-                <span className="text-xs mt-1">Alerts</span>
+                {/* New notification bubble */}
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-8 flex items-center justify-center font-bold">
+                    Soon
+                </div>
+                <span className="text-xs mt-1">Quotes</span>
             </Link>
 
             <Link to="/settings" className={`flex flex-col items-center ${isActive('/settings') ? 'text-vw-green' : 'text-gray-500'}`}>
