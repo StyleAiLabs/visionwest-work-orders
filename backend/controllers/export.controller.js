@@ -11,6 +11,8 @@ const exportWorkOrderPDF = async (req, res) => {
             });
         }
 
+        console.log(`Export request for work order ID: ${id}`);
+
         // Generate PDF
         const pdfBuffer = await PDFService.generateWorkOrderPDF(id);
 
@@ -18,6 +20,8 @@ const exportWorkOrderPDF = async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="work-order-${id}.pdf"`);
         res.setHeader('Content-Length', pdfBuffer.length);
+
+        console.log(`PDF export successful for work order ID: ${id}`);
 
         // Send PDF buffer
         res.end(pdfBuffer);
@@ -35,7 +39,7 @@ const exportWorkOrderPDF = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to generate PDF export',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 };
