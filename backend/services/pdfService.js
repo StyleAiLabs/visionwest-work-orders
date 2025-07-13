@@ -1,13 +1,11 @@
-const puppeteer = require('puppeteer');
+const PDFDocument = require('pdfkit');
 const db = require('../models');
-const { Op } = require('sequelize');
 
 class PDFService {
     static async generateWorkOrderPDF(workOrderId) {
-        let browser = null;
         try {
             console.log(`Generating PDF for work order ID: ${workOrderId}`);
-
+            
             // Fetch all work order data with related tables
             const workOrder = await db.workOrder.findByPk(workOrderId, {
                 include: [
@@ -35,66 +33,40 @@ class PDFService {
 
             console.log(`Found work order: ${workOrder.job_no}`);
 
-            // Generate HTML content for PDF
-            const htmlContent = this.generateHTML(workOrder);
-            console.log('HTML content generated successfully');
-
-            // Create PDF using Puppeteer with better error handling
-            try {
-                browser = await puppeteer.launch({
-                    headless: true,
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                        '--no-first-run',
-                        '--no-zygote',
-                        '--single-process'
-                    ]
+            // Create PDF document
+            const doc = new PDFDocument({ 
+                margin: 50,
+                size: 'A4'
+            });
+            
+            // Create a buffer to store the PDF
+            const chunks = [];
+            doc.on('data', chunk => chunks.push(chunk));
+            
+            // Return a promise that resolves when the PDF is complete
+            return new Promise((resolve, reject) => {
+                doc.on('end', () => {
+                    const pdfBuffer = Buffer.concat(chunks);
+                    console.log('PDF generated successfully');
+                    resolve(pdfBuffer);
                 });
-                console.log('Puppeteer browser launched successfully');
-
-                const page = await browser.newPage();
-                await page.setContent(htmlContent, {
-                    waitUntil: 'networkidle0',
-                    timeout: 30000
-                });
-                console.log('HTML content loaded into page');
-
-                const pdfBuffer = await page.pdf({
-                    format: 'A4',
-                    printBackground: true,
-                    margin: {
-                        top: '20mm',
-                        right: '15mm',
-                        bottom: '20mm',
-                        left: '15mm'
-                    }
-                });
-                console.log('PDF generated successfully');
-
-                return pdfBuffer;
-            } catch (puppeteerError) {
-                console.error('Puppeteer error:', puppeteerError);
-                throw new Error(`PDF generation failed: ${puppeteerError.message}`);
-            }
+                
+                doc.on('error', reject);
+                
+                try {
+                    this.generatePDFContent(doc, workOrder);
+                    doc.end();
+                } catch (error) {
+                    reject(error);
+                }
+            });
         } catch (error) {
             console.error('Error generating PDF:', error);
             throw error;
-        } finally {
-            if (browser) {
-                try {
-                    await browser.close();
-                    console.log('Browser closed successfully');
-                } catch (closeError) {
-                    console.error('Error closing browser:', closeError);
-                }
-            }
         }
     }
 
-    static generateHTML(workOrder) {
+    static generatePDFContent(doc, workOrder) {
         const formatDate = (date) => {
             return new Date(date).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -105,343 +77,254 @@ class PDFService {
             });
         };
 
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(amount || 0);
+        const addSection = (title, yPosition) => {
+            doc.fontSize(16)
+               .fillColor('#1e40af')
+               .text(title, 50, yPosition)
+               .moveTo(50, yPosition + 25)
+               .lineTo(550, yPosition + 25)
+               .strokeColor('#e5e7eb')
+               .lineWidth(2)
+               .stroke();
+            return yPosition + 40;
         };
 
-        const getStatusColor = (status) => {
-            const colors = {
-                'Pending': '#f59e0b',
-                'In Progress': '#3b82f6',
-                'Completed': '#10b981',
-                'Cancelled': '#ef4444'
-            };
-            return colors[status] || '#6b7280';
+        const addInfoItem = (label, value, x, y, width = 200) => {
+            doc.fontSize(10)
+               .fillColor('#374151')
+               .text(label, x, y)
+               .fontSize(12)
+               .fillColor('#1f2937')
+               .text(value || 'Not specified', x, y + 15, { width: width });
+            return y + 45;
         };
 
-        return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Work Order #${workOrder.job_no}</title>
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #1f2937;
-            margin: 0;
-            padding: 0;
-          }
-          
-          .header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-          }
-          
-          .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
-            font-weight: 700;
-          }
-          
-          .header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 16px;
-          }
-          
-          .content {
-            padding: 0 30px;
-          }
-          
-          .section {
-            margin-bottom: 30px;
-            break-inside: avoid;
-          }
-          
-          .section h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e5e7eb;
-          }
-          
-          .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-          }
-          
-          .info-item {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-          }
-          
-          .info-label {
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-            margin-bottom: 4px;
-          }
-          
-          .info-value {
-            font-size: 16px;
-            color: #1f2937;
-          }
-          
-          .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            color: white;
-            background-color: ${getStatusColor(workOrder.status)};
-          }
-          
-          .description {
-            background: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #10b981;
-            margin-bottom: 20px;
-          }
-          
-          .photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-          }
-          
-          .photo-item {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-          }
-          
-          .photo-placeholder {
-            width: 100%;
-            height: 150px;
-            background: #e5e7eb;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          
-          .note-item, .status-item {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid #8b5cf6;
-          }
-          
-          .note-header, .status-header {
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-            margin-bottom: 8px;
-          }
-          
-          .note-content, .status-content {
-            color: #1f2937;
-            line-height: 1.5;
-          }
-          
-          .footer {
-            margin-top: 40px;
-            padding: 20px 30px;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
-          }
-          
-          @media print {
-            body { margin: 0; }
-            .section { page-break-inside: avoid; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>Work Order #${workOrder.job_no}</h1>
-          <p>Generated on ${formatDate(new Date())}</p>
-        </div>
+        let currentY = 50;
+
+        // Header with blue background
+        doc.rect(0, 0, doc.page.width, 120)
+           .fillColor('#1e40af')
+           .fill();
         
-        <div class="content">
-          <div class="section">
-            <h2>Work Order Details</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Status</div>
-                <div class="info-value">
-                  <span class="status-badge">${workOrder.status}</span>
-                </div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Work Order Type</div>
-                <div class="info-value">${workOrder.work_order_type || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Created Date</div>
-                <div class="info-value">${formatDate(workOrder.createdAt)}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Last Updated</div>
-                <div class="info-value">${formatDate(workOrder.updatedAt)}</div>
-              </div>
-            </div>
+        doc.fillColor('white')
+           .fontSize(24)
+           .text(`Work Order #${workOrder.job_no}`, 50, 30);
+        
+        doc.fontSize(12)
+           .text(`Generated on ${formatDate(new Date())}`, 50, 65);
+        
+        currentY = 140;
+
+        // Work Order Details Section
+        currentY = addSection('Work Order Details', currentY);
+        
+        let nextY = addInfoItem('Status', workOrder.status, 50, currentY);
+        addInfoItem('Work Order Type', workOrder.work_order_type, 300, currentY);
+        currentY = Math.max(nextY, currentY + 45);
+        
+        nextY = addInfoItem('Created Date', formatDate(workOrder.createdAt), 50, currentY);
+        addInfoItem('Last Updated', formatDate(workOrder.updatedAt), 300, currentY);
+        currentY = Math.max(nextY, currentY + 45);
+        
+        nextY = addInfoItem('PO Number', workOrder.po_number, 50, currentY);
+        addInfoItem('Date', formatDate(workOrder.date), 300, currentY);
+        currentY = Math.max(nextY, currentY + 45);
+
+        // Property Information Section
+        currentY += 20;
+        if (currentY > 700) { // Start new page if needed
+            doc.addPage();
+            currentY = 50;
+        }
+        currentY = addSection('Property Information', currentY);
+        
+        nextY = addInfoItem('Property Name', workOrder.property_name, 50, currentY);
+        currentY = nextY;
+        
+        nextY = addInfoItem('Property Address', workOrder.property_address, 50, currentY, 400);
+        currentY = nextY;
+        
+        nextY = addInfoItem('Property Phone', workOrder.property_phone, 50, currentY);
+        currentY = nextY;
+
+        // Supplier Information Section
+        currentY += 20;
+        if (currentY > 650) { // Start new page if needed
+            doc.addPage();
+            currentY = 50;
+        }
+        currentY = addSection('Supplier Information', currentY);
+        
+        nextY = addInfoItem('Supplier Name', workOrder.supplier_name, 50, currentY);
+        addInfoItem('Supplier Phone', workOrder.supplier_phone, 300, currentY);
+        currentY = Math.max(nextY, currentY + 45);
+        
+        nextY = addInfoItem('Supplier Email', workOrder.supplier_email, 50, currentY, 400);
+        currentY = nextY;
+
+        // Authorization Section
+        currentY += 20;
+        if (currentY > 650) { // Start new page if needed
+            doc.addPage();
+            currentY = 50;
+        }
+        currentY = addSection('Authorization', currentY);
+        
+        nextY = addInfoItem('Authorized By', workOrder.authorized_by, 50, currentY);
+        addInfoItem('Authorized Contact', workOrder.authorized_contact, 300, currentY);
+        currentY = Math.max(nextY, currentY + 45);
+        
+        nextY = addInfoItem('Authorized Email', workOrder.authorized_email, 50, currentY, 400);
+        currentY = nextY;
+
+        // Work Description Section
+        currentY += 20;
+        if (currentY > 650) { // Start new page if needed
+            doc.addPage();
+            currentY = 50;
+        }
+        currentY = addSection('Work Description', currentY);
+        
+        // Add background box for description
+        doc.rect(50, currentY, 500, 60)
+           .fillColor('#f9fafb')
+           .fill();
+           
+        doc.fontSize(12)
+           .fillColor('#1f2937')
+           .text(workOrder.description || 'No description provided.', 60, currentY + 10, { 
+               width: 480,
+               align: 'left'
+           });
+        
+        // Calculate height needed for description
+        const descriptionHeight = doc.heightOfString(workOrder.description || 'No description provided.', { width: 480 });
+        currentY += Math.max(60, descriptionHeight + 20);
+
+        // Photos Section
+        if (workOrder.photos && workOrder.photos.length > 0) {
+            currentY += 20;
+            if (currentY > 650) { // Start new page if needed
+                doc.addPage();
+                currentY = 50;
+            }
+            currentY = addSection(`Photos (${workOrder.photos.length})`, currentY);
             
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">PO Number</div>
-                <div class="info-value">${workOrder.po_number || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Date</div>
-                <div class="info-value">${formatDate(workOrder.date)}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <h2>Property Information</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Property Name</div>
-                <div class="info-value">${workOrder.property_name || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Property Address</div>
-                <div class="info-value">${workOrder.property_address || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Property Phone</div>
-                <div class="info-value">${workOrder.property_phone || 'Not specified'}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <h2>Supplier Information</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Supplier Name</div>
-                <div class="info-value">${workOrder.supplier_name || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Supplier Phone</div>
-                <div class="info-value">${workOrder.supplier_phone || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Supplier Email</div>
-                <div class="info-value">${workOrder.supplier_email || 'Not specified'}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <h2>Authorization</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Authorized By</div>
-                <div class="info-value">${workOrder.authorized_by || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Authorized Contact</div>
-                <div class="info-value">${workOrder.authorized_contact || 'Not specified'}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Authorized Email</div>
-                <div class="info-value">${workOrder.authorized_email || 'Not specified'}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <h2>Work Description</h2>
-            <div class="description">
-              ${workOrder.description || 'No description provided.'}
-            </div>
-          </div>
-          
-          ${workOrder.photos && workOrder.photos.length > 0 ? `
-          <div class="section">
-            <h2>Photos (${workOrder.photos.length})</h2>
-            <div class="photos-grid">
-              ${workOrder.photos.map(photo => `
-                <div class="photo-item">
-                  <div class="photo-placeholder">
-                    📷 Photo Available
-                  </div>
-                  <div style="font-size: 12px; color: #6b7280;">
-                    ${photo.description || 'No description'}
-                  </div>
-                  <div style="font-size: 11px; color: #9ca3af;">
-                    ${formatDate(photo.createdAt)}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ` : ''}
-          
-          ${workOrder.notes && workOrder.notes.length > 0 ? `
-          <div class="section">
-            <h2>Notes & Comments (${workOrder.notes.length})</h2>
-            ${workOrder.notes.map(note => `
-              <div class="note-item">
-                <div class="note-header">
-                  Note • ${formatDate(note.createdAt)}
-                </div>
-                <div class="note-content">${note.content}</div>
-              </div>
-            `).join('')}
-          </div>
-          ` : ''}
-          
-          ${workOrder.statusUpdates && workOrder.statusUpdates.length > 0 ? `
-          <div class="section">
-            <h2>Status History (${workOrder.statusUpdates.length})</h2>
-            ${workOrder.statusUpdates.map(update => `
-              <div class="status-item">
-                <div class="status-header">
-                  Status changed to "${update.new_status}" • ${formatDate(update.createdAt)}
-                </div>
-                ${update.notes ? `<div class="status-content">${update.notes}</div>` : ''}
-              </div>
-            `).join('')}
-          </div>
-          ` : ''}
-        </div>
+            workOrder.photos.forEach((photo, index) => {
+                if (currentY > 680) { // Start new page if needed
+                    doc.addPage();
+                    currentY = 50;
+                }
+                
+                // Photo box
+                doc.rect(50, currentY, 500, 80)
+                   .fillColor('#f9fafb')
+                   .fill();
+                
+                doc.fontSize(11)
+                   .fillColor('#374151')
+                   .text(`📷 Photo ${index + 1}`, 60, currentY + 10);
+                
+                doc.fontSize(10)
+                   .fillColor('#6b7280')
+                   .text(photo.description || 'No description', 60, currentY + 30);
+                
+                doc.fontSize(9)
+                   .fillColor('#9ca3af')
+                   .text(formatDate(photo.createdAt), 60, currentY + 50);
+                
+                currentY += 90;
+            });
+        }
+
+        // Notes Section
+        if (workOrder.notes && workOrder.notes.length > 0) {
+            currentY += 20;
+            if (currentY > 650) { // Start new page if needed
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            currentY = addSection(`Notes & Comments (${workOrder.notes.length})`, currentY);
+            
+            workOrder.notes.forEach((note, index) => {
+                const noteHeight = Math.max(60, doc.heightOfString(note.content, { width: 480 }) + 40);
+                
+                if (currentY + noteHeight > 700) { // Start new page if needed
+                    doc.addPage();
+                    currentY = 50;
+                }
+                
+                // Note box
+                doc.rect(50, currentY, 500, noteHeight)
+                   .fillColor('#f9fafb')
+                   .fill();
+                
+                doc.fontSize(11)
+                   .fillColor('#374151')
+                   .text(`Note ${index + 1} • ${formatDate(note.createdAt)}`, 60, currentY + 10);
+                
+                doc.fontSize(10)
+                   .fillColor('#1f2937')
+                   .text(note.content, 60, currentY + 30, { width: 480 });
+                
+                currentY += noteHeight + 10;
+            });
+        }
+
+        // Status Updates Section
+        if (workOrder.statusUpdates && workOrder.statusUpdates.length > 0) {
+            currentY += 20;
+            if (currentY > 650) { // Start new page if needed
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            currentY = addSection(`Status History (${workOrder.statusUpdates.length})`, currentY);
+            
+            workOrder.statusUpdates.forEach((update, index) => {
+                const updateText = update.notes || '';
+                const updateHeight = Math.max(50, doc.heightOfString(updateText, { width: 480 }) + 40);
+                
+                if (currentY + updateHeight > 700) { // Start new page if needed
+                    doc.addPage();
+                    currentY = 50;
+                }
+                
+                // Status box
+                doc.rect(50, currentY, 500, updateHeight)
+                   .fillColor('#f9fafb')
+                   .fill();
+                
+                doc.fontSize(11)
+                   .fillColor('#374151')
+                   .text(`Status changed to "${update.new_status}" • ${formatDate(update.createdAt)}`, 60, currentY + 10);
+                
+                if (update.notes) {
+                    doc.fontSize(10)
+                       .fillColor('#1f2937')
+                       .text(update.notes, 60, currentY + 30, { width: 480 });
+                }
+                
+                currentY += updateHeight + 10;
+            });
+        }
+
+        // Footer
+        if (currentY > 650) { // Start new page for footer if needed
+            doc.addPage();
+            currentY = 50;
+        }
         
-        <div class="footer">
-          <p>VisionWest Work Order Management System</p>
-          <p>This document contains confidential information and is intended for authorized personnel only.</p>
-        </div>
-      </body>
-      </html>
-    `;
+        const footerY = doc.page.height - 80;
+        doc.rect(0, footerY - 20, doc.page.width, 100)
+           .fillColor('#f9fafb')
+           .fill();
+           
+        doc.fontSize(10)
+           .fillColor('#6b7280')
+           .text('VisionWest Work Order Management System', 50, footerY, { align: 'center', width: 500 })
+           .text('This document contains confidential information and is intended for authorized personnel only.', 50, footerY + 15, { align: 'center', width: 500 });
     }
 }
 
