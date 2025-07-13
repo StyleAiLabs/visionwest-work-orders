@@ -1,7 +1,41 @@
 const PDFDocument = require('pdfkit');
+const axios = require('axios');
+const sharp = require('sharp');
 const db = require('../models');
 
 class PDFService {
+    static async downloadAndResizeImage(imageUrl, maxWidth = 150, maxHeight = 150) {
+        try {
+            console.log('Downloading image:', imageUrl);
+            
+            // Download image
+            const response = await axios({
+                method: 'GET',
+                url: imageUrl,
+                responseType: 'arraybuffer',
+                timeout: 10000, // 10 second timeout
+                headers: {
+                    'User-Agent': 'VisionWest-PDF-Generator/1.0'
+                }
+            });
+
+            // Resize image to thumbnail
+            const resizedImage = await sharp(response.data)
+                .resize(maxWidth, maxHeight, {
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .jpeg({ quality: 80 })
+                .toBuffer();
+
+            console.log('Image processed successfully');
+            return resizedImage;
+        } catch (error) {
+            console.error('Error processing image:', error.message);
+            return null;
+        }
+    }
+
     static async generateWorkOrderPDF(workOrderId) {
         try {
             console.log(`Generating PDF for work order ID: ${workOrderId}`);
@@ -41,20 +75,18 @@ class PDFService {
 
             // Create a buffer to store the PDF
             const chunks = [];
-            doc.on('data', chunk => chunks.push(chunk));
-
-            // Return a promise that resolves when the PDF is complete
-            return new Promise((resolve, reject) => {
+            doc.on('data', chunk => chunks.push(chunk));            // Return a promise that resolves when the PDF is complete
+            return new Promise(async (resolve, reject) => {
                 doc.on('end', () => {
                     const pdfBuffer = Buffer.concat(chunks);
                     console.log('PDF generated successfully');
                     resolve(pdfBuffer);
                 });
-
+                
                 doc.on('error', reject);
-
+                
                 try {
-                    this.generatePDFContent(doc, workOrder);
+                    await this.generatePDFContent(doc, workOrder);
                     doc.end();
                 } catch (error) {
                     reject(error);
@@ -66,7 +98,7 @@ class PDFService {
         }
     }
 
-    static generatePDFContent(doc, workOrder) {
+    static async generatePDFContent(doc, workOrder) {
         const formatDate = (date) => {
             return new Date(date).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -199,9 +231,7 @@ class PDFService {
 
         // Calculate height needed for description
         const descriptionHeight = doc.heightOfString(workOrder.description || 'No description provided.', { width: 480 });
-        currentY += Math.max(60, descriptionHeight + 20);
-
-        // Photos Section
+        currentY += Math.max(60, descriptionHeight + 20);        // Photos Section
         if (workOrder.photos && workOrder.photos.length > 0) {
             currentY += 20;
             if (currentY > 650) { // Start new page if needed
@@ -209,32 +239,130 @@ class PDFService {
                 currentY = 50;
             }
             currentY = addSection(`Photos (${workOrder.photos.length})`, currentY);
-
-            workOrder.photos.forEach((photo, index) => {
-                if (currentY > 680) { // Start new page if needed
+            
+            for (let i = 0; i < workOrder.photos.length; i++) {
+                const photo = workOrder.photos[i];
+                
+                // Calculate required height (thumbnail + text)
+                const requiredHeight = 180; // 150px for thumbnail + 30px for text
+                
+                if (currentY + requiredHeight > 700) { // Start new page if needed
                     doc.addPage();
                     currentY = 50;
                 }
-
-                // Photo box
-                doc.rect(50, currentY, 500, 80)
-                    .fillColor('#f9fafb')
-                    .fill();
-
-                doc.fontSize(11)
-                    .fillColor('#374151')
-                    .text(`📷 Photo ${index + 1}`, 60, currentY + 10);
-
-                doc.fontSize(10)
-                    .fillColor('#6b7280')
-                    .text(photo.description || 'No description', 60, currentY + 30);
-
-                doc.fontSize(9)
-                    .fillColor('#9ca3af')
-                    .text(formatDate(photo.createdAt), 60, currentY + 50);
-
-                currentY += 90;
-            });
+                
+                // Photo container box
+                doc.rect(50, currentY, 500, requiredHeight)
+                   .fillColor('#f9fafb')
+                   .fill();
+                
+                try {
+                    // Try to download and embed the actual image
+                    let imageBuffer = null;
+                    if (photo.url || photo.image_url || photo.imageUrl) {
+                        const imageUrl = photo.url || photo.image_url || photo.imageUrl;
+                        imageBuffer = await this.downloadAndResizeImage(imageUrl, 120, 120);
+                    }
+                    
+                    if (imageBuffer) {
+                        // Embed actual image thumbnail
+                        doc.image(imageBuffer, 70, currentY + 20, {
+                            width: 120,
+                            height: 120,
+                            fit: [120, 120],
+                            align: 'center',
+                            valign: 'center'
+                        });
+                        
+                        // Image info text beside the thumbnail
+                        doc.fontSize(11)
+                           .fillColor('#374151')
+                           .text(`📷 Photo ${i + 1}`, 210, currentY + 20);
+                        
+                        doc.fontSize(10)
+                           .fillColor('#6b7280')
+                           .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
+                        
+                        doc.fontSize(9)
+                           .fillColor('#9ca3af')
+                           .text(formatDate(photo.createdAt), 210, currentY + 80);
+                           
+                        // Image dimensions/file info if available
+                        if (photo.file_size || photo.fileSize) {
+                            const fileSize = photo.file_size || photo.fileSize;
+                            doc.fontSize(8)
+                               .fillColor('#9ca3af')
+                               .text(`File size: ${Math.round(fileSize / 1024)} KB`, 210, currentY + 100);
+                        }
+                        
+                    } else {
+                        // Fallback to placeholder box if image couldn't be loaded
+                        doc.rect(70, currentY + 20, 120, 120)
+                           .fillColor('#e5e7eb')
+                           .fill();
+                        
+                        // Placeholder icon and text
+                        doc.fontSize(24)
+                           .fillColor('#9ca3af')
+                           .text('📷', 125, currentY + 65, { align: 'center' });
+                        
+                        doc.fontSize(8)
+                           .fillColor('#6b7280')
+                           .text('Image not\navailable', 95, currentY + 95, { align: 'center', width: 70 });
+                        
+                        // Photo info text beside the placeholder
+                        doc.fontSize(11)
+                           .fillColor('#374151')
+                           .text(`📷 Photo ${i + 1}`, 210, currentY + 20);
+                        
+                        doc.fontSize(10)
+                           .fillColor('#6b7280')
+                           .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
+                        
+                        doc.fontSize(9)
+                           .fillColor('#9ca3af')
+                           .text(formatDate(photo.createdAt), 210, currentY + 80);
+                        
+                        // Show image URL if available
+                        if (photo.url || photo.image_url || photo.imageUrl) {
+                            const imageUrl = photo.url || photo.image_url || photo.imageUrl;
+                            doc.fontSize(8)
+                               .fillColor('#9ca3af')
+                               .text(`URL: ${imageUrl.substring(0, 60)}${imageUrl.length > 60 ? '...' : ''}`, 210, currentY + 100, { width: 280 });
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error processing photo ${i + 1}:`, error);
+                    
+                    // Error fallback - show placeholder
+                    doc.rect(70, currentY + 20, 120, 120)
+                       .fillColor('#fef2f2')
+                       .fill();
+                    
+                    doc.fontSize(24)
+                       .fillColor('#ef4444')
+                       .text('⚠️', 125, currentY + 65, { align: 'center' });
+                    
+                    doc.fontSize(8)
+                       .fillColor('#dc2626')
+                       .text('Error loading\nimage', 95, currentY + 95, { align: 'center', width: 70 });
+                    
+                    // Photo info text
+                    doc.fontSize(11)
+                       .fillColor('#374151')
+                       .text(`📷 Photo ${i + 1} (Error)`, 210, currentY + 20);
+                    
+                    doc.fontSize(10)
+                       .fillColor('#6b7280')
+                       .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
+                    
+                    doc.fontSize(9)
+                       .fillColor('#9ca3af')
+                       .text(formatDate(photo.createdAt), 210, currentY + 80);
+                }
+                
+                currentY += requiredHeight + 10;
+            }
         }
 
         // Notes Section
