@@ -4,26 +4,27 @@ const { Op } = require('sequelize');
 
 class PDFService {
     static async generateWorkOrderPDF(workOrderId) {
+        let browser = null;
         try {
+            console.log(`Generating PDF for work order ID: ${workOrderId}`);
+            
             // Fetch all work order data with related tables
-            const workOrder = await db.WorkOrder.findByPk(workOrderId, {
+            const workOrder = await db.workOrder.findByPk(workOrderId, {
                 include: [
                     {
-                        model: db.Photo,
+                        model: db.photo,
                         as: 'photos',
                         required: false
                     },
                     {
-                        model: db.WorkOrderNote,
+                        model: db.workOrderNote,
                         as: 'notes',
-                        required: false,
-                        order: [['createdAt', 'ASC']]
+                        required: false
                     },
                     {
-                        model: db.StatusUpdate,
+                        model: db.statusUpdate,
                         as: 'statusUpdates',
-                        required: false,
-                        order: [['createdAt', 'ASC']]
+                        required: false
                     }
                 ]
             });
@@ -32,35 +33,64 @@ class PDFService {
                 throw new Error(`Work order with ID ${workOrderId} not found`);
             }
 
+            console.log(`Found work order: ${workOrder.job_no}`);
+
             // Generate HTML content for PDF
             const htmlContent = this.generateHTML(workOrder);
+            console.log('HTML content generated successfully');
 
-            // Create PDF using Puppeteer
-            const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
+            // Create PDF using Puppeteer with better error handling
+            try {
+                browser = await puppeteer.launch({
+                    headless: true,
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process'
+                    ]
+                });
+                console.log('Puppeteer browser launched successfully');
 
-            const page = await browser.newPage();
-            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+                const page = await browser.newPage();
+                await page.setContent(htmlContent, { 
+                    waitUntil: 'networkidle0',
+                    timeout: 30000 
+                });
+                console.log('HTML content loaded into page');
 
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: {
-                    top: '20mm',
-                    right: '15mm',
-                    bottom: '20mm',
-                    left: '15mm'
-                }
-            });
+                const pdfBuffer = await page.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: {
+                        top: '20mm',
+                        right: '15mm',
+                        bottom: '20mm',
+                        left: '15mm'
+                    }
+                });
+                console.log('PDF generated successfully');
 
-            await browser.close();
-
-            return pdfBuffer;
+                return pdfBuffer;
+            } catch (puppeteerError) {
+                console.error('Puppeteer error:', puppeteerError);
+                throw new Error(`PDF generation failed: ${puppeteerError.message}`);
+            }
         } catch (error) {
             console.error('Error generating PDF:', error);
             throw error;
+        } finally {
+            if (browser) {
+                try {
+                    await browser.close();
+                    console.log('Browser closed successfully');
+                } catch (closeError) {
+                    console.error('Error closing browser:', closeError);
+                }
+            }
         }
     }
 
@@ -98,7 +128,7 @@ class PDFService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Work Order #${workOrder.id}</title>
+        <title>Work Order #${workOrder.job_no}</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -254,7 +284,7 @@ class PDFService {
       </head>
       <body>
         <div class="header">
-          <h1>Work Order #${workOrder.id}</h1>
+          <h1>Work Order #${workOrder.job_no}</h1>
           <p>Generated on ${formatDate(new Date())}</p>
         </div>
         
@@ -269,8 +299,8 @@ class PDFService {
                 </div>
               </div>
               <div class="info-item">
-                <div class="info-label">Priority</div>
-                <div class="info-value">${workOrder.priority || 'Not specified'}</div>
+                <div class="info-label">Work Order Type</div>
+                <div class="info-value">${workOrder.work_order_type || 'Not specified'}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Created Date</div>
@@ -282,38 +312,68 @@ class PDFService {
               </div>
             </div>
             
-            ${workOrder.scheduledDate ? `
             <div class="info-grid">
               <div class="info-item">
-                <div class="info-label">Scheduled Date</div>
-                <div class="info-value">${formatDate(workOrder.scheduledDate)}</div>
+                <div class="info-label">PO Number</div>
+                <div class="info-value">${workOrder.po_number || 'Not specified'}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Estimated Cost</div>
-                <div class="info-value">${formatCurrency(workOrder.estimatedCost)}</div>
+                <div class="info-label">Date</div>
+                <div class="info-value">${formatDate(workOrder.date)}</div>
               </div>
             </div>
-            ` : ''}
           </div>
           
           <div class="section">
             <h2>Property Information</h2>
             <div class="info-grid">
               <div class="info-item">
+                <div class="info-label">Property Name</div>
+                <div class="info-value">${workOrder.property_name || 'Not specified'}</div>
+              </div>
+              <div class="info-item">
                 <div class="info-label">Property Address</div>
-                <div class="info-value">${workOrder.propertyAddress || 'Not specified'}</div>
+                <div class="info-value">${workOrder.property_address || 'Not specified'}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Client Name</div>
-                <div class="info-value">${workOrder.clientName || 'Not specified'}</div>
+                <div class="info-label">Property Phone</div>
+                <div class="info-value">${workOrder.property_phone || 'Not specified'}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Supplier Information</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Supplier Name</div>
+                <div class="info-value">${workOrder.supplier_name || 'Not specified'}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Contact Phone</div>
-                <div class="info-value">${workOrder.contactPhone || 'Not specified'}</div>
+                <div class="info-label">Supplier Phone</div>
+                <div class="info-value">${workOrder.supplier_phone || 'Not specified'}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Contact Email</div>
-                <div class="info-value">${workOrder.contactEmail || 'Not specified'}</div>
+                <div class="info-label">Supplier Email</div>
+                <div class="info-value">${workOrder.supplier_email || 'Not specified'}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Authorization</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Authorized By</div>
+                <div class="info-value">${workOrder.authorized_by || 'Not specified'}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Authorized Contact</div>
+                <div class="info-value">${workOrder.authorized_contact || 'Not specified'}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Authorized Email</div>
+                <div class="info-value">${workOrder.authorized_email || 'Not specified'}</div>
               </div>
             </div>
           </div>
@@ -352,7 +412,7 @@ class PDFService {
             ${workOrder.notes.map(note => `
               <div class="note-item">
                 <div class="note-header">
-                  Note from ${note.authorName || 'Unknown'} • ${formatDate(note.createdAt)}
+                  Note • ${formatDate(note.createdAt)}
                 </div>
                 <div class="note-content">${note.content}</div>
               </div>
@@ -366,7 +426,7 @@ class PDFService {
             ${workOrder.statusUpdates.map(update => `
               <div class="status-item">
                 <div class="status-header">
-                  Status changed to "${update.newStatus}" • ${formatDate(update.createdAt)}
+                  Status changed to "${update.new_status}" • ${formatDate(update.createdAt)}
                 </div>
                 ${update.notes ? `<div class="status-content">${update.notes}</div>` : ''}
               </div>
