@@ -10,6 +10,7 @@ router.use(authMiddleware.verifyToken);
 router.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSummary);
 
 // Routes accessible to all authenticated users
+router.get('/authorized-persons', authMiddleware.isAnyValidRole, workOrderController.getAuthorizedPersons);
 router.get('/', authMiddleware.isAnyValidRole, workOrderController.getAllWorkOrders);
 router.get('/:id/notes', authMiddleware.isAnyValidRole, workOrderController.getWorkOrderNotes);
 router.get('/:id', authMiddleware.isAnyValidRole, workOrderController.getWorkOrderById);

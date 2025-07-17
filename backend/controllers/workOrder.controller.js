@@ -121,10 +121,58 @@ exports.getSummary = async (req, res) => {
     }
 };
 
+// Get unique authorized persons for filtering
+exports.getAuthorizedPersons = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+
+        let whereClause = {};
+
+        // Apply same role-based filtering as getAllWorkOrders for consistency
+        if (userRole === 'client') {
+            const user = await User.findByPk(userId);
+            if (user) {
+                whereClause.authorized_email = user.email;
+            } else {
+                whereClause.id = -1;
+            }
+        } else if (userRole === 'client_admin') {
+            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
+        }
+
+        const authorizedPersons = await WorkOrder.findAll({
+            attributes: ['authorized_email'],
+            where: {
+                ...whereClause,
+                authorized_email: { [Op.ne]: null } // Only get non-null authorized emails
+            },
+            group: ['authorized_email'],
+            order: [['authorized_email', 'ASC']]
+        });
+
+        const uniquePersons = authorizedPersons
+            .map(wo => wo.authorized_email)
+            .filter(email => email && email.trim() !== ''); // Filter out empty emails
+
+        return res.status(200).json({
+            success: true,
+            data: uniquePersons
+        });
+
+    } catch (error) {
+        console.error('Error fetching authorized persons:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch authorized persons'
+        });
+    }
+};
+
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search, page = 1, limit = 5 } = req.query;
+        const { status, date, sort, search, authorized_person, page = 1, limit = 5 } = req.query;
         const userId = req.userId;
         const userRole = req.userRole;
 
@@ -178,6 +226,11 @@ exports.getAllWorkOrders = async (req, res) => {
                 { description: { [Op.iLike]: `%${search}%` } },
                 { work_description: { [Op.iLike]: `%${search}%` } } // Include work description in search
             ];
+        }
+
+        // Filter by authorized person
+        if (authorized_person && authorized_person !== 'all') {
+            whereClause.authorized_email = authorized_person;
         }
 
         const offset = (page - 1) * limit;

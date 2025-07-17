@@ -6,6 +6,7 @@ export const workOrderService = {
             const params = new URLSearchParams();
             if (filters.status) params.append('status', filters.status);
             if (filters.search) params.append('search', filters.search);
+            if (filters.authorized_person) params.append('authorized_person', filters.authorized_person);
             if (filters.sortBy) params.append('sortBy', filters.sortBy);
             if (filters.page) params.append('page', filters.page);
             if (filters.limit) params.append('limit', filters.limit);
@@ -14,6 +15,16 @@ export const workOrderService = {
             return response.data;
         } catch (error) {
             console.error('Error fetching work orders:', error);
+            throw error;
+        }
+    },
+
+    async getAuthorizedPersons() {
+        try {
+            const response = await api.get('/work-orders/authorized-persons');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching authorized persons:', error);
             throw error;
         }
     },

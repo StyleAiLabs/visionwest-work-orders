@@ -4,6 +4,7 @@ import AppHeader from '../components/layout/AppHeader';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import WorkOrderCard from '../components/workOrders/WorkOrderCard';
 import FilterBar from '../components/workOrders/FilterBar';
+import AuthorizedPersonFilter from '../components/workOrders/AuthorizedPersonFilter';
 import SearchBar from '../components/common/SearchBar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { workOrderService } from '../services/workOrderService';
@@ -16,6 +17,7 @@ const WorkOrdersPage = () => {
     const [filters, setFilters] = useState({
         status: '',
         search: '',
+        authorized_person: '',
         page: 1,
         limit: 5
     });
@@ -58,6 +60,10 @@ const WorkOrdersPage = () => {
         setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
     };
 
+    const handleAuthorizedPersonChange = (authorizedPerson) => {
+        setFilters(prev => ({ ...prev, authorized_person: authorizedPerson, page: 1 }));
+    };
+
     const handleWorkOrderClick = (id) => {
         navigate(`/work-orders/${id}`);
     };
@@ -87,6 +93,11 @@ const WorkOrdersPage = () => {
                 <FilterBar
                     activeFilter={filters.status}
                     onFilterChange={handleFilterChange}
+                />
+
+                <AuthorizedPersonFilter
+                    activeFilter={filters.authorized_person}
+                    onFilterChange={handleAuthorizedPersonChange}
                 />
 
                 {isLoading ? (
