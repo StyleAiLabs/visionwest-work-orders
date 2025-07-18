@@ -1,6 +1,15 @@
 const { Sequelize } = require('sequelize');
 const config = require('../config/db.config.js');
 
+console.log('=== SEQUELIZE CONFIG DEBUG ===');
+console.log('Final config being used:');
+console.log('HOST:', config.HOST);
+console.log('USER:', config.USER);
+console.log('PASSWORD:', config.PASSWORD ? '[HIDDEN]' : 'NOT SET');
+console.log('DB:', config.DB);
+console.log('dialect:', config.dialect);
+console.log('===============================');
+
 // Create Sequelize instance
 const sequelize = new Sequelize(
     config.DB,
