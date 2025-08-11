@@ -28,7 +28,7 @@ router.use(verifyToken, isAnyValidRole);
 router.get('/work-order/:workOrderId', photoController.getWorkOrderPhotos);
 
 // Upload photos for a work order
-router.post('/work-order/:workOrderId', upload.array('photos', 5), photoController.uploadPhotos);
+router.post('/work-order/:workOrderId', upload.array('photos', 10), photoController.uploadPhotos);
 
 // Delete a photo
 router.delete('/:id', photoController.deletePhoto);

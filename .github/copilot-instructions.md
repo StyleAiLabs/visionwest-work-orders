@@ -81,7 +81,7 @@ Custom colors defined in `frontend/tailwind.config.js`:
 Photos use multer with S3 storage in `routes/photo.routes.js`:
 ```javascript
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10MB } });
-router.post('/work-order/:workOrderId', upload.array('photos', 5), controller.uploadPhotos);
+router.post('/work-order/:workOrderId', upload.array('photos', 10), controller.uploadPhotos);
 ```
 
 ## Integration Points
