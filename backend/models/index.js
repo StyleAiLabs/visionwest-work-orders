@@ -13,7 +13,7 @@ console.log('===============================');
 // Create Sequelize instance
 const sequelize = new Sequelize(
     config.DB,
-    config.USER, x
+    config.USER,
     config.PASSWORD,
     {
         host: config.HOST,
