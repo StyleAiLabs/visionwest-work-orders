@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import WorkOrdersPage from './pages/WorkOrdersPage';
 import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
+import CreateWorkOrder from './pages/CreateWorkOrder';
 import PhotoUploadPage from './pages/PhotoUploadPage';
 import StatusUpdatePage from './pages/StatusUpdatePage';
 import AlertsPage from './pages/AlertsPage';
@@ -86,6 +87,15 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <WorkOrdersPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/work-orders/create"
+                element={
+                  <ProtectedRoute>
+                    <CreateWorkOrder />
                   </ProtectedRoute>
                 }
               />

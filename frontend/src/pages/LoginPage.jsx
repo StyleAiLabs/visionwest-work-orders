@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import TextField from '../components/common/TextField';
 import Button from '../components/common/Button';
-import visionwestLogo from '../assets/visionwest-logo.png';
+import visionwestLogo from '../assets/visionwest-logo-header.png';
 
 const LoginPage = () => {
     const navigate = useNavigate();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import AppHeader from '../components/layout/AppHeader';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import WorkOrderCard from '../components/workOrders/WorkOrderCard';
@@ -8,9 +9,11 @@ import AuthorizedPersonFilter from '../components/workOrders/AuthorizedPersonFil
 import SearchBar from '../components/common/SearchBar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { workOrderService } from '../services/workOrderService';
+import { useAuth } from '../hooks/useAuth';
 
 const WorkOrdersPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [workOrders, setWorkOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -23,6 +26,9 @@ const WorkOrdersPage = () => {
     });
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+
+    // Check if user is client_admin (tenancy manager)
+    const isClientAdmin = user && user.role === 'client_admin';
 
     useEffect(() => {
         fetchWorkOrders();
@@ -202,6 +208,40 @@ const WorkOrdersPage = () => {
             </div>
 
             <MobileNavigation />
+
+            {/* Floating Action Button (FAB) - Only for client_admin users */}
+            {/* Use Portal to render to dedicated fab-portal container */}
+            {isClientAdmin && !isLoading && createPortal(
+                <button
+                    onClick={() => navigate('/work-orders/create')}
+                    style={{
+                        position: 'absolute',
+                        bottom: '80px',
+                        right: '24px',
+                        width: '56px',
+                        height: '56px',
+                        backgroundColor: '#99ca3f',
+                        color: 'white',
+                        borderRadius: '50%',
+                        border: 'none',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1,
+                        transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7fb834'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#99ca3f'}
+                    aria-label="Create new work order"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '24px', height: '24px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>,
+                document.getElementById('fab-portal')
+            )}
         </div>
     );
 };

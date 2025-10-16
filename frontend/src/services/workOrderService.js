@@ -51,11 +51,6 @@ export const workOrderService = {
 
     async addNote(workOrderId, content) {
         try {
-            // Add console log to see what's being sent
-            console.log('Adding note with:', { workOrderId, content });
-
-            // Try with the correct field name expected by the backend
-            // The backend might be expecting 'note' instead of 'content'
             const response = await api.post(`/work-orders/${workOrderId}/notes`, {
                 note: content,
                 // Make sure other required fields are included
@@ -79,6 +74,16 @@ export const workOrderService = {
             return response.data;
         } catch (error) {
             console.error('Error updating work order status:', error);
+            throw error;
+        }
+    },
+
+    async createWorkOrder(formData) {
+        try {
+            const response = await api.post('/work-orders', formData);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating work order:', error);
             throw error;
         }
     }

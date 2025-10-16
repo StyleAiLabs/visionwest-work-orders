@@ -172,7 +172,7 @@ exports.getAuthorizedPersons = async (req, res) => {
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search, authorized_person, page = 1, limit = 5 } = req.query;
+        const { status, date, sort, search, authorized_person, work_order_type, page = 1, limit = 5 } = req.query;
         const userId = req.userId;
         const userRole = req.userRole;
 
@@ -233,6 +233,11 @@ exports.getAllWorkOrders = async (req, res) => {
             whereClause.authorized_email = authorized_person;
         }
 
+        // Filter by work order type
+        if (work_order_type && work_order_type !== 'all') {
+            whereClause.work_order_type = work_order_type;
+        }
+
         const offset = (page - 1) * limit;
         let orderClause = [['createdAt', 'DESC']];
 
@@ -272,6 +277,7 @@ exports.getAllWorkOrders = async (req, res) => {
                 job_no: workOrder.job_no, // Include both formats for compatibility
                 date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
                 status: workOrder.status,
+                work_order_type: workOrder.work_order_type, // Include work order type
                 supplierName: workOrder.supplier_name,
                 supplier_name: workOrder.supplier_name, // Include both formats
                 propertyName: workOrder.property_name,
@@ -1053,6 +1059,135 @@ exports.getWorkOrderNotes = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'An error occurred while fetching notes.',
+            error: error.message
+        });
+    }
+};
+
+// Create manual work order (for client_admin users only)
+exports.createManualWorkOrder = async (req, res) => {
+    try {
+        const {
+            job_no,
+            date,
+            supplier_name,
+            supplier_phone,
+            supplier_email,
+            property_name,
+            property_address,
+            property_phone,
+            description,
+            po_number,
+            authorized_by,
+            authorized_contact,
+            authorized_email
+        } = req.body;
+
+        console.log('Creating manual work order:', { job_no, supplier_name, property_name });
+
+        // Validate required fields
+        if (!job_no || !supplier_name || !property_name || !description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields. Please provide job number, supplier name, property name, and description.'
+            });
+        }
+
+        // Validate email format if provided
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (supplier_email && !emailRegex.test(supplier_email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format for supplier_email.'
+            });
+        }
+        if (authorized_email && !emailRegex.test(authorized_email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format for authorized_email.'
+            });
+        }
+
+        // Check for duplicate job number
+        const existingWorkOrder = await WorkOrder.findOne({ where: { job_no } });
+        if (existingWorkOrder) {
+            return res.status(400).json({
+                success: false,
+                message: `Work order with job number ${job_no} already exists.`
+            });
+        }
+
+        // Create work order with work_order_type='manual'
+        const workOrder = await WorkOrder.create({
+            job_no,
+            date: date || new Date(),
+            status: 'pending',
+            work_order_type: 'manual',
+            supplier_name,
+            supplier_phone,
+            supplier_email,
+            property_name,
+            property_address,
+            property_phone,
+            description,
+            po_number,
+            authorized_by,
+            authorized_contact,
+            authorized_email,
+            created_by: req.userId // From auth middleware
+        });
+
+        console.log('Manual work order created:', workOrder.id);
+
+        // Get creator info for email notification
+        const creator = await User.findByPk(req.userId, {
+            attributes: ['id', 'full_name', 'email']
+        });
+
+        // Send in-app notifications (reuse existing notification helper)
+        try {
+            await notificationController.createNotification(
+                req.userId,
+                workOrder.id,
+                'work-order',
+                'New Work Order Created (Manual)',
+                `New manual work order created: Job #${workOrder.job_no} by ${creator ? creator.full_name : 'Unknown'}`
+            );
+            console.log('✅ In-app notification created for manual work order');
+        } catch (notificationError) {
+            console.error('Error creating in-app notification:', notificationError);
+            // Don't block work order creation if notification fails
+        }
+
+        // Send email notification asynchronously (non-blocking)
+        setImmediate(async () => {
+            try {
+                const emailService = require('../utils/emailService');
+                await emailService.sendWorkOrderCreatedEmail(workOrder, creator || { full_name: 'Unknown', email: 'unknown@example.com' });
+                console.log('✅ Email notification sent for manual work order');
+            } catch (emailError) {
+                console.error('❌ Failed to send email notification:', emailError);
+                // Email failure doesn't block work order creation
+            }
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Work order created successfully',
+            data: {
+                id: workOrder.id,
+                job_no: workOrder.job_no,
+                status: workOrder.status,
+                work_order_type: workOrder.work_order_type,
+                created_by: workOrder.created_by,
+                createdAt: workOrder.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('Error creating manual work order:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while creating the work order.',
             error: error.message
         });
     }

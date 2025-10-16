@@ -18,8 +18,9 @@ router.get('/:id', authMiddleware.isAnyValidRole, workOrderController.getWorkOrd
 // Status updates - use the specialized middleware for client cancellations
 router.patch('/:id/status', authMiddleware.handleWorkOrderStatusUpdate, workOrderController.updateWorkOrderStatus);
 
-// Routes accessible only to staff and admin
-router.post('/', authMiddleware.isStaffOrAdmin, workOrderController.createWorkOrder);
+// Manual work order creation - client_admin (tenancy managers) only
+// This route must be defined BEFORE the generic POST / route to avoid conflicts
+router.post('/', authMiddleware.isClientAdmin, workOrderController.createManualWorkOrder);
 
 // FIX: Replace undefined updateWorkOrder with a valid controller method
 // Option 1: If you have a partial update endpoint, use patchWorkOrder

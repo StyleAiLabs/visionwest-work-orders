@@ -143,6 +143,22 @@
       visibility: hidden;
       transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
     }
+
+    /* FAB Portal - Separate from transform context */
+    #fab-portal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      transform: none !important;
+    }
+
+    #fab-portal > * {
+      pointer-events: auto;
+    }
   </style>
 </head>
 
@@ -156,6 +172,7 @@
   </div>
 
   <div id="root"></div>
+  <div id="fab-portal"></div>
   <script type="module" src="/src/main.jsx"></script>
 
   <script>
