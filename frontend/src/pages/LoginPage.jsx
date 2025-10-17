@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import TextField from '../components/common/TextField';
 import Button from '../components/common/Button';
@@ -7,11 +7,15 @@ import visionwestLogo from '../assets/visionwest-logo-header.png';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Get the redirect path from location state, default to dashboard
+    const from = location.state?.from?.pathname || '/dashboard';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,7 +24,7 @@ const LoginPage = () => {
 
         try {
             await login(email, password);
-            navigate('/dashboard');
+            navigate(from, { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
             setIsLoading(false);

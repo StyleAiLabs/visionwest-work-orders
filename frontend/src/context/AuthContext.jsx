@@ -14,7 +14,12 @@ export const AuthProvider = ({ children }) => {
             name: apiUser.full_name || apiUser.name || 'Unknown',
             email: apiUser.email || '',
             role: apiUser.role || 'user',
-            // add other fields as needed
+            client_id: apiUser.client_id,
+            clientId: apiUser.client_id, // Support camelCase
+            client: apiUser.client,
+            full_name: apiUser.full_name,
+            phone_number: apiUser.phone_number,
+            username: apiUser.username
         };
     };
 

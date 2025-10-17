@@ -1,7 +1,26 @@
 import api from './api';
 
+/**
+ * Add X-Client-Context header for admin context switching
+ * @param {Object} config - Axios config object
+ * @param {number|null} clientId - Client ID to switch context to (admin only)
+ * @returns {Object} Config with X-Client-Context header if applicable
+ */
+const addClientContextHeader = (config = {}, clientId = null) => {
+    if (clientId) {
+        return {
+            ...config,
+            headers: {
+                ...config.headers,
+                'X-Client-Context': clientId
+            }
+        };
+    }
+    return config;
+};
+
 export const workOrderService = {
-    async getWorkOrders(filters = {}) {
+    async getWorkOrders(filters = {}, clientId = null) {
         try {
             const params = new URLSearchParams();
             if (filters.status) params.append('status', filters.status);
@@ -11,7 +30,8 @@ export const workOrderService = {
             if (filters.page) params.append('page', filters.page);
             if (filters.limit) params.append('limit', filters.limit);
 
-            const response = await api.get(`/work-orders?${params}`);
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.get(`/work-orders?${params}`, config);
             return response.data;
         } catch (error) {
             console.error('Error fetching work orders:', error);
@@ -29,9 +49,10 @@ export const workOrderService = {
         }
     },
 
-    async getWorkOrderById(id) {
+    async getWorkOrderById(id, clientId = null) {
         try {
-            const response = await api.get(`/work-orders/${id}`);
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.get(`/work-orders/${id}`, config);
             return response.data;
         } catch (error) {
             console.error('Error fetching work order:', error);
@@ -39,9 +60,10 @@ export const workOrderService = {
         }
     },
 
-    async updateStatus(id, status) {
+    async updateStatus(id, status, clientId = null) {
         try {
-            const response = await api.patch(`/work-orders/${id}/status`, { status });
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.patch(`/work-orders/${id}/status`, { status }, config);
             return response.data;
         } catch (error) {
             console.error('Error updating status:', error);
@@ -49,13 +71,14 @@ export const workOrderService = {
         }
     },
 
-    async addNote(workOrderId, content) {
+    async addNote(workOrderId, content, clientId = null) {
         try {
+            const config = addClientContextHeader({}, clientId);
             const response = await api.post(`/work-orders/${workOrderId}/notes`, {
                 note: content,
                 // Make sure other required fields are included
                 work_order_id: workOrderId
-            });
+            }, config);
 
             return response.data;
         } catch (error) {
@@ -65,12 +88,13 @@ export const workOrderService = {
         }
     },
 
-    async updateWorkOrderStatus(id, status, notes = '') {
+    async updateWorkOrderStatus(id, status, notes = '', clientId = null) {
         try {
+            const config = addClientContextHeader({}, clientId);
             const response = await api.patch(`/work-orders/${id}/status`, {
                 status,
                 notes
-            });
+            }, config);
             return response.data;
         } catch (error) {
             console.error('Error updating work order status:', error);
@@ -78,9 +102,10 @@ export const workOrderService = {
         }
     },
 
-    async createWorkOrder(formData) {
+    async createWorkOrder(formData, clientId = null) {
         try {
-            const response = await api.post('/work-orders', formData);
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.post('/work-orders', formData, config);
             return response.data;
         } catch (error) {
             console.error('Error creating work order:', error);

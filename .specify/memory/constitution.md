@@ -230,6 +230,20 @@ While comprehensive test suites are aspirational, the following MUST be manually
 - Commit messages SHOULD follow conventional commits format when possible
 - Pull requests MUST link to feature specification in `/specs/`
 
+### Version Management Before Main Branch Push
+
+Before pushing to the main branch, the following version management steps MUST be completed:
+
+1. **Update Settings Page Version**: Navigate to Settings page (`src/pages/SettingsPage.jsx` or equivalent) and update the version number display
+2. **Add Release Note**: Include a brief release note summarizing the changes being merged (features added, bugs fixed, enhancements made) (`/relse-notes/`)
+3. **Synchronize package.json**: Ensure both `frontend/package.json` and `backend/package.json` reflect the same version number
+4. **Follow Semantic Versioning**:
+   - **MAJOR** (X.0.0): Breaking changes, major feature overhauls
+   - **MINOR** (0.X.0): New features, non-breaking enhancements
+   - **PATCH** (0.0.X): Bug fixes, minor improvements, documentation updates
+
+**Rationale**: Version tracking in the Settings page provides users with visibility into system updates and helps support teams identify which version is deployed. Release notes document change history and facilitate troubleshooting.
+
 ## Governance
 
 ### Amendment Process

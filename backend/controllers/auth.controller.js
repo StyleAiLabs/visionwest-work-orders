@@ -119,9 +119,14 @@ exports.getCurrentUser = async (req, res) => {
         // User is already available from the auth middleware
         const userId = req.userId;
 
-        // Find the user
+        // Find the user with client association
         const user = await User.findByPk(userId, {
-            attributes: { exclude: ['password'] }
+            attributes: { exclude: ['password'] },
+            include: [{
+                model: db.client,
+                as: 'client',
+                attributes: ['id', 'name', 'code', 'status']
+            }]
         });
 
         if (!user) {
@@ -131,9 +136,25 @@ exports.getCurrentUser = async (req, res) => {
             });
         }
 
+        // Format response to match login response structure
+        const userResponse = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            full_name: user.full_name,
+            phone_number: user.phone_number,
+            client_id: user.client_id,
+            client: user.client ? {
+                id: user.client.id,
+                name: user.client.name,
+                code: user.client.code
+            } : null
+        };
+
         return res.status(200).json({
             success: true,
-            user
+            user: userResponse
         });
     } catch (error) {
         console.error('Get current user error:', error);

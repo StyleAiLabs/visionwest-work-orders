@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ClientProvider } from './context/ClientContext';
 import { AlertProvider } from './context/AlertContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -12,12 +13,14 @@ import StatusUpdatePage from './pages/StatusUpdatePage';
 import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import ReleaseNotesPage from './pages/ReleaseNotesPage';
+import AdminPanel from './pages/AdminPanel';
 import { useAuth } from './hooks/useAuth';
 import InstallPrompt from './components/common/InstallPrompt';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -26,7 +29,29 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+// Admin-only route wrapper
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+    </div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -66,12 +91,13 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <AlertProvider>
-        <Router>
-          <InstallPrompt />
-          <div className="app-container">
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
+      <ClientProvider>
+        <AlertProvider>
+          <Router>
+            <InstallPrompt />
+            <div className="app-container">
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
 
               <Route
                 path="/dashboard"
@@ -154,12 +180,22 @@ const App = () => {
                 }
               />
 
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminPanel />
+                  </AdminRoute>
+                }
+              />
+
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
         </Router>
-      </AlertProvider>
+        </AlertProvider>
+      </ClientProvider>
     </AuthProvider>
   );
 };
