@@ -70,14 +70,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [US1] Update getAllWorkOrders controller in backend/controllers/workOrder.controller.js - add client_id filter using req.clientId from middleware
-- [ ] T023 [P] [US1] Update getWorkOrderById controller in backend/controllers/workOrder.controller.js - add client_id validation to prevent cross-client access
-- [ ] T024 [P] [US1] Update createWorkOrder controller in backend/controllers/workOrder.controller.js - automatically assign req.clientId to new work orders
-- [ ] T025 [P] [US1] Update updateWorkOrder controller in backend/controllers/workOrder.controller.js - validate work order belongs to user's client before allowing updates
-- [ ] T026 [P] [US1] Update deleteWorkOrder controller in backend/controllers/workOrder.controller.js - validate work order belongs to user's client before allowing deletion
-- [ ] T027 [US1] Update login endpoint in backend/controllers/auth.controller.js - include client details in response per auth-changes.md contract
-- [ ] T028 [US1] Update register endpoint in backend/controllers/auth.controller.js - require and validate client_id for new users per auth-changes.md contract
-- [ ] T029 [US1] Test user story 1 isolation: Create test users for two clients, verify work order access is properly scoped
+- [X] T022 [P] [US1] Update getAllWorkOrders controller in backend/controllers/workOrder.controller.js - add client_id filter using req.clientId from middleware
+- [X] T023 [P] [US1] Update getWorkOrderById controller in backend/controllers/workOrder.controller.js - add client_id validation to prevent cross-client access
+- [X] T024 [P] [US1] Update createWorkOrder controller in backend/controllers/workOrder.controller.js - automatically assign req.clientId to new work orders
+- [X] T025 [P] [US1] Update updateWorkOrder controller in backend/controllers/workOrder.controller.js - validate work order belongs to user's client before allowing updates
+- [X] T026 [P] [US1] Update deleteWorkOrder controller in backend/controllers/workOrder.controller.js - validate work order belongs to user's client before allowing deletion
+- [X] T027 [US1] Update login endpoint in backend/controllers/auth.controller.js - include client details in response per auth-changes.md contract
+- [X] T028 [US1] Update register endpoint in backend/controllers/auth.controller.js - require and validate client_id for new users per auth-changes.md contract
+- [X] T029 [US1] Test user story 1 isolation: Create test users for two clients, verify work order access is properly scoped
 
 **Checkpoint**: At this point, client data isolation should be fully functional - users can only see their own client's work orders
 

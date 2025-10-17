@@ -570,7 +570,8 @@ exports.createWorkOrder = async (req, res) => {
             authorized_by,
             authorized_contact,
             authorized_email,
-            created_by: req.userId // From auth middleware
+            created_by: req.userId, // From auth middleware
+            client_id: req.clientId // Multi-tenant: Automatically assign client_id
         });
 
         // Create notification for new work order
@@ -788,6 +789,7 @@ exports.addWorkOrderNote = async (req, res) => {
 exports.deleteWorkOrder = async (req, res) => {
     try {
         const { id } = req.params; // Changed from workOrderId to id
+        const clientId = req.clientId;
 
         // Check if work order exists
         const workOrder = await WorkOrder.findByPk(id);
@@ -795,6 +797,16 @@ exports.deleteWorkOrder = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Work order not found'
+            });
+        }
+
+        // Multi-tenant: Validate client ownership before allowing deletion
+        try {
+            clientScoping.validateClientOwnership(workOrder, clientId);
+        } catch (error) {
+            return res.status(error.statusCode || 403).json({
+                success: false,
+                message: error.message
             });
         }
 
@@ -896,6 +908,7 @@ exports.deleteWorkOrder = async (req, res) => {
 exports.updateWorkOrder = async (req, res) => {
     try {
         const { id } = req.params;
+        const clientId = req.clientId;
         const {
             job_no,
             date,
@@ -919,6 +932,16 @@ exports.updateWorkOrder = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Work order not found.'
+            });
+        }
+
+        // Multi-tenant: Validate client ownership before allowing updates
+        try {
+            clientScoping.validateClientOwnership(workOrder, clientId);
+        } catch (error) {
+            return res.status(error.statusCode || 403).json({
+                success: false,
+                message: error.message
             });
         }
 
@@ -1138,7 +1161,8 @@ exports.createManualWorkOrder = async (req, res) => {
             authorized_by,
             authorized_contact,
             authorized_email,
-            created_by: req.userId // From auth middleware
+            created_by: req.userId, // From auth middleware
+            client_id: req.clientId // Multi-tenant: Automatically assign client_id
         });
 
         console.log('Manual work order created:', workOrder.id);
