@@ -127,12 +127,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T050 [P] [US3] Create rollback script in backend/scripts/rollback-migration.js - implements complete rollback per migration.md
+- [X] T050 [P] [US3] Create rollback script in backend/scripts/rollback-migration.js - implements complete rollback per migration.md
 - [ ] T051 [P] [US3] Create migration validation script in backend/scripts/validate-migration.js - runs all validation queries from migration.md
-- [ ] T052 [US3] Document migration procedure in backend/scripts/MIGRATION_GUIDE.md - step-by-step instructions with validation checkpoints
-- [ ] T053 [US3] Verify n8n webhook endpoint excluded from client scoping in backend/routes/workOrder.routes.js - webhook must bypass JWT auth and client scoping per research.md
-- [ ] T054 [US3] Update webhook handler in backend/controllers/workOrder.controller.js - automatically assign Visionwest client_id to webhook-created work orders per client-api.md contract
-- [ ] T055 [US3] Test webhook integration: Send test webhook request, verify work order created with Visionwest client_id, verify Visionwest users can see it
+- [ ] T051T051 [US3] Document migration procedure in backend/scripts/MIGRATION_GUIDE.md - step-by-step instructions with validation checkpoints
+- [X] T053 [US3] Verify n8n webhook endpoint excluded from client scoping in backend/routes/workOrder.routes.js - webhook must bypass JWT auth and client scoping per research.md
+- [X] T054 [US3] Update webhook handler in backend/controllers/workOrder.controller.js - automatically assign Visionwest client_id to webhook-created work orders per client-api.md contract
+- [X] T055 [US3] Test webhook integration: Send test webhook request, verify work order created with Visionwest client_id, verify Visionwest users can see it
 - [ ] T056 [US3] Run complete migration on staging environment: Execute all four phases, run validation script
 - [ ] T057 [US3] Test legacy user login: Verify existing Visionwest user can log in and receives token with clientId claim
 - [ ] T058 [US3] Test legacy work order access: Verify existing Visionwest user sees same work orders as before migration

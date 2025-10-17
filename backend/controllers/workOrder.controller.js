@@ -276,6 +276,7 @@ exports.getAllWorkOrders = async (req, res) => {
                 date: workOrder.date ? formatDate(workOrder.date) : 'N/A',
                 status: workOrder.status,
                 work_order_type: workOrder.work_order_type, // Include work order type
+                client_id: workOrder.client_id, // Multi-tenant: Include client_id
                 supplierName: workOrder.supplier_name,
                 supplier_name: workOrder.supplier_name, // Include both formats
                 propertyName: workOrder.property_name,
@@ -346,6 +347,7 @@ exports.getWorkOrderById = async (req, res) => {
             jobNo: workOrder.job_no || '',
             status: workOrder.status || 'unknown',
             description: workOrder.description || '',
+            client_id: workOrder.client_id, // Multi-tenant: Include client_id
             createdAt: workOrder.createdAt,
             updatedAt: workOrder.updatedAt,
 

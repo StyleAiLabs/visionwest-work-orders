@@ -112,6 +112,21 @@ exports.createWorkOrderFromEmail = async (req, res) => {
 
         console.log(`Creating new work order with job number: ${job_no}`);
 
+        // Multi-tenant: Find Visionwest client for webhook-created work orders
+        // Webhook work orders are always assigned to Visionwest client
+        const Client = db.client;
+        const visionwestClient = await Client.findOne({
+            where: { code: 'VISIONWEST' }
+        });
+
+        if (!visionwestClient) {
+            console.log('Visionwest client not found');
+            return res.status(500).json({
+                success: false,
+                message: 'Visionwest client not found. Please run migrations.'
+            });
+        }
+
         // Create new work order
         const workOrder = await WorkOrder.create({
             job_no,
@@ -129,6 +144,7 @@ exports.createWorkOrderFromEmail = async (req, res) => {
             authorized_contact,
             authorized_email,
             created_by: adminUser.id,
+            client_id: visionwestClient.id, // Multi-tenant: Assign to Visionwest client
             // Optional metadata from email
             work_order_type: 'email', // Mark as coming from email
             metadata: {
@@ -458,6 +474,7 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
                 updatedFields: changedFields
             }
         });
+
 
     } catch (error) {
         console.error('Error updating work order from email:', error);
