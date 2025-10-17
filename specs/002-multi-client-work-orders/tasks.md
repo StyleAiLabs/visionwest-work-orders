@@ -44,19 +44,19 @@
 - [X] T009 Create backfill script: backend/scripts/backfill-visionwest-client.js - assigns all existing users and work_orders to Visionwest client (implements Phase 2 of migration)
 - [X] T010 Run backfill script on local development database
 - [X] T011 Verify Phase 2: Check zero NULL client_id values in users and work_orders tables
-- [ ] T012 Create Phase 3 migration file: backend/migrations/YYYYMMDDHHMMSS-add-multi-client-support-phase3.js - makes client_id NOT NULL, adds composite indexes
-- [ ] T013 Run Phase 3 migration on local development database
-- [ ] T014 Verify Phase 3: Check client_id is NOT NULL, verify composite indexes exist with validation queries from migration.md
+- [X] T012 Create Phase 3 migration file: backend/migrations/YYYYMMDDHHMMSS-add-multi-client-support-phase3.js - makes client_id NOT NULL, adds composite indexes
+- [X] T013 Run Phase 3 migration on local development database
+- [X] T014 Verify Phase 3: Check client_id is NOT NULL, verify composite indexes exist with validation queries from migration.md
 
 ### Core Models and Middleware
 
-- [ ] T015 [P] Create Client Sequelize model in backend/models/Client.js with all attributes, validations, and associations per data-model.md
-- [ ] T016 [P] Update User Sequelize model in backend/models/User.js - add client_id field, belongsTo association, update indexes per data-model.md
-- [ ] T017 [P] Update WorkOrder Sequelize model in backend/models/WorkOrder.js - add client_id field, belongsTo association, update indexes per data-model.md
-- [ ] T018 Create client scoping middleware in backend/middleware/clientScoping.js - implements automatic client_id filtering per auth-changes.md contract
-- [ ] T019 Update authentication middleware in backend/middleware/auth.middleware.js - extend JWT token generation to include clientId claim per auth-changes.md
-- [ ] T020 Update JWT token verification in backend/middleware/auth.middleware.js - extract clientId from token and attach to req.user
-- [ ] T021 Apply client scoping middleware to all work order routes (exclude webhook endpoint) in backend/routes/workOrder.routes.js
+- [X] T015 [P] Create Client Sequelize model in backend/models/Client.js with all attributes, validations, and associations per data-model.md
+- [X] T016 [P] Update User Sequelize model in backend/models/User.js - add client_id field, belongsTo association, update indexes per data-model.md
+- [X] T017 [P] Update WorkOrder Sequelize model in backend/models/WorkOrder.js - add client_id field, belongsTo association, update indexes per data-model.md
+- [X] T018 Create client scoping middleware in backend/middleware/clientScoping.js - implements automatic client_id filtering per auth-changes.md contract
+- [X] T019 Update authentication middleware in backend/middleware/auth.middleware.js - extend JWT token generation to include clientId claim per auth-changes.md
+- [X] T020 Update JWT token verification in backend/middleware/auth.middleware.js - extract clientId from token and attach to req.user
+- [X] T021 Apply client scoping middleware to all work order routes (exclude webhook endpoint) in backend/routes/workOrder.routes.js
 
 **Checkpoint**: Foundation ready - multi-tenant infrastructure in place, all user story implementation can now begin
 
@@ -99,7 +99,7 @@
 - [ ] T035 [P] [US2] Implement updateClient controller method - prevents code modification, allows partial updates per client-api.md
 - [ ] T036 [P] [US2] Implement deleteClient controller method - validates no active users/work orders, implements soft delete (status='archived') per client-api.md
 - [ ] T037 [P] [US2] Implement getClientStats controller method - returns work order counts by status, user counts by role per client-api.md
-- [ ] T038 [US2] Update client scoping middleware in backend/middleware/clientScoping.js - add admin context switching via X-Client-Context header per auth-changes.md
+- [X] T038 [US2] Update client scoping middleware in backend/middleware/clientScoping.js - add admin context switching via X-Client-Context header per auth-changes.md
 - [ ] T039 [US2] Register client routes in backend/app.js or main server file with admin role authorization
 
 ### Frontend Implementation for User Story 2
@@ -134,9 +134,9 @@
 - [X] T054 [US3] Update webhook handler in backend/controllers/workOrder.controller.js - automatically assign Visionwest client_id to webhook-created work orders per client-api.md contract
 - [X] T055 [US3] Test webhook integration: Send test webhook request, verify work order created with Visionwest client_id, verify Visionwest users can see it
 - [ ] T056 [US3] Run complete migration on staging environment: Execute all four phases, run validation script
-- [ ] T057 [US3] Test legacy user login: Verify existing Visionwest user can log in and receives token with clientId claim
-- [ ] T058 [US3] Test legacy work order access: Verify existing Visionwest user sees same work orders as before migration
-- [ ] T059 [US3] Perform data integrity validation: Run all queries from data-model.md "Data Validation Checklist" section
+- [X] T057 [US3] Test legacy user login: Verify existing Visionwest user can log in and receives token with clientId claim
+- [X] T058 [US3] Test legacy work order access: Verify existing Visionwest user sees same work orders as before migration
+- [X] T059 [US3] Perform data integrity validation: Run all queries from data-model.md "Data Validation Checklist" section
 
 **Checkpoint**: At this point, legacy data migration should be complete and validated - all existing Visionwest operations continue seamlessly
 

@@ -19,7 +19,11 @@ module.exports = (sequelize, DataTypes) => {
             validate: {
                 notEmpty: true,
                 isUppercase: true,
-                is: /^[A-Z0-9_]+$/
+                is: /^[A-Z0-9_-]+$/  // Allow hyphen as per spec
+            },
+            set(value) {
+                // Automatically uppercase the code
+                this.setDataValue('code', value ? value.toUpperCase() : value);
             }
         },
         status: {

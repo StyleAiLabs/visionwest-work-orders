@@ -45,6 +45,13 @@ exports.verifyToken = async (req, res, next) => {
             req.clientId = decoded.clientId; // Multi-tenant: extract from JWT
             req.clientCode = decoded.clientCode; // Multi-tenant: extract from JWT
 
+            // Also set req.user object for client scoping middleware
+            req.user = {
+                userId: decoded.id,
+                clientId: decoded.clientId,
+                role: decoded.role
+            };
+
             next();
         } catch (error) {
             console.error('Token verification error:', error);

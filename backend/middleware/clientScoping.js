@@ -16,63 +16,104 @@ const db = require('../models');
  */
 
 /**
- * Add client_id to request context from authenticated user
+ * Add client_id to request context from authenticated user's JWT token
+ * Supports admin context switching via X-Client-Context header
  */
 exports.addClientScope = async (req, res, next) => {
     try {
-        // User ID should be available from auth middleware
-        if (!req.userId) {
+        // Skip for webhook endpoints (they bypass authentication)
+        if (req.path.startsWith('/api/webhook/')) {
+            return next();
+        }
+
+        // Skip for auth endpoints
+        if (req.path.startsWith('/api/auth/')) {
+            return next();
+        }
+
+        // Skip for health check endpoints
+        if (req.path === '/api/health' || req.path === '/') {
+            return next();
+        }
+
+        // Ensure user is authenticated (auth middleware should run before this)
+        if (!req.user || !req.user.userId) {
             return res.status(401).json({
                 success: false,
-                message: 'User not authenticated'
+                message: 'Authentication required',
+                code: 'AUTH_REQUIRED'
             });
         }
 
-        // Fetch user with client_id
-        const user = await db.user.findByPk(req.userId, {
-            attributes: ['id', 'email', 'role', 'client_id'],
-            include: [{
-                model: db.client,
-                as: 'client',
-                attributes: ['id', 'name', 'code', 'status']
-            }]
-        });
-
-        if (!user) {
-            return res.status(404).json({
+        // Ensure user has clientId in JWT token
+        if (!req.user.clientId) {
+            return res.status(401).json({
                 success: false,
-                message: 'User not found'
+                message: 'Authentication token is outdated. Please log in again.',
+                code: 'TOKEN_MISSING_CLIENT_ID'
             });
         }
 
-        if (!user.client) {
-            return res.status(500).json({
-                success: false,
-                message: 'User has no associated client organization'
-            });
-        }
+        // Admin context switching via X-Client-Context header
+        if (req.user.role === 'admin' && req.headers['x-client-context']) {
+            const targetClientId = parseInt(req.headers['x-client-context']);
 
-        // Check if client is active
-        if (user.client.status !== 'active') {
+            // Validate the header value is a number
+            if (isNaN(targetClientId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid X-Client-Context header. Must be a valid client ID.',
+                    code: 'INVALID_CLIENT_CONTEXT_FORMAT'
+                });
+            }
+
+            // Validate target client exists
+            const client = await db.client.findByPk(targetClientId);
+            if (!client) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid client context. Client ID ${targetClientId} does not exist.`,
+                    code: 'INVALID_CLIENT_CONTEXT'
+                });
+            }
+
+            // Attach context-switched client ID
+            req.clientId = targetClientId;
+            req.client = client;
+            req.isAdminSwitchedContext = true; // For audit logging
+            req.adminOriginalClientId = req.user.clientId; // For audit trail
+
+            // Log context switch
+            console.log(`[ADMIN CONTEXT SWITCH] User ${req.user.userId} (from client ${req.user.clientId}) switched to client ${targetClientId}`);
+
+        } else if (req.headers['x-client-context']) {
+            // Non-admin user attempting to use X-Client-Context header
             return res.status(403).json({
                 success: false,
-                message: 'Your organization account is inactive. Please contact support.'
+                message: 'Admin role required for client context switching',
+                code: 'FORBIDDEN_CONTEXT_SWITCH'
             });
+        } else {
+            // Normal user - use client from JWT token
+            req.clientId = req.user.clientId;
+
+            // Optionally fetch client details if needed
+            const client = await db.client.findByPk(req.clientId);
+            if (client) {
+                req.client = client;
+            }
         }
 
-        // Add client context to request
-        req.clientId = user.client_id;
-        req.client = user.client;
-
         // Flag for global admin (can bypass client scoping if needed)
-        req.isGlobalAdmin = user.role === 'admin';
+        req.isGlobalAdmin = req.user.role === 'admin';
 
         next();
     } catch (error) {
         console.error('Client scoping middleware error:', error);
         return res.status(500).json({
             success: false,
-            message: 'An error occurred while processing client context'
+            message: 'An error occurred while processing client context',
+            error: error.message
         });
     }
 };
