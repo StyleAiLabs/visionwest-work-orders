@@ -39,9 +39,11 @@ exports.verifyToken = async (req, res, next) => {
                 });
             }
 
-            // Add user id to request
+            // Add user data to request (including clientId for multi-tenant support)
             req.userId = decoded.id;
             req.userRole = decoded.role;
+            req.clientId = decoded.clientId; // Multi-tenant: extract from JWT
+            req.clientCode = decoded.clientCode; // Multi-tenant: extract from JWT
 
             next();
         } catch (error) {

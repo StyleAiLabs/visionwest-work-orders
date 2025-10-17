@@ -21,6 +21,8 @@ app.use(cors({
         const allowedOrigins = [
             process.env.CORS_ORIGIN,
             'http://localhost:5173',
+            'http://localhost:5174',
+            'http://localhost:5175',
             'https://vision-west.netlify.app', // staging
             'https://prod-wom-visionwest.netlify.app', //production
             'https://visionwest.wom.wpsg.nz' // production

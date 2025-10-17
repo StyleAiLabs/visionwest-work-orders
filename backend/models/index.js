@@ -34,6 +34,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Models
+db.client = require('./client.model.js')(sequelize, Sequelize);
 db.user = require('./user.model.js')(sequelize, Sequelize);
 db.workOrder = require('./workOrder.model.js')(sequelize, Sequelize);
 db.statusUpdate = require('./statusUpdate.model.js')(sequelize, Sequelize);
@@ -43,6 +44,13 @@ db.photo = require('./photo.model.js')(sequelize, Sequelize);
 db.smsNotification = require('./smsNotification.model')(sequelize, Sequelize);
 
 // Define relationships
+// Client relationships
+db.client.hasMany(db.user, { foreignKey: 'client_id', as: 'users' });
+db.user.belongsTo(db.client, { foreignKey: 'client_id', as: 'client' });
+
+db.client.hasMany(db.workOrder, { foreignKey: 'client_id', as: 'workOrders' });
+db.workOrder.belongsTo(db.client, { foreignKey: 'client_id', as: 'client' });
+
 // User to WorkOrder relationship
 db.user.hasMany(db.workOrder, { foreignKey: 'created_by', as: 'createdWorkOrders' });
 db.workOrder.belongsTo(db.user, { foreignKey: 'created_by', as: 'creator' });

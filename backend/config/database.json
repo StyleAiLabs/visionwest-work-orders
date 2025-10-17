@@ -1,0 +1,25 @@
+{
+  "development": {
+    "username": "uhex928pteytg",
+    "password": "bei0w7c1yvnz",
+    "database": "dbahuwojk8viis",
+    "host": "35.213.224.151",
+    "dialect": "postgres",
+    "port": 5432
+  },
+  "test": {
+    "username": "uhex928pteytg",
+    "password": "bei0w7c1yvnz",
+    "database": "dbahuwojk8viis_test",
+    "host": "35.213.224.151",
+    "dialect": "postgres",
+    "port": 5432
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": false
+    }
+  }
+}

@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const workOrderController = require('../controllers/workOrder.controller');
 const authMiddleware = require('../middleware/auth.middleware');
+const clientScoping = require('../middleware/clientScoping');
 
 // Apply auth middleware to all routes
 router.use(authMiddleware.verifyToken);
+
+// Apply client scoping to all routes (adds req.clientId from JWT)
+// This ensures all work order operations are automatically scoped to the user's client
+router.use(clientScoping.addClientScope);
 
 
 router.get('/summary', authMiddleware.isAnyValidRole, workOrderController.getSummary);
@@ -20,7 +25,8 @@ router.patch('/:id/status', authMiddleware.handleWorkOrderStatusUpdate, workOrde
 
 // Manual work order creation - client_admin (tenancy managers) only
 // This route must be defined BEFORE the generic POST / route to avoid conflicts
-router.post('/', authMiddleware.isClientAdmin, workOrderController.createManualWorkOrder);
+// Automatically adds client_id to the work order from JWT
+router.post('/', authMiddleware.isClientAdmin, clientScoping.enforceClientOnCreate, workOrderController.createManualWorkOrder);
 
 // FIX: Replace undefined updateWorkOrder with a valid controller method
 // Option 1: If you have a partial update endpoint, use patchWorkOrder

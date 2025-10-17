@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         job_no: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true
+            // Note: unique constraint is client-scoped in database (client_id, job_no)
         },
         date: {
             type: DataTypes.DATEONLY,
@@ -82,11 +82,12 @@ module.exports = (sequelize, DataTypes) => {
                 key: 'id'
             }
         },
+        // Multi-tenant support: associate work order with a client organization
         client_id: {
             type: DataTypes.INTEGER,
-            allowNull: true,
+            allowNull: false,
             references: {
-                model: 'users',
+                model: 'clients',
                 key: 'id'
             }
         },
@@ -102,6 +103,9 @@ module.exports = (sequelize, DataTypes) => {
         }
     }, {
         timestamps: true,
+        // Note: work_orders table uses camelCase for timestamps
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
     });
 
     return WorkOrder;

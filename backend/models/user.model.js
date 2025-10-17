@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         email: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
+            // Note: unique constraint is client-scoped in database (client_id, email)
             validate: {
                 isEmail: true
             }
@@ -52,10 +52,23 @@ module.exports = (sequelize, DataTypes) => {
                 model: 'users',
                 key: 'id'
             }
+        },
+        // Multi-tenant support: associate user with a client organization
+        client_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'clients',
+                key: 'id'
+            }
         }
     }, {
         timestamps: true,
-
+        // Note: We added underscored: true for client_id consistency,
+        // but the users table already uses camelCase for timestamps
+        // so we need to explicitly define the timestamp field names
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
     });
 
     return User;

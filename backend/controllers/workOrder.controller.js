@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const db = require('../models');
 const notificationController = require('./notification.controller');
 const smsService = require('../services/smsService');
+const clientScoping = require('../middleware/clientScoping');
 const WorkOrder = db.workOrder;
 const StatusUpdate = db.statusUpdate;
 const WorkOrderNote = db.workOrderNote;
@@ -22,14 +23,19 @@ exports.getSummary = async (req, res) => {
     try {
         const userId = req.userId;
         const userRole = req.userRole;
+        const clientId = req.clientId;
 
         console.log('=== DASHBOARD SUMMARY DEBUG ===');
         console.log('User ID:', userId);
         console.log('User Role:', userRole);
+        console.log('Client ID:', clientId);
 
-        // APPLY THE SAME ROLE-BASED FILTERING AS getAllWorkOrders
-        let whereClause = {};
+        // Multi-tenant: Apply client scoping filter
+        // All users (including clients, client_admin, staff) see only their client's data
+        // Global admins could optionally bypass this if needed (future P2 feature)
+        let whereClause = clientScoping.applyClientFilter(req);
 
+        // Additional role-based filtering within the client
         if (userRole === 'client') {
             // Get the current user's email for filtering
             const user = await User.findByPk(userId);
@@ -43,12 +49,8 @@ exports.getSummary = async (req, res) => {
                 console.log('User not found, returning empty summary');
                 whereClause.id = -1; // No work orders will match this
             }
-        } else if (userRole === 'client_admin') {
-            // VisionWest housing admin sees all VisionWest work orders
-            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
-            console.log('VisionWest admin - filtering summary for @visionwest.org.nz emails');
         }
-        // staff and admin roles see everything (no additional filtering)
+        // client_admin, staff, and admin within the client see all work orders for their client
 
         console.log('Dashboard summary whereClause:', JSON.stringify(whereClause));
 
@@ -127,7 +129,8 @@ exports.getAuthorizedPersons = async (req, res) => {
         const userId = req.userId;
         const userRole = req.userRole;
 
-        let whereClause = {};
+        // Multi-tenant: Apply client scoping filter
+        let whereClause = clientScoping.applyClientFilter(req);
 
         // Apply same role-based filtering as getAllWorkOrders for consistency
         if (userRole === 'client') {
@@ -137,8 +140,6 @@ exports.getAuthorizedPersons = async (req, res) => {
             } else {
                 whereClause.id = -1;
             }
-        } else if (userRole === 'client_admin') {
-            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
         }
 
         const authorizedPersons = await WorkOrder.findAll({
@@ -175,13 +176,15 @@ exports.getAllWorkOrders = async (req, res) => {
         const { status, date, sort, search, authorized_person, work_order_type, page = 1, limit = 5 } = req.query;
         const userId = req.userId;
         const userRole = req.userRole;
+        const clientId = req.clientId;
 
-        console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}`);
+        console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}, Client: ${clientId}`);
 
-        let whereClause = {};
+        // Multi-tenant: Apply client scoping filter
+        let whereClause = clientScoping.applyClientFilter(req);
         let includeClause = []; // Fix: this was missing
 
-        // Apply role-based filtering based on email matching
+        // Apply role-based filtering based on email matching (within the client)
         if (userRole === 'client') {
             // Get the current user's email for filtering
             const user = await User.findByPk(userId);
@@ -193,13 +196,8 @@ exports.getAllWorkOrders = async (req, res) => {
                 console.log('User not found, returning empty results');
                 whereClause.id = -1; // No work orders will match this
             }
-        } else if (userRole === 'client_admin') {
-            // VisionWest housing admin sees all VisionWest work orders
-            // Optionally filter by VisionWest domain
-            whereClause.authorized_email = { [Op.like]: '%@visionwest.org.nz' };
-            console.log('VisionWest admin - showing all VisionWest work orders');
         }
-        // staff and admin roles see everything (no additional filtering)
+        // client_admin, staff, and admin within the client see all work orders for their client
 
         // Apply other filters (status, date, search)
         if (status && status !== 'all') {
@@ -319,22 +317,28 @@ exports.getAllWorkOrders = async (req, res) => {
 exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log(`Fetching work order with ID: ${id}`);
+        const clientId = req.clientId;
+        console.log(`Fetching work order with ID: ${id}, Client ID: ${clientId}`);
 
-        // Simple query first to check if it exists
-        const workOrderExists = await WorkOrder.findByPk(id, {
-            attributes: ['id']
-        });
+        // Multi-tenant: Fetch work order and validate client ownership
+        const workOrder = await WorkOrder.findByPk(id);
 
-        if (!workOrderExists) {
+        if (!workOrder) {
             return res.status(404).json({
                 success: false,
                 message: 'Work order not found'
             });
         }
 
-        // Now fetch with minimal attributes first (avoid joins)
-        const workOrder = await WorkOrder.findByPk(id);
+        // Validate client ownership
+        try {
+            clientScoping.validateClientOwnership(workOrder, clientId);
+        } catch (error) {
+            return res.status(error.statusCode || 403).json({
+                success: false,
+                message: error.message
+            });
+        }
 
         // Create a base response object with minimal data
         const formattedWorkOrder = {

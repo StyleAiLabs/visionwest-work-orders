@@ -1,62 +1,41 @@
 <!--
-Sync Impact Report - Constitution v1.0.0
+Sync Impact Report - Constitution v1.0.1
 ========================================
-Version Change: INITIAL → 1.0.0
-Rationale: Initial constitution creation for VisionWest Work Orders System
+Version Change: 1.0.0 → 1.0.1
+Rationale: Patch update with clarifications based on successful P1 MVP implementation (manual work order entry feature completed 2025-10-17)
 
-This is the first version of the constitution, establishing governance principles
-for the VisionWest Work Order Management System based on existing project architecture,
-technical stack, and operational requirements.
+Change Type: PATCH - Clarifications and refinements based on implementation learnings
 
-Modified Principles: N/A (Initial creation)
+Modified Principles:
+  - Principle III (Integration Integrity): Clarified webhook endpoint path correction
+  - Principle V (Security & Data Protection): Added email notification security guidance
 
 Added Sections:
-  - Core Principles (5 principles):
-    I. Mobile-First Design (NON-NEGOTIABLE)
-    II. Progressive Enhancement & Offline Capability
-    III. Integration Integrity
-    IV. User Story-Driven Development
-    V. Security & Data Protection
-  - Technical Standards (Technology Stack, Project Structure, Version Sync, Performance)
-  - Development Workflow (Feature Process, Code Review, Testing, Branching)
-  - Governance (Amendment Process, Compliance Review, Complexity Justification)
+  - Technical Standards → Email Notification Standards (new subsection)
+  - Development Workflow → P1 MVP Validation Pattern (new guideline based on successful implementation)
+
+Removed Sections: None
 
 Templates Requiring Updates:
-  ✅ spec-template.md - ALIGNED: Already emphasizes user story prioritization (P1, P2, P3)
-     with Given/When/Then acceptance criteria, which directly supports Principle IV
+  ✅ plan-template.md - No changes required, constitution check section remains valid
+  ✅ spec-template.md - No changes required, user story prioritization guidance remains valid
+  ✅ tasks-template.md - No changes required, P1/P2/P3 task organization remains valid
+  ✅ checklist-template.md - No changes required, mobile-first validation items still applicable
+  ✅ agent-file-template.md - No changes required, auto-generated content
 
-  ✅ plan-template.md - ALIGNED: Contains "Constitution Check" section (line 30) ready
-     to validate compliance. Technical Context section compatible with Technical Standards.
-
-  ✅ tasks-template.md - ALIGNED: Tasks organized by user story (Phase 3+) enabling
-     independent implementation and testing per Principle IV requirements.
-
-  ✅ checklist-template.md - ALIGNED: Generic template structure, no constitution-specific
-     changes required. Future checklists can incorporate mobile-first validation items.
-
-  ✅ agent-file-template.md - ALIGNED: Auto-generated guidelines template, no constitution
-     references. Will naturally incorporate constitutional principles as features are built.
-
-Removed Sections: N/A (Initial creation)
+Implementation Learnings Incorporated:
+  1. Email notification pattern established: Asynchronous, non-blocking, failure-tolerant
+  2. P1 MVP pattern validated: Backend → Frontend → Manual Testing → Integration Testing
+  3. Webhook endpoint path corrected: /api/webhook/work-orders (not /api/work-orders/webhook)
 
 Follow-up TODOs:
-  1. When creating feature checklists, consider adding mobile-first validation items:
-     - "Test on physical mobile device (iOS/Android)"
-     - "Validate responsive breakpoints (320px, 375px, 390px, 414px)"
-     - "Verify touch target sizes (minimum 44x44px)"
-     - "Test offline functionality and sync behavior"
-     - "Validate n8n webhook integration (if API changed)"
+  1. Continue manual testing of P1 MVP (T046-T052) per tasks.md
+  2. Integration testing pending (T088-T096)
+  3. P2 (Edit Work Order) and P3 (Autocomplete) remain in backlog
+  4. Consider documenting email notification service pattern in integration docs
 
-  2. Consider creating automated mobile responsiveness tests in future
-
-  3. Document n8n webhook contract in `/specs/integration/n8n-webhook-contract.md`
-     to formalize the Integration Integrity principle (Principle III)
-
-  4. Create `/specs/integration/offline-sync-strategy.md` to document the conflict
-     resolution approach required by Principle II
-
-No immediate breaking changes to existing templates.
-All templates are compatible with the constitutional principles as written.
+No breaking changes to existing templates or workflows.
+Constitution remains fully compatible with all existing features and ongoing development.
 -->
 
 # VisionWest Work Order Management System Constitution
@@ -93,7 +72,7 @@ All changes to the API contract MUST maintain backward compatibility with the ex
 **Rationale**: The n8n workflow is a critical automation pipeline that processes incoming work orders from email, extracts data from PDFs using AI, and creates work orders via webhook. Breaking this integration would halt incoming work order creation.
 
 **Protected Endpoints**:
-- Work order creation webhook (POST /api/work-orders/webhook)
+- Work order creation webhook: `POST /api/webhook/work-orders`
 - Work order status update endpoints used by n8n
 - Authentication endpoints used by n8n automation
 
@@ -101,6 +80,7 @@ All changes to the API contract MUST maintain backward compatibility with the ex
 - API contract changes MUST be documented in `/specs/[feature]/contracts/`
 - Backward compatibility MUST be maintained or explicit versioning introduced
 - n8n workflow maintainer MUST approve breaking changes
+- New endpoints (like manual work order creation) MUST NOT conflict with or alter webhook behavior
 
 ### IV. User Story-Driven Development
 
@@ -113,6 +93,7 @@ All feature development MUST begin with prioritized user stories (P1, P2, P3...)
 - Each user story MUST have clear acceptance criteria in Given/When/Then format
 - Tasks MUST be grouped by user story to enable independent implementation
 - P1 stories collectively MUST form a functional MVP
+- P2 and P3 stories MAY be deferred to backlog after P1 MVP completion
 
 ### V. Security & Data Protection
 
@@ -126,6 +107,7 @@ The system MUST implement JWT-based authentication, role-based access control (R
 - Photos MUST be stored in cloud storage with access controls (currently AWS S3)
 - SQL injection prevention MUST be enforced via Sequelize ORM parameterization
 - CORS MUST be properly configured to allow only authorized origins
+- Email notifications MUST NOT expose sensitive credentials in logs or error messages
 
 ## Technical Standards
 
@@ -148,6 +130,22 @@ The system MUST implement JWT-based authentication, role-based access control (R
 - Frontend: Netlify (static hosting with CDN)
 - Backend: Render (containerized Node.js service)
 - Database: PostgreSQL managed service
+
+### Email Notification Standards
+
+Email notifications (when required by features) MUST follow these patterns:
+
+**Implementation Pattern**:
+- Email sending MUST be asynchronous and non-blocking
+- Email failures MUST NOT prevent primary operation completion (e.g., work order creation)
+- Email configuration MUST use environment variables (EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD)
+- Recipient addresses MUST be configurable via environment variables
+- Email service library: nodemailer (current standard)
+
+**Error Handling**:
+- Email failures MUST be logged with appropriate detail level
+- Sensitive credentials MUST NOT appear in logs
+- Primary operation success MUST NOT depend on email delivery success
 
 ### Project Structure
 
@@ -196,6 +194,17 @@ Frontend and backend versions MUST remain synchronized. Both package.json files 
 6. **Validation**: Test each user story independently before proceeding to next priority
 7. **Integration Testing**: Verify n8n workflow integration if API changes were made
 8. **Deployment**: Deploy to staging, validate PWA functionality, then promote to production
+
+### P1 MVP Validation Pattern
+
+When implementing P1 MVP features, follow this validated pattern:
+
+1. **Backend First**: Implement and test backend API endpoints, middleware, and services
+2. **Frontend Integration**: Build UI components, forms, and pages that consume the backend API
+3. **Manual Testing**: Validate form behavior, error handling, success flows, and role-based access
+4. **Integration Testing**: Verify compatibility with existing features (n8n webhook, work order list, etc.)
+5. **Mobile Device Testing**: Test on actual iOS and Android devices before considering P1 complete
+6. **P2/P3 Deferral**: Document P2 and P3 features in backlog; deploy P1 MVP before continuing
 
 ### Code Review Requirements
 
@@ -253,4 +262,6 @@ Any violation of constitutional principles (adding unnecessary complexity, skipp
 
 For AI coding agents and developers, runtime development guidance should reference this constitution when making architectural decisions, proposing features, or evaluating trade-offs. When in doubt, prioritize mobile users, maintain n8n integration, and deliver incrementally by user story.
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-16 | **Last Amended**: 2025-10-16
+**P1 MVP Pattern**: When implementing features, complete P1 (MVP) tasks fully before considering P2/P3 enhancements. Validate P1 functionality with manual and integration testing before expanding scope.
+
+**Version**: 1.0.1 | **Ratified**: 2025-10-16 | **Last Amended**: 2025-10-17
