@@ -4,8 +4,8 @@
 const axios = require('axios');
 
 // Configuration - update these based on your setup
-const WEBHOOK_URL = 'http://localhost:3001/api/webhook/work-orders';
-const WEBHOOK_API_KEY = process.env.WEBHOOK_API_KEY || 'your-webhook-api-key';
+const WEBHOOK_URL = 'http://localhost:5002/api/webhook/work-orders';
+const WEBHOOK_API_KEY = process.env.WEBHOOK_API_KEY || 'wh_p2k6bTxYdEzJNGvQqH8A7RMm3fVXcFLtS9WD5sZj';
 
 // Test data for creating a work order
 const testWorkOrder = {

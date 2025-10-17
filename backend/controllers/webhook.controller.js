@@ -45,6 +45,16 @@ exports.createWorkOrderFromEmail = async (req, res) => {
 
         console.log(`Processing work order with job number: ${job_no}`);
 
+        // Find admin user to set as creator (needed for both create and update paths)
+        const adminUser = await User.findOne({ where: { role: 'admin' } });
+        if (!adminUser) {
+            console.log('No admin user found');
+            return res.status(500).json({
+                success: false,
+                message: 'No admin user found to assign as creator.'
+            });
+        }
+
         // Check if work order with the same job number already exists
         const existingWorkOrder = await WorkOrder.findOne({ where: { job_no } });
 
@@ -97,16 +107,6 @@ exports.createWorkOrderFromEmail = async (req, res) => {
                     status: existingWorkOrder.status,
                     updated: true
                 }
-            });
-        }
-
-        // Find admin user to set as creator
-        const adminUser = await User.findOne({ where: { role: 'admin' } });
-        if (!adminUser) {
-            console.log('No admin user found');
-            return res.status(500).json({
-                success: false,
-                message: 'No admin user found to assign as creator.'
             });
         }
 
