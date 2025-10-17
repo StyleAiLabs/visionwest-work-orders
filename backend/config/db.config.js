@@ -49,10 +49,7 @@ const sequelizeCliConfig = {
         port: process.env.DB_PORT || 5432,
         dialect: 'postgres',
         dialectOptions: {
-            ssl: {
-                require: false,
-                rejectUnauthorized: false
-            }
+            ssl: false
         }
     }
 };
