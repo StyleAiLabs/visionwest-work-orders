@@ -1,7 +1,7 @@
 import api from './api';
 
 const photoService = {
-    async uploadPhotos(workOrderId, files, description = '') {
+    async uploadPhotos(workOrderId, files, description = '', onProgress = null) {
         try {
             const formData = new FormData();
 
@@ -14,10 +14,16 @@ const photoService = {
             formData.append('description', description);
             formData.append('workOrderId', workOrderId);
 
-            // Custom config for multipart/form-data
+            // Custom config for multipart/form-data with progress tracking
             const config = {
                 headers: {
                     'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        onProgress(percentCompleted);
+                    }
                 }
             };
 
