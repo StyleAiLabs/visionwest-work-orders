@@ -23,9 +23,10 @@ app.use(cors({
             'http://localhost:5173',
             'http://localhost:5174',
             'http://localhost:5175',
-            'https://vision-west.netlify.app', // staging
-            'https://prod-wom-visionwest.netlify.app', //production
-            'https://visionwest.wom.wpsg.nz' // production
+            'https://vision-west.netlify.app', // dev branch official
+            'https://visionwest.netlify.app', // alternative dev domain (without hyphen)
+            'https://prod-wom-visionwest.netlify.app', // legacy production
+            'https://visionwest.wom.wpsg.nz' // main branch production
         ];
 
         if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
