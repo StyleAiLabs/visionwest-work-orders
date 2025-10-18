@@ -157,6 +157,17 @@ exports.isClientAdmin = (req, res, next) => {
     next();
 };
 
+// Check if user is client_admin OR admin (SuperAdmin can manage all clients)
+exports.isClientAdminOrAdmin = (req, res, next) => {
+    if (!['client_admin', 'admin'].includes(req.userRole)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Require Client Admin or SuperAdmin Role!'
+        });
+    }
+    next();
+};
+
 // Add this new specialized middleware
 
 exports.handleWorkOrderStatusUpdate = (req, res, next) => {

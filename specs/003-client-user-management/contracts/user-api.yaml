@@ -1,0 +1,508 @@
+openapi: 3.0.3
+info:
+  title: NextGen WOM - Client User Management API
+  description: |
+    API endpoints for client admins to manage users within their organization.
+    All endpoints require JWT authentication and client_admin role.
+  version: 2.7.0
+  contact:
+    name: NextGen WOM Development Team
+
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+  - url: https://api-staging.example.com/api
+    description: Staging environment
+  - url: https://api.example.com/api
+    description: Production environment
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Users
+    description: User management operations for client admins
+
+paths:
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List all users in client organization
+      description: |
+        Retrieves a paginated list of users belonging to the authenticated admin's client organization.
+        Only active users are returned. Results are sorted alphabetically by full name.
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of users per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+            example: 50
+      responses:
+        '200':
+          description: Successfully retrieved user list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - users
+                  - total
+                  - page
+                  - totalPages
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                    description: Total number of users in organization
+                    example: 123
+                  page:
+                    type: integer
+                    description: Current page number
+                    example: 1
+                  totalPages:
+                    type: integer
+                    description: Total number of pages
+                    example: 3
+              example:
+                users:
+                  - id: 1
+                    full_name: John Smith
+                    email: john.smith@example.com
+                    role: client_admin
+                    phone_number: '+64211234567'
+                    createdAt: '2025-10-19T12:00:00.000Z'
+                  - id: 2
+                    full_name: Jane Doe
+                    email: jane.doe@example.com
+                    role: client
+                    phone_number: null
+                    createdAt: '2025-10-18T10:30:00.000Z'
+                total: 123
+                page: 1
+                totalPages: 3
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      description: |
+        Creates a new user account within the authenticated admin's client organization.
+        Generates a secure temporary password and sends it to the user via email.
+        Email must be unique within the organization.
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example:
+              full_name: Alice Johnson
+              email: alice.johnson@example.com
+              role: client
+              phone_number: '+64211234567'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - user
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully. Credentials have been sent to their email.
+                  user:
+                    $ref: '#/components/schemas/User'
+              example:
+                message: User created successfully. Credentials have been sent to their email.
+                user:
+                  id: 3
+                  full_name: Alice Johnson
+                  email: alice.johnson@example.com
+                  role: client
+                  phone_number: '+64211234567'
+                  createdAt: '2025-10-19T14:30:00.000Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicateEmail:
+                  value:
+                    error: A user with this email already exists in your organization
+                invalidEmail:
+                  value:
+                    error: Please provide a valid email address
+                invalidPhone:
+                  value:
+                    error: Please provide a valid phone number in international format
+                invalidRole:
+                  value:
+                    error: You can only assign Client User or Client Admin roles
+                missingFields:
+                  value:
+                    error: Full name and email are required
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user details
+      description: |
+        Retrieves detailed information for a specific user.
+        User must belong to the authenticated admin's client organization.
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: integer
+            example: 3
+      responses:
+        '200':
+          description: Successfully retrieved user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                id: 3
+                full_name: Alice Johnson
+                email: alice.johnson@example.com
+                role: client
+                phone_number: '+64211234567'
+                createdAt: '2025-10-19T14:30:00.000Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: User not found
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Users
+      summary: Update user details
+      description: |
+        Updates user role or contact details (name, email, phone).
+        User must belong to the authenticated admin's client organization.
+        Admins cannot change their own role.
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: integer
+            example: 3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            examples:
+              updateRole:
+                summary: Update user role
+                value:
+                  role: client_admin
+              updateContact:
+                summary: Update contact details
+                value:
+                  full_name: Alice Johnson-Smith
+                  email: alice.smith@example.com
+                  phone_number: '+64219876543'
+              updateBoth:
+                summary: Update role and contact details
+                value:
+                  full_name: Alice Johnson-Smith
+                  email: alice.smith@example.com
+                  role: client_admin
+                  phone_number: '+64219876543'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - user
+                properties:
+                  message:
+                    type: string
+                    example: User updated successfully
+                  user:
+                    $ref: '#/components/schemas/User'
+              example:
+                message: User updated successfully
+                user:
+                  id: 3
+                  full_name: Alice Johnson-Smith
+                  email: alice.smith@example.com
+                  role: client_admin
+                  phone_number: '+64219876543'
+                  createdAt: '2025-10-19T14:30:00.000Z'
+                  updatedAt: '2025-10-19T15:00:00.000Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicateEmail:
+                  value:
+                    error: A user with this email already exists in your organization
+                invalidRole:
+                  value:
+                    error: You can only assign Client User or Client Admin roles
+                selfRoleChange:
+                  value:
+                    error: You cannot change your own role
+                invalidPhone:
+                  value:
+                    error: Please provide a valid phone number in international format
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: User not found
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from /api/auth/login endpoint.
+        Must include valid token for a user with 'client_admin' role.
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - full_name
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: integer
+          description: Unique user identifier
+          example: 3
+        full_name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: Alice Johnson
+        email:
+          type: string
+          format: email
+          description: User's email address (login credential)
+          example: alice.johnson@example.com
+        role:
+          type: string
+          enum:
+            - client
+            - client_admin
+          description: |
+            User's role within the organization.
+            - client: Standard user (no admin privileges)
+            - client_admin: Admin user (can manage other users)
+          example: client
+        phone_number:
+          type: string
+          nullable: true
+          description: User's phone number in E.164 format (optional)
+          pattern: '^\+[1-9]\d{1,14}$'
+          example: '+64211234567'
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when user was created
+          example: '2025-10-19T14:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when user was last updated
+          example: '2025-10-19T15:00:00.000Z'
+
+    CreateUserRequest:
+      type: object
+      required:
+        - full_name
+        - email
+        - role
+      properties:
+        full_name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: Alice Johnson
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique within organization)
+          example: alice.johnson@example.com
+        role:
+          type: string
+          enum:
+            - client
+            - client_admin
+          description: |
+            User's role within the organization.
+            Must be either 'client' or 'client_admin'.
+          example: client
+        phone_number:
+          type: string
+          nullable: true
+          description: User's phone number in E.164 format (optional)
+          pattern: '^\+[1-9]\d{1,14}$'
+          example: '+64211234567'
+
+    UpdateUserRequest:
+      type: object
+      description: |
+        At least one field must be provided for update.
+        All fields are optional, but request must not be empty.
+      properties:
+        full_name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: Alice Johnson-Smith
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique within organization if changed)
+          example: alice.smith@example.com
+        role:
+          type: string
+          enum:
+            - client
+            - client_admin
+          description: |
+            User's role within the organization.
+            Must be either 'client' or 'client_admin'.
+            Cannot change own role.
+          example: client_admin
+        phone_number:
+          type: string
+          nullable: true
+          description: User's phone number in E.164 format (optional, null to clear)
+          pattern: '^\+[1-9]\d{1,14}$'
+          example: '+64219876543'
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: A user with this email already exists in your organization
+        details:
+          type: object
+          description: Additional error details (optional)
+          additionalProperties: true
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid/expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized. Please provide a valid authentication token.
+
+    ForbiddenError:
+      description: User does not have required permissions (client_admin role required)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden. You must be a client admin to access this resource.
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: An unexpected error occurred. Please try again later.

@@ -23,8 +23,14 @@ const LoginPage = () => {
         setError('');
 
         try {
-            await login(email, password);
-            navigate(from, { replace: true });
+            const response = await login(email, password);
+
+            // Check if password change is required
+            if (response.requirePasswordChange) {
+                navigate('/change-password', { replace: true });
+            } else {
+                navigate(from, { replace: true });
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
             setIsLoading(false);

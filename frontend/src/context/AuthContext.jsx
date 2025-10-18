@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [requirePasswordChange, setRequirePasswordChange] = useState(false);
 
     const normalizeUser = (apiUser) => {
         return {
@@ -32,6 +33,8 @@ export const AuthProvider = ({ children }) => {
                     setUser(normalizeUser(userData));
                     setIsAuthenticated(true);
                 }
+                // Check if password change is required
+                setRequirePasswordChange(authService.requiresPasswordChange());
             } catch (error) {
                 console.error('Auth check failed:', error);
             } finally {
@@ -43,24 +46,34 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const userData = await authService.login(email, password);
-        setUser(normalizeUser(userData));
+        const response = await authService.login(email, password);
+        setUser(normalizeUser(response.user));
         setIsAuthenticated(true);
-        return userData;
+        setRequirePasswordChange(response.requirePasswordChange || false);
+        return response;
     };
 
     const logout = async () => {
         await authService.logout();
         setUser(null);
         setIsAuthenticated(false);
+        setRequirePasswordChange(false);
+    };
+
+    const changePassword = async (currentPassword, newPassword) => {
+        const result = await authService.changePassword(currentPassword, newPassword);
+        setRequirePasswordChange(false);
+        return result;
     };
 
     const value = {
         user,
         isAuthenticated,
         isLoading,
+        requirePasswordChange,
         login,
-        logout
+        logout,
+        changePassword
     };
 
     return (

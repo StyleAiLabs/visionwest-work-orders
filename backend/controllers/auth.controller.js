@@ -81,6 +81,9 @@ exports.login = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
 
+        // Check if user needs to change password
+        const requirePasswordChange = !user.password_changed;
+
         // Remove password from response and include client info
         const userWithoutPassword = {
             id: user.id,
@@ -97,12 +100,13 @@ exports.login = async (req, res) => {
             }
         };
 
-        // Send response
+        // Send response with password change requirement flag
         return res.status(200).json({
             success: true,
             message: 'Login successful!',
             user: userWithoutPassword,
-            token
+            token,
+            requirePasswordChange  // Frontend will redirect to change password if true
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -335,4 +339,79 @@ exports.logout = (req, res) => {
         success: true,
         message: 'Logout successful!'
     });
+};
+
+// Change Password
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.userId; // From auth middleware
+
+        // Validate request
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide both current password and new password!'
+            });
+        }
+
+        // Validate new password strength
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be at least 8 characters long!'
+            });
+        }
+
+        // Find user
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found!'
+            });
+        }
+
+        // Verify current password
+        const passwordIsValid = bcrypt.compareSync(currentPassword, user.password);
+
+        if (!passwordIsValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect!'
+            });
+        }
+
+        // Check if new password is same as current
+        const sameAsOld = bcrypt.compareSync(newPassword, user.password);
+        if (sameAsOld) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be different from current password!'
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+        // Update password and set password_changed to true
+        await user.update({
+            password: hashedPassword,
+            password_changed: true
+        });
+
+        console.log(`✅ User ${user.email} (ID: ${user.id}) successfully changed their password`);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password changed successfully!'
+        });
+    } catch (error) {
+        console.error('Change password error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while changing password.'
+        });
+    }
 };

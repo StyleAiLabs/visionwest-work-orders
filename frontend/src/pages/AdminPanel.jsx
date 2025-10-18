@@ -118,8 +118,46 @@ const AdminPanel = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
+            {/* Admin Modules Navigation */}
             <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Modules</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Client Management Module */}
+                        <button
+                            onClick={handleCreateNew}
+                            className="flex items-start p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                        >
+                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-1">Client Organizations</h3>
+                                <p className="text-sm text-gray-600">Manage client organizations, settings, and configurations</p>
+                            </div>
+                        </button>
+
+                        {/* User Management Module */}
+                        <button
+                            onClick={() => navigate('/users')}
+                            className="flex items-start p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left"
+                        >
+                            <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-1">User Management</h3>
+                                <p className="text-sm text-gray-600">Manage users across all client organizations</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Client List Section */}
                 <ClientList
                     key={refreshKey}
                     onClientSelect={handleClientSelect}

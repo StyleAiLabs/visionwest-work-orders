@@ -12,11 +12,40 @@ export const authService = {
                 localStorage.setItem('token', response.data.token);
             }
 
-            return response.data.user;
+            // Store requirePasswordChange flag if present
+            if (response.data.requirePasswordChange !== undefined) {
+                localStorage.setItem('requirePasswordChange', response.data.requirePasswordChange.toString());
+            }
+
+            return {
+                user: response.data.user,
+                requirePasswordChange: response.data.requirePasswordChange || false
+            };
         } catch (error) {
             console.error('Login error:', error);
             throw error;
         }
+    },
+
+    async changePassword(currentPassword, newPassword) {
+        try {
+            const response = await api.post('/auth/change-password', {
+                currentPassword,
+                newPassword
+            });
+
+            // Clear the requirePasswordChange flag on successful password change
+            localStorage.removeItem('requirePasswordChange');
+
+            return response.data;
+        } catch (error) {
+            console.error('Change password error:', error);
+            throw error;
+        }
+    },
+
+    requiresPasswordChange() {
+        return localStorage.getItem('requirePasswordChange') === 'true';
     },
 
     async logout() {

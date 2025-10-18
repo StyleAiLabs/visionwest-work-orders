@@ -101,6 +101,14 @@ const DashboardPage = () => {
                     <div className="absolute -bottom-1 -right-1 bg-purple-500 text-white text-xs font-bold rounded-full h-3 w-3"></div>
                 </button>
             )}
+            {/* Company Code Display */}
+            {user?.client?.code && (
+                <div className="px-3 py-1 bg-nextgen-green bg-opacity-20 rounded-full">
+                    <span className="text-xs font-semibold text-pure-white">
+                        {user.client.code}
+                    </span>
+                </div>
+            )}
             <button
                 className="p-1 rounded-full hover:bg-nextgen-green relative"
                 onClick={() => navigate('/alerts')}

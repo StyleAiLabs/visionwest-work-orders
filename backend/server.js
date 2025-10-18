@@ -158,6 +158,7 @@ app.use('/api/webhook', require('./routes/webhook.routes'));
 app.use('/api/export', require('./routes/export.routes'));
 app.use('/api/app', require('./routes/app.routes'));
 app.use('/api/clients', require('./routes/client.routes'));
+app.use('/api/users', require('./routes/user.routes'));
 
 // Import routes
 const notesRoutes = require('./routes/notes.routes');

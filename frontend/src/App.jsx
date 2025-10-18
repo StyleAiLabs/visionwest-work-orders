@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ClientProvider } from './context/ClientContext';
 import { AlertProvider } from './context/AlertContext';
 import LoginPage from './pages/LoginPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import WorkOrdersPage from './pages/WorkOrdersPage';
 import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
@@ -14,6 +15,7 @@ import AlertsPage from './pages/AlertsPage';
 import SettingsPage from './pages/SettingsPage';
 import ReleaseNotesPage from './pages/ReleaseNotesPage';
 import AdminPanel from './pages/AdminPanel';
+import UserManagementPage from './pages/UserManagementPage';
 import { useAuth } from './hooks/useAuth';
 import InstallPrompt from './components/common/InstallPrompt';
 
@@ -98,6 +100,15 @@ const App = () => {
             <div className="app-container">
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+
+                <Route
+                  path="/change-password"
+                  element={
+                    <ProtectedRoute>
+                      <ChangePasswordPage />
+                    </ProtectedRoute>
+                  }
+                />
 
               <Route
                 path="/dashboard"
@@ -186,6 +197,15 @@ const App = () => {
                   <AdminRoute>
                     <AdminPanel />
                   </AdminRoute>
+                }
+              />
+
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute>
+                    <UserManagementPage />
+                  </ProtectedRoute>
                 }
               />
 

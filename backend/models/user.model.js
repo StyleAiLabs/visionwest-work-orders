@@ -61,6 +61,13 @@ module.exports = (sequelize, DataTypes) => {
                 model: 'clients',
                 key: 'id'
             }
+        },
+        // Track whether user has changed their initial temporary password
+        password_changed: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: 'Tracks whether user has changed their initial temporary password'
         }
     }, {
         timestamps: true,

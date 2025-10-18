@@ -20,9 +20,11 @@ const db = require('../models');
  * Supports admin context switching via X-Client-Context header
  */
 exports.addClientScope = async (req, res, next) => {
+
     try {
         // Skip for webhook endpoints (they bypass authentication)
         if (req.path.startsWith('/api/webhook/')) {
+            console.log('Skipping clientScoping for webhook endpoint');
             return next();
         }
 
@@ -31,8 +33,9 @@ exports.addClientScope = async (req, res, next) => {
             return next();
         }
 
-        // Skip for health check endpoints
-        if (req.path === '/api/health' || req.path === '/') {
+        // Skip for health check endpoints and root path ONLY
+        // Use originalUrl to check the full path, not just the router-relative path
+        if (req.originalUrl === '/api/health' || req.originalUrl === '/') {
             return next();
         }
 
@@ -84,7 +87,11 @@ exports.addClientScope = async (req, res, next) => {
             req.adminOriginalClientId = req.user.clientId; // For audit trail
 
             // Log context switch
-            console.log(`[ADMIN CONTEXT SWITCH] User ${req.user.userId} (from client ${req.user.clientId}) switched to client ${targetClientId}`);
+            console.log('========================================');
+            console.log('[ADMIN CONTEXT SWITCH]');
+            console.log(`User ${req.user.userId} (from client ${req.user.clientId})`);
+            console.log(`Switched to client ${targetClientId} (${client.name})`);
+            console.log('========================================');
 
         } else if (req.headers['x-client-context']) {
             // Non-admin user attempting to use X-Client-Context header
