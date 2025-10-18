@@ -9,6 +9,55 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.6.0',
+            date: 'October 18, 2025',
+            title: 'Manual Work Order Entry Enhancements',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Photo upload functionality - Users can now upload multiple "before" photos when creating work orders',
+                        'Camera integration - Direct camera capture on mobile devices and desktops with webcam',
+                        'Gallery upload - Select multiple photos from device gallery',
+                        'Auto-fill supplier details - Automatically sets supplier to "Williams Property Service"',
+                        'Auto-fill authorization - Populates authorized by fields from logged-in user profile',
+                        'Photo validation - Automatic validation for file type (images only) and size (max 5MB per photo)'
+                    ]
+                },
+                {
+                    category: 'Improvements',
+                    items: [
+                        'Enhanced validation - Property address and phone are now required fields',
+                        'Hidden supplier fields - Supplier input removed from UI (auto-filled on backend)',
+                        'Photo preview grid - Visual preview with ability to remove selected photos',
+                        'Editable authorization fields - Auto-filled fields remain editable for flexibility',
+                        'User-friendly error messages - Clear, descriptive error messages for validation failures',
+                        'Duplicate prevention - Prevents creation of work orders with duplicate job numbers'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'React Hook Form integration for efficient form state management',
+                        'Two-step workflow - Creates work order first, then uploads photos separately',
+                        'Default value enforcement - Backend always enforces Williams Property Service as supplier',
+                        'Improved validation logic - Updated validation to require property_address and property_phone',
+                        'Memory management - Proper cleanup of object URLs to prevent memory leaks',
+                        'Automated test script with 4 test cases and comprehensive manual testing guide'
+                    ]
+                },
+                {
+                    category: 'Bug Fixes',
+                    items: [
+                        'Fixed database column name reference (phone_number instead of phone)',
+                        'Ensured Williams Property Service is always set, regardless of manual input',
+                        'Improved JWT token validation and error messages',
+                        'Fixed proper error messages for missing required fields'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.5.0',
             date: 'October 18, 2025',
             title: 'Multi-Client Platform Support',
