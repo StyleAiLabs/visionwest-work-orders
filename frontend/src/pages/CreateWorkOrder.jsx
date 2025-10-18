@@ -13,6 +13,8 @@ const CreateWorkOrder = () => {
     const { user } = useAuth();
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Redirect if user is not client_admin
     React.useEffect(() => {
@@ -34,6 +36,7 @@ const CreateWorkOrder = () => {
     const handleSubmit = async (formData) => {
         try {
             setIsSubmitting(true);
+            setUploadProgress(0);
             console.log('Submitting work order:', formData);
 
             // Extract photos from form data
@@ -48,11 +51,24 @@ const CreateWorkOrder = () => {
                 // Upload photos if any were selected
                 if (photos && photos.length > 0) {
                     try {
+                        setIsUploading(true);
                         console.log(`Uploading ${photos.length} photos for work order ${workOrderId}`);
-                        await photoService.uploadPhotos(workOrderId, photos, 'Before photos');
+
+                        // Upload photos with progress callback
+                        await photoService.uploadPhotos(
+                            workOrderId,
+                            photos,
+                            'Before photos',
+                            (progress) => {
+                                setUploadProgress(progress);
+                            }
+                        );
+
+                        setIsUploading(false);
                         showToast('Work order and photos uploaded successfully', 'success');
                     } catch (photoError) {
                         console.error('Error uploading photos:', photoError);
+                        setIsUploading(false);
                         // Work order was created successfully, but photos failed
                         showToast('Work order created, but some photos failed to upload', 'warning');
                     }
@@ -78,6 +94,8 @@ const CreateWorkOrder = () => {
             showToast(errorMessage, 'error');
         } finally {
             setIsSubmitting(false);
+            setUploadProgress(0);
+            setIsUploading(false);
         }
     };
 
@@ -126,6 +144,8 @@ const CreateWorkOrder = () => {
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}
                         submitLabel="Create Work Order"
+                        isUploading={isUploading}
+                        uploadProgress={uploadProgress}
                     />
                 </div>
             </div>
