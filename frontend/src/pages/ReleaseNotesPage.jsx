@@ -9,6 +9,55 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.5.0',
+            date: 'October 18, 2025',
+            title: 'Multi-Client Platform Support',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Multi-tenant platform: System now supports multiple independent client organizations',
+                        'Admin Panel for client management (accessible from Settings for admin users)',
+                        'Client organization CRUD operations (Create, Read, Update, Delete)',
+                        'Client context switching for administrators to view data across organizations',
+                        'Search and filter clients by name, code, or status',
+                        'Mobile-responsive admin interface with card-based layout'
+                    ]
+                },
+                {
+                    category: 'Security',
+                    items: [
+                        'Client data isolation - users can only access their organization\'s work orders',
+                        'Enhanced JWT authentication with client context (clientId, clientCode)',
+                        'Automatic client assignment for new work orders and users',
+                        'Foreign key constraints ensure data referential integrity',
+                        'Middleware-based client scoping for all API endpoints'
+                    ]
+                },
+                {
+                    category: 'Improvements',
+                    items: [
+                        'Enhanced login/registration with client validation',
+                        'Improved navigation between Dashboard, Admin Panel, and Settings',
+                        'Database performance optimizations with composite indexes',
+                        'Better error handling for cross-client access attempts',
+                        'All existing Visionwest data seamlessly migrated to multi-client structure'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'New clients table with organization information',
+                        'Client relationships added to users and work_orders tables',
+                        'Sequelize models extended with client associations',
+                        'Client scoping middleware for automatic data filtering',
+                        'Composite indexes for optimized multi-client queries',
+                        'n8n webhook integration preserved and working with Visionwest client'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.4.1',
             date: 'July 13, 2025',
             title: 'Pagination Improvements',
