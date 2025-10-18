@@ -17,10 +17,12 @@ As a tenancy manager, I want to manually create work orders directly in the syst
 
 **Acceptance Scenarios**:
 
-1. **Given** a tenancy manager is logged into the system, **When** they navigate to the work order creation page and fill in all required fields (property name, supplier name, description, job number), **Then** the system creates a new work order with status "pending" and displays a success confirmation
+1. **Given** a tenancy manager is logged into the system, **When** they navigate to the work order creation page and fill in all required fields (property name, property address, property phone, description, job number), **Then** the system creates a new work order with status "pending", supplier automatically set to "Williams Property Service", authorized by details auto-filled from user profile, and displays a success confirmation
 2. **Given** a tenancy manager has created a manual work order, **When** they view the work order list, **Then** the newly created work order appears in the list with a visual indicator showing it was manually created (not from email automation)
 3. **Given** a tenancy manager is filling out the work order form, **When** they attempt to submit without completing required fields, **Then** the system displays clear validation errors indicating which fields are missing
 4. **Given** a tenancy manager successfully creates a work order, **When** the work order is saved, **Then** all relevant users (staff, admin, client users) receive notifications about the new work order
+5. **Given** a tenancy manager is creating a work order, **When** they access the photo upload section, **Then** they can upload multiple "before" photos to document the initial state of the maintenance issue
+6. **Given** a tenancy manager is creating a work order, **When** the form loads, **Then** the "Authorized By" field is automatically populated with the user's full name and contact details (email, phone) from their profile
 
 ---
 
@@ -41,20 +43,20 @@ As a tenancy manager, I want to edit additional work order details after initial
 
 ---
 
-### User Story 3 - Attach Property and Supplier Details (Priority: P3)
+### User Story 3 - Attach Property Details with Autocomplete (Priority: P3)
 
-As a tenancy manager, I want to select properties and suppliers from existing lists (if available) so that I can ensure consistency in data entry and reduce typing errors.
+As a tenancy manager, I want to select properties from existing lists (if available) so that I can ensure consistency in data entry and reduce typing errors.
 
-**Why this priority**: This is a quality-of-life improvement that reduces data entry errors and saves time. It's not critical for MVP but significantly improves user experience once basic manual entry is working.
+**Why this priority**: This is a quality-of-life improvement that reduces data entry errors and saves time. It's not critical for MVP but significantly improves user experience once basic manual entry is working. Supplier is always "Williams Property Service" so autocomplete is only needed for properties.
 
-**Independent Test**: Can be tested by implementing autocomplete or dropdown fields for property names and supplier names that pull from existing work orders. Users should be able to either select from the list or type new values.
+**Independent Test**: Can be tested by implementing autocomplete or dropdown fields for property names that pull from existing work orders. Users should be able to either select from the list or type new values.
 
 **Acceptance Scenarios**:
 
 1. **Given** a tenancy manager is creating a work order, **When** they start typing a property name, **Then** the system suggests previously used property names matching their input
 2. **Given** a tenancy manager is creating a work order, **When** they select a property from the suggestion list, **Then** the system auto-fills associated property details (address, phone if previously entered)
-3. **Given** a tenancy manager is entering a supplier name, **When** they select from previously used suppliers, **Then** supplier contact details (phone, email) are auto-filled if available
-4. **Given** a tenancy manager needs to enter a new property or supplier not in the system, **When** they type a name not in the suggestions, **Then** they can still create the work order with the new information
+3. **Given** a tenancy manager needs to enter a new property not in the system, **When** they type a name not in the suggestions, **Then** they can still create the work order with the new information
+4. **Given** all work orders use Williams Property Service, **When** a tenancy manager creates a work order, **Then** the supplier name is automatically set to "Williams Property Service" with contact details (phone: 021 123 4567, email: info@williamspropertyservices.co.nz)
 
 ---
 
@@ -71,8 +73,8 @@ As a tenancy manager, I want to select properties and suppliers from existing li
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a form accessible only to users with the tenancy manager role for manual work order creation
-- **FR-002**: System MUST require the following fields for work order creation: job number, property name, supplier name, and description
-- **FR-003**: System MUST allow optional fields: date, supplier phone, supplier email, property address, property phone, PO number, authorized by, authorized contact, and authorized email
+- **FR-002**: System MUST require the following fields for work order creation: job number, property name, property address, property phone, and description (supplier name is automatically set to "Williams Property Service")
+- **FR-003**: System MUST allow optional fields: date, PO number (supplier fields are pre-filled with Williams Property Service defaults and hidden from the form; authorized by contact details are auto-filled from logged-in user's profile)
 - **FR-004**: System MUST validate that job numbers are unique before allowing work order creation
 - **FR-005**: System MUST mark manually created work orders with a work order type of "manual" to distinguish them from email-automated work orders
 - **FR-006**: System MUST assign the creating user as the "created_by" field value when saving manual work orders
@@ -84,6 +86,10 @@ As a tenancy manager, I want to select properties and suppliers from existing li
 - **FR-012**: System MUST preserve email metadata fields (email_subject, email_sender, email_received_date) from automated work orders and not allow manual editing of these fields
 - **FR-013**: System MUST maintain backward compatibility with the n8n webhook integration (no changes to existing webhook endpoints)
 - **FR-014**: Tenancy manager role MUST be mapped to the existing `client_admin` role, granting all current client administrators the ability to manually create and edit work orders
+- **FR-015**: System MUST provide a photo upload interface during work order creation allowing tenancy managers to upload multiple "before" photos documenting the initial state of the maintenance issue
+- **FR-016**: System MUST auto-populate the "Authorized By" field with the logged-in user's full name from their user profile
+- **FR-017**: System MUST auto-populate the "Authorized Contact" field with the logged-in user's phone number from their user profile (if available)
+- **FR-018**: System MUST auto-populate the "Authorized Email" field with the logged-in user's email address from their user profile
 
 ### Key Entities
 
@@ -103,6 +109,8 @@ As a tenancy manager, I want to select properties and suppliers from existing li
 - **SC-004**: All relevant users receive notifications for manual work orders within 10 seconds of creation
 - **SC-005**: Zero disruption to existing n8n webhook workflow (all automated work orders continue to function normally)
 - **SC-006**: Tenancy managers can edit work order details and changes are visible immediately to all users viewing that work order
+- **SC-007**: Tenancy managers can upload multiple "before" photos during work order creation, with photos appearing in the work order detail view immediately after creation
+- **SC-008**: Authorized By contact details (name, phone, email) are automatically populated from the user's profile, reducing form fields by 3 inputs
 
 ### Assumptions
 
@@ -113,3 +121,7 @@ As a tenancy manager, I want to select properties and suppliers from existing li
 5. **Duplicate Prevention**: Assuming the system should prevent creation of work orders with duplicate job numbers (same validation as webhook endpoint).
 6. **Edit Permissions**: Assuming tenancy managers can edit any work order in the system, not just ones they created, to allow for collaborative management.
 7. **Audit Trail**: Assuming all edits should create system notes for compliance and transparency purposes.
+8. **Default Supplier**: All manually created work orders use "Williams Property Service" as the supplier. Supplier name, phone (021 123 4567), and email (info@williamspropertyservices.co.nz) are automatically filled and hidden from the form UI to simplify data entry.
+9. **Property Details Mandatory**: Property name, property address, and property phone are now required fields to ensure complete property information is captured at the time of work order creation.
+10. **Before Photos**: System allows upload of multiple "before" photos during work order creation to document the initial state of the issue, improving communication with maintenance staff.
+11. **Auto-fill Authorization**: Authorized By, Authorized Contact, and Authorized Email fields are automatically populated from the logged-in user's profile (name, phone, email) to reduce data entry and ensure accurate contact information.

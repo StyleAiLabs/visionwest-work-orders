@@ -1112,13 +1112,13 @@ exports.createManualWorkOrder = async (req, res) => {
             authorized_email
         } = req.body;
 
-        console.log('Creating manual work order:', { job_no, supplier_name, property_name });
+        console.log('Creating manual work order:', { job_no, property_name, property_address, property_phone });
 
-        // Validate required fields
-        if (!job_no || !supplier_name || !property_name || !description) {
+        // Validate required fields (updated per new spec)
+        if (!job_no || !property_name || !property_address || !property_phone || !description) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields. Please provide job number, supplier name, property name, and description.'
+                message: 'Missing required fields. Please provide job number, property name, property address, property phone, and description.'
             });
         }
 
@@ -1146,23 +1146,39 @@ exports.createManualWorkOrder = async (req, res) => {
             });
         }
 
+        // Fetch logged-in user's details to auto-fill authorized by fields
+        const user = await User.findByPk(req.userId, {
+            attributes: ['full_name', 'email', 'phone_number']
+        });
+
+        // Auto-fill authorized by details from logged-in user
+        const authorizedByName = authorized_by || (user ? user.full_name : '');
+        const authorizedContactPhone = authorized_contact || (user ? user.phone_number : '');
+        const authorizedEmailAddress = authorized_email || (user ? user.email : '');
+
+        // ALWAYS use Williams Property Service as the supplier (per spec requirement)
+        // Ignore any supplier details sent from frontend - always enforce default
+        const defaultSupplierName = 'Williams Property Service';
+        const defaultSupplierPhone = '021 123 4567';
+        const defaultSupplierEmail = 'info@williamspropertyservices.co.nz';
+
         // Create work order with work_order_type='manual'
         const workOrder = await WorkOrder.create({
             job_no,
             date: date || new Date(),
             status: 'pending',
             work_order_type: 'manual',
-            supplier_name,
-            supplier_phone,
-            supplier_email,
+            supplier_name: defaultSupplierName, // ALWAYS Williams Property Service
+            supplier_phone: defaultSupplierPhone, // ALWAYS 021 123 4567
+            supplier_email: defaultSupplierEmail, // ALWAYS info@williamspropertyservices.co.nz
             property_name,
             property_address,
             property_phone,
             description,
             po_number,
-            authorized_by,
-            authorized_contact,
-            authorized_email,
+            authorized_by: authorizedByName,
+            authorized_contact: authorizedContactPhone,
+            authorized_email: authorizedEmailAddress,
             created_by: req.userId, // From auth middleware
             client_id: req.clientId // Multi-tenant: Automatically assign client_id
         });

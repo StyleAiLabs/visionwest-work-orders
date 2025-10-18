@@ -6,6 +6,7 @@ import MobileNavigation from '../components/layout/MobileNavigation';
 import WorkOrderForm from '../components/workOrders/WorkOrderForm';
 import Toast from '../components/common/Toast';
 import { workOrderService } from '../services/workOrderService';
+import photoService from '../services/photoService';
 
 const CreateWorkOrder = () => {
     const navigate = useNavigate();
@@ -35,10 +36,29 @@ const CreateWorkOrder = () => {
             setIsSubmitting(true);
             console.log('Submitting work order:', formData);
 
-            const response = await workOrderService.createWorkOrder(formData);
+            // Extract photos from form data
+            const { photos, ...workOrderData } = formData;
+
+            // Create the work order first
+            const response = await workOrderService.createWorkOrder(workOrderData);
 
             if (response.success) {
-                showToast('Work order created successfully', 'success');
+                const workOrderId = response.data.id;
+
+                // Upload photos if any were selected
+                if (photos && photos.length > 0) {
+                    try {
+                        console.log(`Uploading ${photos.length} photos for work order ${workOrderId}`);
+                        await photoService.uploadPhotos(workOrderId, photos, 'Before photos');
+                        showToast('Work order and photos uploaded successfully', 'success');
+                    } catch (photoError) {
+                        console.error('Error uploading photos:', photoError);
+                        // Work order was created successfully, but photos failed
+                        showToast('Work order created, but some photos failed to upload', 'warning');
+                    }
+                } else {
+                    showToast('Work order created successfully', 'success');
+                }
 
                 // Navigate to work orders list after a brief delay to show success message
                 setTimeout(() => {
