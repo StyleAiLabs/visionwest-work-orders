@@ -113,7 +113,7 @@ const WorkOrderDetailPage = () => {
     // Update the header right content button styles
 
     const headerRightContent = (
-        <button className="p-1 rounded-full hover:bg-vw-green">
+        <button className="p-1 rounded-full hover:bg-nextgen-green">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
@@ -123,7 +123,7 @@ const WorkOrderDetailPage = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vw-green"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nextgen-green"></div>
             </div>
         );
     }
@@ -186,7 +186,7 @@ const WorkOrderDetailPage = () => {
                                 {!isClient && (
                                     <button
                                         onClick={() => setShowStatusUpdate(true)}
-                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-deep-navy hover:bg-deep-navy-dark text-pure-white rounded-lg text-sm font-medium transition-colors"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

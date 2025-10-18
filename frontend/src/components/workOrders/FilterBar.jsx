@@ -55,22 +55,22 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
                 case 'pending':
                     return 'bg-orange-600 text-white';
                 case 'in-progress':
-                    return 'bg-blue-600 text-white';
+                    return 'bg-deep-navy text-pure-white';
                 case 'completed':
-                    return 'bg-green-600 text-white';
+                    return 'bg-nextgen-green text-pure-white';
                 case 'cancelled':
                     return 'bg-red-600 text-white';
                 default:
-                    return 'bg-vw-green text-white';
+                    return 'bg-nextgen-green text-pure-white';
             }
         } else {
             switch (filterId) {
                 case 'pending':
                     return 'bg-white text-orange-600 border border-orange-200';
                 case 'in-progress':
-                    return 'bg-white text-blue-600 border border-blue-200';
+                    return 'bg-pure-white text-deep-navy border border-deep-navy/20';
                 case 'completed':
-                    return 'bg-white text-green-600 border border-green-200';
+                    return 'bg-pure-white text-nextgen-green border border-nextgen-green/20';
                 case 'cancelled':
                     return 'bg-white text-red-600 border border-red-200';
                 default:

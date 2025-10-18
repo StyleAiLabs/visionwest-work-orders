@@ -1,8 +1,8 @@
-# VisionWest Work Orders System - AI Coding Agent Instructions
+# NextGen WOM - Work Order Management System - AI Coding Agent Instructions
 
 ## Architecture Overview
 
-This is a full-stack property maintenance work order management system with:
+This is a full-stack multi-client property maintenance work order management system with:
 - **Frontend**: React + Vite PWA with Tailwind CSS (deployed on Netlify)
 - **Backend**: Node.js + Express API with PostgreSQL (deployed on Render)
 - **Integration**: n8n workflow for email processing and SMS notifications
@@ -40,7 +40,7 @@ db.workOrder.hasMany(db.photo, { foreignKey: 'work_order_id', as: 'photos' });
 Environment switching: `node scripts/set-env.js [staging|development]` copies appropriate `.env.*` file.
 
 ### Database Seeding
-- Production users: `npm run setup` (creates VisionWest users)
+- Production users: `npm run setup` (creates initial client users)
 - Development data: `node utils/seeder.js` (test users and work orders)
 - Test credentials in `backend/README.md` under "Development Notes"
 
@@ -71,11 +71,12 @@ Work orders have complex nested data that gets formatted in `workOrder.controlle
 // Related arrays: photos[], notes[], statusUpdates[]
 ```
 
-### VisionWest Color Scheme (Tailwind)
+### NextGen WOM Color Scheme (Tailwind)
 Custom colors defined in `frontend/tailwind.config.js`:
-- `vwblue` (#0075bf) - Primary brand color
-- `vworange` (#F26522) - Accent color  
-- `vw.green` (#99ca3f) - Secondary brand color
+- `deep-navy` (#0e2640) - Primary brand color for headers and key elements
+- `nextgen-green` (#8bc63b) - Secondary brand color for accents and CTAs
+- `rich-black` (#010308) - Body text and high contrast elements
+- `pure-white` (#ffffff) - Backgrounds and negative space
 
 ### File Upload Pattern
 Photos use multer with S3 storage in `routes/photo.routes.js`:
@@ -90,7 +91,7 @@ router.post('/work-order/:workOrderId', upload.array('photos', 10), controller.u
 `backend/services/smsService.js` sends notifications via external webhook. Test endpoint: `/api/webhook/test-sms`
 
 ### PWA Configuration
-Vite PWA plugin in `frontend/vite.config.js` with VisionWest branding and API caching strategy for offline support.
+Vite PWA plugin in `frontend/vite.config.js` with NextGen WOM branding and API caching strategy for offline support.
 
 ### Deployment Specifics
 - **Backend**: Render with `Procfile: web: node server.js` and automatic migrations

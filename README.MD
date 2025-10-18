@@ -1,7 +1,7 @@
-# VisionWest Work Order Management System - Project Overview
+# NextGen WOM - Work Order Management System - Project Overview
 
 ## Project Purpose
-The VisionWest Work Order Management System is a mobile-friendly web application designed to streamline the management of property maintenance work orders. It integrates with an existing n8n workflow that processes incoming email work orders and sends SMS notifications.
+NextGen WOM is a mobile-friendly multi-client work order management system designed to streamline the management of property maintenance work orders. It integrates with an existing n8n workflow that processes incoming email work orders and sends SMS notifications.
 
 ## Key Features
 1. **Mobile-Optimized Interface**: Fully responsive design that works well on smartphones and tablets
@@ -66,4 +66,4 @@ The VisionWest Work Order Management System is a mobile-friendly web application
 6. Implement push notifications for mobile users
 7. Final end-to-end testing and user acceptance testing
 
-This project provides VisionWest with a modern, efficient system for managing property maintenance work orders, improving communication between stakeholders, and creating a more streamlined workflow for their maintenance team.
+This project provides organizations with a modern, efficient multi-client system for managing property maintenance work orders, improving communication between stakeholders, and creating a more streamlined workflow for maintenance teams.

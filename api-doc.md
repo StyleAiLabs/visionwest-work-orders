@@ -1,10 +1,10 @@
-# VisionWest Work Order Management System - API Documentation
+# NextGen WOM - Work Order Management System - API Documentation
 
 This document provides a brief overview of the available API endpoints for frontend integration. All API requests should be made to the base URL of the backend server.
 
 ## Base URL
 ```
-https://api.visionwest-workorders.com
+https://api.nextgen-wom.com
 ```
 
 ## Authentication
@@ -493,7 +493,7 @@ Common HTTP status codes:
 // Login example
 async function login(email, password) {
   try {
-    const response = await fetch('https://api.visionwest-workorders.com/api/auth/login', {
+    const response = await fetch('https://api.nextgen-wom.com/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -519,7 +519,7 @@ async function login(email, password) {
 async function getWorkOrders(status = null, page = 1) {
   try {
     // Build query string
-    let url = 'https://api.visionwest-workorders.com/api/work-orders?page=' + page;
+    let url = 'https://api.nextgen-wom.com/api/work-orders?page=' + page;
     if (status) {
       url += '&status=' + status;
     }

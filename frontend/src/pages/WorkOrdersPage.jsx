@@ -145,7 +145,7 @@ const WorkOrdersPage = () => {
                                         disabled={filters.page === 1}
                                         className={`p-2 rounded-md ${filters.page === 1
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-vw-green text-white hover:bg-vw-green-dark'
+                                            : 'bg-nextgen-green text-pure-white hover:bg-nextgen-green-dark'
                                             }`}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,7 +177,7 @@ const WorkOrdersPage = () => {
                                                     key={pageNum}
                                                     onClick={() => handlePageChange(pageNum)}
                                                     className={`px-3 py-1 rounded-md text-sm font-medium min-w-8 ${pageNum === filters.page
-                                                        ? 'bg-vw-green text-white'
+                                                        ? 'bg-nextgen-green text-pure-white'
                                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                 >
@@ -193,7 +193,7 @@ const WorkOrdersPage = () => {
                                         disabled={filters.page === totalPages}
                                         className={`p-2 rounded-md ${filters.page === totalPages
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-vw-green text-white hover:bg-vw-green-dark'
+                                            : 'bg-nextgen-green text-pure-white hover:bg-nextgen-green-dark'
                                             }`}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

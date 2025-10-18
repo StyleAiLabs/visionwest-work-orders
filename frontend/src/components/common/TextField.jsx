@@ -16,7 +16,7 @@ const TextField = ({
     return (
         <div className="w-full">
             {label && (
-                <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor={id} className="block text-sm font-medium text-rich-black mb-1">
                     {label} {required && <span className="text-red-500">*</span>}
                 </label>
             )}
@@ -30,8 +30,8 @@ const TextField = ({
                 onChange={onChange}
                 onBlur={onBlur}
                 required={required}
-                className={`appearance-none rounded-md relative block w-full px-3 py-3 border ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-vw-green focus:border-vw-green'
-                    } placeholder-gray-500 text-gray-900 focus:outline-none focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-3 border ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-nextgen-green focus:border-nextgen-green'
+                    } placeholder-gray-500 text-rich-black focus:outline-none focus:z-10 sm:text-sm`}
                 {...props}
             />
 

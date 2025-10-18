@@ -26,12 +26,12 @@ const StatusRadioGroup = ({ status, onStatusChange }) => {
                             className="h-4 w-4 text-amber-600 focus:ring-amber-500"
                         />
                         <div className="ml-3">
-                            <span className="text-sm font-medium text-gray-900">Pending</span>
+                            <span className="text-sm font-medium text-rich-black">Pending</span>
                             <p className="text-xs text-gray-500">Work order received but not started</p>
                         </div>
                     </label>
 
-                    <label className={`flex items-center p-3 border rounded-md ${status === 'in-progress' ? 'bg-vw-green-light border-vw-green' : 'hover:bg-vw-green-light'}`}>
+                    <label className={`flex items-center p-3 border rounded-md ${status === 'in-progress' ? 'bg-nextgen-green-light border-nextgen-green' : 'hover:bg-nextgen-green-light'}`}>
                         <input
                             type="radio"
                             name="status"
@@ -41,22 +41,22 @@ const StatusRadioGroup = ({ status, onStatusChange }) => {
                             className="h-4 w-4 text-vw-green focus:ring-vw-green"
                         />
                         <div className="ml-3">
-                            <span className="text-sm font-medium text-gray-900">In Progress</span>
+                            <span className="text-sm font-medium text-rich-black">In Progress</span>
                             <p className="text-xs text-gray-500">Work has started but not completed</p>
                         </div>
                     </label>
 
-                    <label className={`flex items-center p-3 border rounded-md ${status === 'completed' ? 'bg-green-50 border-green-300' : 'hover:bg-green-50'}`}>
+                    <label className={`flex items-center p-3 border rounded-md ${status === 'completed' ? 'bg-nextgen-green/10 border-nextgen-green' : 'hover:bg-nextgen-green/5'}`}>
                         <input
                             type="radio"
                             name="status"
                             value="completed"
                             checked={status === 'completed'}
                             onChange={() => onStatusChange('completed')}
-                            className="h-4 w-4 text-green-600 focus:ring-green-500"
+                            className="h-4 w-4 text-nextgen-green focus:ring-nextgen-green"
                         />
                         <div className="ml-3">
-                            <span className="text-sm font-medium text-gray-900">Completed</span>
+                            <span className="text-sm font-medium text-rich-black">Completed</span>
                             <p className="text-xs text-gray-500">All work has been finished</p>
                         </div>
                     </label>
@@ -83,9 +83,9 @@ const StatusRadioGroup = ({ status, onStatusChange }) => {
 
             {/* Display current status for clients when already completed/cancelled */}
             {isClient && status === 'completed' && (
-                <div className="p-3 border rounded-md bg-green-50 border-green-300">
+                <div className="p-3 border rounded-md bg-nextgen-green/10 border-nextgen-green">
                     <div className="flex items-center">
-                        <div className="h-4 w-4 bg-green-600 rounded-full mr-3"></div>
+                        <div className="h-4 w-4 bg-nextgen-green rounded-full mr-3"></div>
                         <div>
                             <span className="text-sm font-medium text-gray-900">Completed</span>
                             <p className="text-xs text-gray-500">This work order has been marked as complete</p>

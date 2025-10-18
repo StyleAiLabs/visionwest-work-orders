@@ -91,7 +91,7 @@ const DashboardPage = () => {
             {/* Admin Panel button - only for admin users */}
             {user?.role === 'admin' && (
                 <button
-                    className="p-1 rounded-full hover:bg-vw-green relative"
+                    className="p-1 rounded-full hover:bg-nextgen-green relative"
                     onClick={() => navigate('/admin')}
                     title="Admin Panel"
                 >
@@ -102,7 +102,7 @@ const DashboardPage = () => {
                 </button>
             )}
             <button
-                className="p-1 rounded-full hover:bg-vw-green relative"
+                className="p-1 rounded-full hover:bg-nextgen-green relative"
                 onClick={() => navigate('/alerts')}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -115,7 +115,7 @@ const DashboardPage = () => {
                 )}
             </button>
             <button
-                className="p-1 rounded-full hover:bg-vw-green"
+                className="p-1 rounded-full hover:bg-nextgen-green"
                 onClick={() => navigate('/settings')}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,7 +180,7 @@ const DashboardPage = () => {
                         {unreadAlertsCount > 0 && (
                             <button
                                 onClick={() => navigate('/alerts')}
-                                className="text-blue-600 text-sm font-medium flex items-center"
+                                className="text-nextgen-green text-sm font-medium flex items-center"
                             >
                                 View All ({unreadAlertsCount} new)
                             </button>

@@ -10,13 +10,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'icons/*.png'],
       manifest: {
-        name: 'VisionWest Work Orders',
-        short_name: 'Work Orders',
-        description: 'VisionWest Work Orders Management System',
+        name: 'NextGen WOM',
+        short_name: 'NextGen WOM',
+        description: 'NextGen WOM - Work Order Management System',
 
-        // VisionWest Theme Colors
-        theme_color: '#99ca3f', // VisionWest green
-        background_color: '#f8fafc', // Light gray background
+        // NextGen WOM Theme Colors
+        theme_color: '#0e2640', // Deep Navy primary
+        background_color: '#ffffff', // Pure White background
 
         display: 'standalone',
         display_override: ['window-controls-overlay', 'standalone'],

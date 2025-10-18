@@ -1,5 +1,5 @@
 {
-  "name": "visionwest-work-orders-frontend",
+  "name": "nextgen-wom-frontend",
   "private": true,
   "version": "2.6.0",
   "type": "module",
@@ -39,7 +39,7 @@
   "resolutions": {
     "netlify-redirector": "latest"
   },
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "description": "NextGen WOM - Work Order Management System Frontend",
   "main": "eslint.config.js",
   "keywords": [],
   "author": "",

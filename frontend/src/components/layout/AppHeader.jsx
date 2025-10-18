@@ -1,10 +1,10 @@
 import React from 'react';
-import visionwestLogo from '../../assets/visionwest-logo-header.png';
+import nextgenLogo from '../../assets/nextgen-logo.png';
 
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     return (
         <header
-            className="bg-gray-900 text-white fixed top-0 left-0 right-0 z-[9999] shadow-lg"
+            className="bg-deep-navy text-pure-white fixed top-0 left-0 right-0 z-[9999] shadow-lg"
             style={{
                 height: '64px',
                 padding: '16px',
@@ -19,7 +19,7 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
             {showBackButton && (
                 <button
                     onClick={onBackClick}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-1 rounded-full hover:bg-gray-700 transition-colors"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-1 rounded-full hover:bg-deep-navy-light transition-colors"
                     aria-label="Go back"
                     style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }}
                 >
@@ -40,7 +40,7 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                 }}
             >
                 {title === "Dashboard" ? (
-                    <img src={visionwestLogo} alt="VisionWest Logo" className="h-8" />
+                    <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
                 ) : (
                     <h1 className="text-lg font-semibold truncate" style={{ fontSize: '18px', fontWeight: '600' }}>
                         {title}

@@ -33,8 +33,8 @@ const StatusUpdateForm = ({ initialStatus, onSubmit, onCancel, showNotes = true 
                 </button>
                 <button
                     className={`flex-1 font-medium py-2 px-3 rounded-md text-sm border-2 ${selectedStatus === 'in-progress'
-                        ? 'bg-vw-green-light text-vw-dark border-vw-green'
-                        : 'bg-white text-vw-dark border-gray-300'
+                        ? 'bg-nextgen-green-light text-deep-navy border-nextgen-green'
+                        : 'bg-pure-white text-rich-black border-gray-300'
                         }`}
                     onClick={() => setSelectedStatus('in-progress')}
                     type="button"
@@ -43,8 +43,8 @@ const StatusUpdateForm = ({ initialStatus, onSubmit, onCancel, showNotes = true 
                 </button>
                 <button
                     className={`flex-1 font-medium py-2 px-3 rounded-md text-sm border-2 ${selectedStatus === 'completed'
-                        ? 'bg-green-100 text-green-800 border-green-300'
-                        : 'bg-white text-green-800 border-gray-300'
+                        ? 'bg-nextgen-green/10 text-nextgen-green border-nextgen-green'
+                        : 'bg-pure-white text-nextgen-green border-gray-300'
                         }`}
                     onClick={() => setSelectedStatus('completed')}
                     type="button"
@@ -81,7 +81,7 @@ const StatusUpdateForm = ({ initialStatus, onSubmit, onCancel, showNotes = true 
                 <button
                     onClick={handleSubmit}
                     type="button"
-                    className="px-4 py-2 bg-vw-green hover:bg-vw-green-dark text-white rounded-md text-sm font-medium"
+                    className="px-4 py-2 bg-nextgen-green hover:bg-nextgen-green-dark text-pure-white rounded-md text-sm font-medium"
                 >
                     Update Status
                 </button>

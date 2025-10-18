@@ -1,7 +1,7 @@
 {
-    "name": "visionwest-work-orders-backend",
+    "name": "nextgen-wom-backend",
     "version": "2.6.0",
-    "description": "VisionWest Work Orders Backend API",
+    "description": "NextGen WOM - Work Order Management Backend API",
     "main": "server.js",
     "scripts": {
         "start": "npm run migrate && node server.js",

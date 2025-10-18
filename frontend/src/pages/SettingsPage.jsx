@@ -22,7 +22,7 @@ const SettingsPage = () => {
                 // Fallback to static version if API fails
                 setAppInfo({
                     version: '2.6.0',
-                    name: 'VisionWest Work Orders'
+                    name: 'NextGen WOM'
                 });
             } finally {
                 setIsLoadingAppInfo(false);
@@ -96,11 +96,11 @@ const SettingsPage = () => {
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-gray-600">Application</span>
-                            <span className="font-medium text-gray-900">VisionWest Work Orders</span>
+                            <span className="font-medium text-gray-900">NextGen WOM</span>
                         </div>
                         <button
                             onClick={() => navigate('/release-notes')}
-                            className="w-full mt-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 flex items-center justify-between"
+                            className="w-full mt-3 bg-nextgen-green/10 hover:bg-nextgen-green/20 text-nextgen-green font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200 flex items-center justify-between"
                         >
                             <span>View Release Notes</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -2,12 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VisionWest Theme Variables */
+/* NextGen WOM Theme Variables */
 :root {
-    /* VisionWest Color Palette */
-    --vw-green: #99ca3f;
-    --vw-green-dark: #7fb834;
-    --vw-green-light: #b3d669;
+    /* NextGen WOM Color Palette */
+    --nextgen-green: #8bc63b;
+    --nextgen-green-dark: #6fa52a;
+    --nextgen-green-light: #a5d662;
+    --deep-navy: #0e2640;
+    --deep-navy-light: #1a3a5c;
+    --deep-navy-dark: #081a2d;
+    --rich-black: #010308;
+    --pure-white: #ffffff;
+
+    /* Legacy colors for backward compatibility */
+    --vw-green: #8bc63b;
+    --vw-green-dark: #6fa52a;
+    --vw-green-light: #a5d662;
     --vw-gray-50: #f8fafc;
     --vw-gray-100: #f1f5f9;
     --vw-gray-200: #e2e8f0;

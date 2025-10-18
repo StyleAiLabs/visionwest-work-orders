@@ -1,4 +1,4 @@
-# Release Notes - VisionWest Work Orders v2.3.0
+# Release Notes - NextGen WOM v2.3.0
 *Released: July 13, 2025*
 
 ## 🚀 Major Features

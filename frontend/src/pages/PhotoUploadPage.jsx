@@ -130,7 +130,7 @@ const PhotoUploadPage = () => {
             disabled={isUploading || selectedPhotos.length === 0}
             className={`p-1 rounded-full ${isUploading || selectedPhotos.length === 0
                 ? 'text-gray-400'
-                : 'hover:bg-vw-green'
+                : 'hover:bg-nextgen-green'
                 }`}
         >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +142,7 @@ const PhotoUploadPage = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vw-green"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nextgen-green"></div>
             </div>
         );
     }

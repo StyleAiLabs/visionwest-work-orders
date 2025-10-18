@@ -38,7 +38,11 @@ No breaking changes to existing templates or workflows.
 Constitution remains fully compatible with all existing features and ongoing development.
 -->
 
-# VisionWest Work Order Management System Constitution
+# NextGen WOM - Work Order Management System Constitution
+
+## Brand Guidelines Reference
+For comprehensive brand identity, color palette, typography, and component design standards, refer to:
+📖 **[Brand Kit Guidelines](./brand-kit-guidelines.md)** - Complete visual identity and design system documentation
 
 ## Core Principles
 
