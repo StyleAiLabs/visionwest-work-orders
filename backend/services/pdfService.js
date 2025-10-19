@@ -159,7 +159,7 @@ class PDFService {
 
         const addSection = (title, yPosition) => {
             doc.fontSize(16)
-                .fillColor('#1e40af')
+                .fillColor('#0e2640') // Deep Navy - Primary brand color
                 .text(title, 50, yPosition)
                 .moveTo(50, yPosition + 25)
                 .lineTo(550, yPosition + 25)
@@ -171,27 +171,38 @@ class PDFService {
 
         const addInfoItem = (label, value, x, y, width = 200) => {
             doc.fontSize(10)
-                .fillColor('#374151')
+                .fillColor('#6b7280') // Neutral gray for labels
                 .text(label, x, y)
                 .fontSize(12)
-                .fillColor('#1f2937')
+                .fillColor('#010308') // Rich Black - Body text
                 .text(value || 'Not specified', x, y + 15, { width: width });
             return y + 45;
         };
 
         let currentY = 50;
 
-        // Header with blue background
+        // Header with Deep Navy brand background
         doc.rect(0, 0, doc.page.width, 120)
-            .fillColor('#1e40af')
+            .fillColor('#0e2640') // Deep Navy - Primary brand color
             .fill();
 
+        // NextGen WOM branding
         doc.fillColor('white')
-            .fontSize(24)
-            .text(`Work Order #${workOrder.job_no}`, 50, 30);
+            .fontSize(28)
+            .text('NextGen WOM', 50, 25);
 
-        doc.fontSize(12)
-            .text(`Generated on ${formatDate(new Date())}`, 50, 65);
+        doc.fontSize(11)
+            .fillColor('#8bc63b') // NextGen Green - Secondary brand color
+            .text('Work Order Management System', 50, 58);
+
+        // Work Order Number
+        doc.fillColor('white')
+            .fontSize(16)
+            .text(`Work Order #${workOrder.job_no}`, 320, 32);
+
+        doc.fontSize(9)
+            .fillColor('#e5e7eb')
+            .text(`Generated on ${formatDate(new Date())}`, 320, 53);
 
         currentY = 140;
 
@@ -271,7 +282,7 @@ class PDFService {
             .fill();
 
         doc.fontSize(12)
-            .fillColor('#1f2937')
+            .fillColor('#010308') // Rich Black - Body text
             .text(workOrder.description || 'No description provided.', 60, currentY + 10, {
                 width: 480,
                 align: 'left'
@@ -336,11 +347,11 @@ class PDFService {
 
                         // Image info text beside the thumbnail
                         doc.fontSize(11)
-                            .fillColor('#374151')
+                            .fillColor('#0e2640') // Deep Navy for emphasis
                             .text(`📷 Photo ${i + 1}`, 210, currentY + 20);
 
                         doc.fontSize(10)
-                            .fillColor('#6b7280')
+                            .fillColor('#010308') // Rich Black - Body text
                             .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
 
                         doc.fontSize(9)
@@ -372,11 +383,11 @@ class PDFService {
 
                         // Photo info text beside the placeholder
                         doc.fontSize(11)
-                            .fillColor('#374151')
+                            .fillColor('#0e2640') // Deep Navy for emphasis
                             .text(`📷 Photo ${i + 1}`, 210, currentY + 20);
 
                         doc.fontSize(10)
-                            .fillColor('#6b7280')
+                            .fillColor('#010308') // Rich Black - Body text
                             .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
 
                         doc.fontSize(9)
@@ -410,11 +421,11 @@ class PDFService {
 
                     // Photo info text
                     doc.fontSize(11)
-                        .fillColor('#374151')
+                        .fillColor('#0e2640') // Deep Navy for emphasis
                         .text(`📷 Photo ${i + 1} (Error)`, 210, currentY + 20);
 
                     doc.fontSize(10)
-                        .fillColor('#6b7280')
+                        .fillColor('#010308') // Rich Black - Body text
                         .text(photo.description || 'No description', 210, currentY + 40, { width: 280 });
 
                     doc.fontSize(9)
@@ -461,11 +472,11 @@ class PDFService {
                     .fill();
 
                 doc.fontSize(11)
-                    .fillColor('#374151')
+                    .fillColor('#0e2640') // Deep Navy for emphasis
                     .text(`Note ${index + 1} • ${formatDate(note.createdAt)}`, 60, currentY + 10);
 
                 doc.fontSize(10)
-                    .fillColor('#1f2937')
+                    .fillColor('#010308') // Rich Black - Body text
                     .text(noteText, 60, currentY + 30, { width: 480 });
 
                 currentY += noteHeight + 10;
@@ -510,12 +521,12 @@ class PDFService {
                     .fill();
 
                 doc.fontSize(11)
-                    .fillColor('#374151')
+                    .fillColor('#0e2640') // Deep Navy for emphasis
                     .text(`Status changed to "${statusText}" • ${formatDate(update.createdAt || update.updatedAt)}`, 60, currentY + 10);
 
                 if (updateNotes) {
                     doc.fontSize(10)
-                        .fillColor('#1f2937')
+                        .fillColor('#010308') // Rich Black - Body text
                         .text(updateNotes, 60, currentY + 30, { width: 480 });
                 }
 
@@ -523,24 +534,23 @@ class PDFService {
             });
         }
 
-        // Footer
-        if (currentY > 650) { // Start new page for footer if needed
-            doc.addPage();
-            currentY = 50;
-        }
-
+        // Footer - Always place at the bottom of the last page (no new page needed)
         const footerY = doc.page.height - 100;
         doc.rect(0, footerY - 20, doc.page.width, 120)
-            .fillColor('#f9fafb')
+            .fillColor('#0e2640') // Deep Navy - Primary brand color
             .fill();
 
+        // NextGen WOM Footer branding
+        doc.fontSize(12)
+            .fillColor('#8bc63b') // NextGen Green - Secondary brand color
+            .text('NextGen WOM', 50, footerY, { align: 'center', width: 500 });
+
         doc.fontSize(10)
-            .fillColor('#6b7280')
-            .text('VisionWest Work Order Management System', 50, footerY, { align: 'center', width: 500 })
-            .text('This document contains confidential information and is intended for authorized personnel only.', 50, footerY + 15, { align: 'center', width: 500 })
+            .fillColor('white')
+            .text('Work Order Management System', 50, footerY + 18, { align: 'center', width: 500 })
             .fontSize(9)
-            .fillColor('#9ca3af')
-            .text('© 2025 Williams Property Services Group. All rights reserved.', 50, footerY + 35, { align: 'center', width: 500 });
+            .fillColor('#e5e7eb')
+            .text('© 2025 Williams Property Services. All rights reserved.', 50, footerY + 38, { align: 'center', width: 500 });
     }
 }
 
