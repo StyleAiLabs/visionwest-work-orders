@@ -9,6 +9,49 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.7.0',
+            date: 'October 20, 2025',
+            title: 'Staff Role Access Control Enhancements',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Staff users can now view and manage work orders across all clients (multi-client access)',
+                        'Client filter dropdown now visible for staff users on Work Orders page',
+                        'Client context switching - Staff can filter by specific clients or view all clients',
+                        'Authorized person filter dynamically updates based on selected client'
+                    ]
+                },
+                {
+                    category: 'Role-Based Access Control',
+                    items: [
+                        'Constitution v1.1.0 compliance - Updated role permissions with detailed matrix',
+                        'Staff: Can view/update all work orders, cannot delete or access admin panel',
+                        'Admin: Full system access including deletion and admin configuration',
+                        'Clear separation of staff vs admin capabilities enforced across all endpoints'
+                    ]
+                },
+                {
+                    category: 'Bug Fixes',
+                    items: [
+                        'Fixed 403 Forbidden errors for staff users accessing individual work orders',
+                        'Fixed client filter missing for staff users',
+                        'Fixed authorized person filter showing stale data after client change',
+                        'Improved filter synchronization between client and authorized person filters'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'Enhanced clientScoping middleware to support staff context switching',
+                        'Updated 6 work order controller functions with role-based access control',
+                        'X-Client-Context header now supported for staff users',
+                        'Context switch audit logging for staff and admin actions'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.5.2',
             date: 'October 19, 2025',
             title: ' Client Filter for Work Orders Dashboard',

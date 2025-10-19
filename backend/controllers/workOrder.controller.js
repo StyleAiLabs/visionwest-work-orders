@@ -30,10 +30,14 @@ exports.getSummary = async (req, res) => {
         console.log('User Role:', userRole);
         console.log('Client ID:', clientId);
 
-        // Multi-tenant: Apply client scoping filter
-        // All users (including clients, client_admin, staff) see only their client's data
-        // Global admins could optionally bypass this if needed (future P2 feature)
-        let whereClause = clientScoping.applyClientFilter(req);
+        // Multi-tenant: Apply client scoping ONLY for client and client_admin roles
+        // Staff and admin see all work orders across all clients (constitution principle III)
+        let whereClause = {};
+
+        if (['client', 'client_admin'].includes(userRole)) {
+            whereClause = clientScoping.applyClientFilter(req);
+        }
+        // Staff and admin: no client filter (see all work orders across all clients)
 
         // Additional role-based filtering within the client
         if (userRole === 'client') {
@@ -50,7 +54,8 @@ exports.getSummary = async (req, res) => {
                 whereClause.id = -1; // No work orders will match this
             }
         }
-        // client_admin, staff, and admin within the client see all work orders for their client
+        // client_admin sees all work orders for their client
+        // staff and admin see all work orders across all clients
 
         console.log('Dashboard summary whereClause:', JSON.stringify(whereClause));
 
@@ -128,9 +133,27 @@ exports.getAuthorizedPersons = async (req, res) => {
     try {
         const userId = req.userId;
         const userRole = req.userRole;
+        const clientId = req.clientId; // This comes from clientScoping middleware (respects X-Client-Context)
 
-        // Multi-tenant: Apply client scoping filter
-        let whereClause = clientScoping.applyClientFilter(req);
+        console.log('GET AUTHORIZED PERSONS - User:', userId, 'Role:', userRole, 'ClientId:', clientId);
+
+        // Multi-tenant: Apply client scoping ONLY for client and client_admin roles
+        // Staff and admin can filter by specific client via X-Client-Context header
+        let whereClause = {};
+
+        if (['client', 'client_admin'].includes(userRole)) {
+            whereClause = clientScoping.applyClientFilter(req);
+        } else if (['staff', 'admin'].includes(userRole)) {
+            // Staff and admin: Check if X-Client-Context header was provided
+            // If yes, req.clientId will be set by clientScoping middleware
+            // If no X-Client-Context header, req.clientId will be their default client (show all)
+            if (req.isContextSwitched) {
+                // Context was switched via X-Client-Context header - filter by that client
+                whereClause.client_id = clientId;
+                console.log('Staff/Admin filtering authorized persons by client:', clientId);
+            }
+            // else: no client filter (see all authorized persons across all clients)
+        }
 
         // Apply same role-based filtering as getAllWorkOrders for consistency
         if (userRole === 'client') {
@@ -141,6 +164,8 @@ exports.getAuthorizedPersons = async (req, res) => {
                 whereClause.id = -1;
             }
         }
+
+        console.log('Authorized persons where clause:', whereClause);
 
         const authorizedPersons = await WorkOrder.findAll({
             attributes: ['authorized_email'],
@@ -155,6 +180,8 @@ exports.getAuthorizedPersons = async (req, res) => {
         const uniquePersons = authorizedPersons
             .map(wo => wo.authorized_email)
             .filter(email => email && email.trim() !== ''); // Filter out empty emails
+
+        console.log('Found', uniquePersons.length, 'authorized persons');
 
         return res.status(200).json({
             success: true,
@@ -180,8 +207,15 @@ exports.getAllWorkOrders = async (req, res) => {
 
         console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}, Client: ${clientId}`);
 
-        // Multi-tenant: Apply client scoping filter
-        let whereClause = clientScoping.applyClientFilter(req);
+        // Multi-tenant: Apply client scoping ONLY for client and client_admin roles
+        // Staff and admin see all work orders across all clients (constitution principle III)
+        let whereClause = {};
+
+        if (['client', 'client_admin'].includes(userRole)) {
+            whereClause = clientScoping.applyClientFilter(req);
+        }
+        // Staff and admin: no client filter (see all work orders across all clients)
+
         let includeClause = []; // Fix: this was missing
 
         // Apply role-based filtering based on email matching (within the client)
@@ -197,7 +231,10 @@ exports.getAllWorkOrders = async (req, res) => {
                 whereClause.id = -1; // No work orders will match this
             }
         }
-        // client_admin, staff, and admin within the client see all work orders for their client
+        // client_admin sees all work orders for their client
+        // staff and admin see all work orders across all clients
+
+        console.log('Where clause:', JSON.stringify(whereClause));
 
         // Apply other filters (status, date, search)
         if (status && status !== 'all') {
@@ -331,14 +368,17 @@ exports.getWorkOrderById = async (req, res) => {
             });
         }
 
-        // Validate client ownership
-        try {
-            clientScoping.validateClientOwnership(workOrder, clientId);
-        } catch (error) {
-            return res.status(error.statusCode || 403).json({
-                success: false,
-                message: error.message
-            });
+        // Validate client ownership (skip for staff and admin roles)
+        const userRole = req.userRole;
+        if (!['staff', 'admin'].includes(userRole)) {
+            try {
+                clientScoping.validateClientOwnership(workOrder, clientId);
+            } catch (error) {
+                return res.status(error.statusCode || 403).json({
+                    success: false,
+                    message: error.message
+                });
+            }
         }
 
         // Create a base response object with minimal data
@@ -802,14 +842,17 @@ exports.deleteWorkOrder = async (req, res) => {
             });
         }
 
-        // Multi-tenant: Validate client ownership before allowing deletion
-        try {
-            clientScoping.validateClientOwnership(workOrder, clientId);
-        } catch (error) {
-            return res.status(error.statusCode || 403).json({
-                success: false,
-                message: error.message
-            });
+        // Multi-tenant: Validate client ownership before allowing deletion (skip for staff/admin)
+        const userRole = req.userRole;
+        if (!['staff', 'admin'].includes(userRole)) {
+            try {
+                clientScoping.validateClientOwnership(workOrder, clientId);
+            } catch (error) {
+                return res.status(error.statusCode || 403).json({
+                    success: false,
+                    message: error.message
+                });
+            }
         }
 
         // Create notification before deletion
@@ -937,14 +980,17 @@ exports.updateWorkOrder = async (req, res) => {
             });
         }
 
-        // Multi-tenant: Validate client ownership before allowing updates
-        try {
-            clientScoping.validateClientOwnership(workOrder, clientId);
-        } catch (error) {
-            return res.status(error.statusCode || 403).json({
-                success: false,
-                message: error.message
-            });
+        // Multi-tenant: Validate client ownership before allowing updates (skip for staff/admin)
+        const userRole = req.userRole;
+        if (!['staff', 'admin'].includes(userRole)) {
+            try {
+                clientScoping.validateClientOwnership(workOrder, clientId);
+            } catch (error) {
+                return res.status(error.statusCode || 403).json({
+                    success: false,
+                    message: error.message
+                });
+            }
         }
 
         // Check if job_no is being changed and if the new job_no already exists

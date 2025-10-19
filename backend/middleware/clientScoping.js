@@ -57,8 +57,8 @@ exports.addClientScope = async (req, res, next) => {
             });
         }
 
-        // Admin context switching via X-Client-Context header
-        if (req.user.role === 'admin' && req.headers['x-client-context']) {
+        // Admin and Staff context switching via X-Client-Context header
+        if (['admin', 'staff'].includes(req.user.role) && req.headers['x-client-context']) {
             const targetClientId = parseInt(req.headers['x-client-context']);
 
             // Validate the header value is a number
@@ -83,21 +83,21 @@ exports.addClientScope = async (req, res, next) => {
             // Attach context-switched client ID
             req.clientId = targetClientId;
             req.client = client;
-            req.isAdminSwitchedContext = true; // For audit logging
-            req.adminOriginalClientId = req.user.clientId; // For audit trail
+            req.isContextSwitched = true; // For audit logging (renamed from isAdminSwitchedContext)
+            req.originalClientId = req.user.clientId; // For audit trail (renamed from adminOriginalClientId)
 
             // Log context switch
             console.log('========================================');
-            console.log('[ADMIN CONTEXT SWITCH]');
+            console.log(`[${req.user.role.toUpperCase()} CONTEXT SWITCH]`);
             console.log(`User ${req.user.userId} (from client ${req.user.clientId})`);
             console.log(`Switched to client ${targetClientId} (${client.name})`);
             console.log('========================================');
 
         } else if (req.headers['x-client-context']) {
-            // Non-admin user attempting to use X-Client-Context header
+            // Non-admin/non-staff user attempting to use X-Client-Context header
             return res.status(403).json({
                 success: false,
-                message: 'Admin role required for client context switching',
+                message: 'Staff or Admin role required for client context switching',
                 code: 'FORBIDDEN_CONTEXT_SWITCH'
             });
         } else {

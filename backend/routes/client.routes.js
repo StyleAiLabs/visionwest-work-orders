@@ -6,14 +6,12 @@ const authMiddleware = require('../middleware/auth.middleware');
 // Apply authentication to all routes
 router.use(authMiddleware.verifyToken);
 
-// Apply admin role check to all routes
-router.use(authMiddleware.isAdmin);
-
-// Client Management Routes (Admin Only)
-
 // IMPORTANT: Specific routes must come before parameterized routes
-// Get simple client list for dropdown (no pagination)
-router.get('/list', clientController.getClients);
+// Get simple client list for dropdown (no pagination) - Staff and Admin access
+router.get('/list', authMiddleware.isStaffOrAdmin, clientController.getClients);
+
+// Apply admin role check to remaining routes (Client Management - Admin Only)
+router.use(authMiddleware.isAdmin);
 
 // List all clients with pagination, filtering, and search
 router.get('/', clientController.getAllClients);

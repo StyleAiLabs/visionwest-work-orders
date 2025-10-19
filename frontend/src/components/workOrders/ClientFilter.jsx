@@ -3,16 +3,16 @@ import clientService from '../../services/clientService';
 
 /**
  * ClientFilter Component
- * Dropdown filter for admins to select and filter work orders by client
- * Only visible for users with admin role
+ * Dropdown filter for staff and admins to select and filter work orders by client
+ * Only visible for users with staff or admin role (per constitution v1.1.0)
  */
 const ClientFilter = ({ selectedClientId, onClientChange, userRole }) => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Only show filter for admin users
-  if (userRole !== 'admin') {
+  // Only show filter for staff and admin users (they see all clients' work orders)
+  if (!['staff', 'admin'].includes(userRole)) {
     return null;
   }
 

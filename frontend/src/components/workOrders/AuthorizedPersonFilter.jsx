@@ -16,9 +16,9 @@ const AuthorizedPersonFilter = ({ activeFilter, onFilterChange, clientId }) => {
         try {
             setIsLoading(true);
             setError(null);
-            // Only pass clientId for admin users (for X-Client-Context header)
-            // Non-admin users get their client from JWT token automatically
-            const contextClientId = user?.role === 'admin' ? clientId : null;
+            // Pass clientId for staff and admin users (for X-Client-Context header)
+            // Client and client_admin users get their client from JWT token automatically
+            const contextClientId = ['staff', 'admin'].includes(user?.role) ? clientId : null;
             const response = await workOrderService.getAuthorizedPersons(contextClientId);
             setAuthorizedPersons(response.data || []);
 

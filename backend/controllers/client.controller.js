@@ -6,16 +6,18 @@ const WorkOrder = db.workOrder;
 
 /**
  * Get active clients for dropdown (simplified, no pagination)
- * GET /api/clients/dropdown
- * Admin-only endpoint for populating client filter dropdown
+ * GET /api/clients/list
+ * Staff and Admin endpoint for populating client filter dropdown
  */
 exports.getClients = async (req, res) => {
     try {
-        // Verify admin role
-        if (req.user.role !== 'admin') {
+        const userRole = req.userRole;
+
+        // Verify staff or admin role
+        if (!['staff', 'admin'].includes(userRole)) {
             return res.status(403).json({
                 success: false,
-                error: 'Forbidden: Admin access required',
+                error: 'Forbidden: Staff or Admin access required',
                 code: 'FORBIDDEN'
             });
         }

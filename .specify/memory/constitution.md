@@ -1,18 +1,26 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: Initial → 1.0.0
-Created: 2025-10-20
-Ratification: First constitution for NextGen WOM
+Version Change: 1.0.0 → 1.1.0 (MINOR - expanded Role-Based Access Control principle)
+Last Updated: 2025-10-20
+Amendment: Clarified staff vs admin role distinctions
 
 Principles Defined:
 - Mobile-First Design (mandatory)
 - Multi-Client Data Isolation (security critical)
-- Role-Based Access Control (enforced at query level)
+- Role-Based Access Control (enforced at query level) ← UPDATED
 - Brand Consistency (NextGen WOM identity)
 - Environment Parity (dev/staging/production)
 - Release Documentation (changelog required)
 - Integration Resilience (n8n/SMS async patterns)
+
+Changes in v1.1.0:
+- Added detailed permission matrix for all 4 roles
+- Clarified staff role: can view/update all work orders but CANNOT delete or access admin section
+- Clarified admin role: full system access including deletion and user/client management
+- Added requirement for client ownership validation bypass for staff/admin
+- Added DELETE endpoint protection (admin only)
+- Added admin section route protection (admin only)
 
 Templates Status:
 ✅ plan-template.md - aligned with multi-environment setup
@@ -25,6 +33,7 @@ Follow-up TODOs:
 - Add CHANGELOG.md template for release documentation principle
 - Create pre-commit hooks for brand color validation
 - Add automated tests for role-based access patterns
+- Update route middleware to use isAdmin for DELETE endpoints (currently isStaffOrAdmin)
 -->
 
 # NextGen WOM Constitution
@@ -60,17 +69,33 @@ Every database query MUST enforce client-level data isolation through `client_id
 Access control MUST be enforced at the API route level using role-specific middleware. Four roles with distinct access patterns:
 
 **Roles**:
-- `client`: Sees only work orders where `authorized_email` matches their email
-- `client_admin`: Sees all work orders for their client organization
-- `staff`: Sees all work orders across all clients
-- `admin`: Full system access including user management
+- `client`: Sees only work orders where `authorized_email` matches their email; Can request cancellation only
+- `client_admin`: Sees all work orders for their client organization; Can create and update work orders for their client
+- `staff`: Sees all work orders across all clients; Can view and update any work order; CANNOT delete work orders; NO access to admin section (user management)
+- `admin`: Full system access; Can view, update, and delete any work order; Full access to admin section including user management and client management
+
+**Permission Matrix**:
+| Action | client | client_admin | staff | admin |
+|--------|--------|--------------|-------|-------|
+| View own client work orders | ✅ (filtered by email) | ✅ | ✅ | ✅ |
+| View all client work orders | ❌ | ✅ (own client) | ✅ (all clients) | ✅ (all clients) |
+| Create work order | ❌ | ✅ | ❌ | ✅ |
+| Update work order | ❌ | ✅ (own client) | ✅ (all clients) | ✅ (all clients) |
+| Delete work order | ❌ | ❌ | ❌ | ✅ |
+| Cancel work order | ✅ | ✅ | ✅ | ✅ |
+| Access admin section | ❌ | ❌ | ❌ | ✅ |
+| User management | ❌ | ❌ | ❌ | ✅ |
+| Client management | ❌ | ❌ | ❌ | ✅ |
 
 **Requirements**:
-- All routes use `authMiddleware.verifyToken` + role middleware (e.g., `authMiddleware.isAnyValidRole`)
+- All routes use `authMiddleware.verifyToken` + role middleware (e.g., `authMiddleware.isAnyValidRole`, `authMiddleware.isStaffOrAdmin`, `authMiddleware.isAdmin`)
 - Status updates have special logic: clients can only set status to `'cancelled'`
+- Client ownership validation MUST skip for `staff` and `admin` roles (they bypass client scoping)
+- DELETE endpoints protected by `authMiddleware.isAdmin` only
+- Admin section routes protected by `authMiddleware.isAdmin` only
 - Maintain consistency between dashboard summaries and work order listings
 
-**Rationale**: Clear role separation prevents unauthorized access while enabling appropriate visibility.
+**Rationale**: Clear role separation prevents unauthorized access while enabling appropriate visibility. Staff can manage all work orders operationally without administrative privileges like deletion or user management.
 
 ### IV. Brand Consistency (NextGen WOM Identity)
 
@@ -112,14 +137,29 @@ Code MUST behave identically across development, staging, and production environ
 Every feature update MUST include updated release notes documenting user-facing changes.
 
 **Requirements**:
-- Version follows semantic versioning: MAJOR.MINOR.PATCH (currently 2.6.0)
+- Version follows semantic versioning: MAJOR.MINOR.PATCH (currently 2.7.0)
 - MAJOR: Breaking API changes, database schema removals, role permission changes
 - MINOR: New features, new API endpoints, new UI components
 - PATCH: Bug fixes, typo corrections, performance improvements
+- Release notes MUST be created in `/release-notes` folder as `release-X.Y.Z-summary.md`
+- Release notes MUST be added to Settings → App Information → Release Notes (in ReleaseNotesPage.jsx)
+- Version MUST be updated in:
+  - `frontend/package.json` - Frontend version
+  - `backend/package.json` - Backend version (used by /api/app/info endpoint)
+  - `frontend/src/pages/SettingsPage.jsx` - Fallback version display
+  - `frontend/src/pages/ReleaseNotesPage.jsx` - Latest version entry
 - Document in commit message and create GitHub release notes
 - Include migration instructions if database schema changes
 
-**Rationale**: Deployment teams and clients need clear change documentation for production updates.
+**Release Notes Structure**:
+- Summary section with release date and type
+- New Features (user-facing capabilities)
+- Bug Fixes (issues resolved)
+- Technical Improvements (developer-facing changes)
+- Breaking Changes (if any)
+- Upgrade Instructions
+
+**Rationale**: Deployment teams and clients need clear change documentation for production updates. Users can view release history from Settings → App Information → View Release Notes.
 
 ### VII. Integration Resilience
 
@@ -253,4 +293,6 @@ Principle violations MUST be documented in implementation plan's "Complexity Tra
 - Why violation is necessary
 - What simpler alternative was rejected and why
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20
+**Version**: 1.1.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20 | **App Version**: 2.7.0
+
+````

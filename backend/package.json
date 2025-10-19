@@ -1,6 +1,6 @@
 {
     "name": "nextgen-wom-backend",
-    "version": "2.6.0",
+    "version": "2.7.0",
     "description": "NextGen WOM - Work Order Management Backend API",
     "main": "server.js",
     "scripts": {

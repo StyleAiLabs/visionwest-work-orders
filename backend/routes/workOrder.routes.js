@@ -28,13 +28,10 @@ router.patch('/:id/status', authMiddleware.handleWorkOrderStatusUpdate, workOrde
 // Automatically adds client_id to the work order from JWT
 router.post('/', authMiddleware.isClientAdmin, clientScoping.enforceClientOnCreate, workOrderController.createManualWorkOrder);
 
-// FIX: Replace undefined updateWorkOrder with a valid controller method
-// Option 1: If you have a partial update endpoint, use patchWorkOrder
+// Update work order - staff and admin only
 router.put('/:id', authMiddleware.isStaffOrAdmin, workOrderController.updateWorkOrder || workOrderController.createWorkOrder);
 
-// Option 2: If the route isn't needed yet, comment it out:
-// router.put('/:id', authMiddleware.isStaffOrAdmin, workOrderController.updateWorkOrder);
-
-router.delete('/:id', authMiddleware.isStaffOrAdmin, workOrderController.deleteWorkOrder);
+// Delete work order - admin only (staff cannot delete)
+router.delete('/:id', authMiddleware.isAdmin, workOrderController.deleteWorkOrder);
 
 module.exports = router;

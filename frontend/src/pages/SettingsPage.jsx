@@ -21,7 +21,7 @@ const SettingsPage = () => {
                 console.error('Error fetching app info:', error);
                 // Fallback to static version if API fails
                 setAppInfo({
-                    version: '2.6.0',
+                    version: '2.7.0',
                     name: 'NextGen WOM'
                 });
             } finally {
@@ -91,7 +91,7 @@ const SettingsPage = () => {
                             {isLoadingAppInfo ? (
                                 <div className="w-16 h-4 bg-gray-200 animate-pulse rounded"></div>
                             ) : (
-                                <span className="font-medium text-gray-900">{appInfo?.version || '2.6.0'}</span>
+                                <span className="font-medium text-gray-900">{appInfo?.version || '2.7.0'}</span>
                             )}
                         </div>
                         <div className="flex justify-between items-center">

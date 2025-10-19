@@ -107,7 +107,8 @@ const WorkOrdersPage = () => {
 
     const handleClientChange = (newClientId) => {
         setClientId(newClientId);
-        setFilters(prev => ({ ...prev, page: 1 })); // Reset to page 1
+        // Reset authorized person filter and page when client changes
+        setFilters(prev => ({ ...prev, authorized_person: '', page: 1 }));
     };
 
     const handleWorkOrderClick = (id) => {
