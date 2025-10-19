@@ -69,9 +69,9 @@ const WorkOrdersPage = () => {
     const fetchWorkOrders = async () => {
         try {
             setIsLoading(true);
-            // Only pass clientId for admin users (for X-Client-Context header)
-            // Non-admin users get their client from JWT token automatically
-            const contextClientId = user?.role === 'admin' ? clientId : null;
+            // Only pass clientId for staff and admin users (for X-Client-Context header)
+            // Client and client_admin users get their client from JWT token automatically
+            const contextClientId = ['staff', 'admin'].includes(user?.role) ? clientId : null;
             const response = await workOrderService.getWorkOrders(filters, contextClientId);
             console.log('Fetched work orders response:', response);
             console.log('Individual work order sample:', response.data[0]);

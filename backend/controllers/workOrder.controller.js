@@ -31,13 +31,21 @@ exports.getSummary = async (req, res) => {
         console.log('Client ID:', clientId);
 
         // Multi-tenant: Apply client scoping ONLY for client and client_admin roles
-        // Staff and admin see all work orders across all clients (constitution principle III)
+        // Staff and admin see all work orders across all clients UNLESS they explicitly filter by client
         let whereClause = {};
 
         if (['client', 'client_admin'].includes(userRole)) {
             whereClause = clientScoping.applyClientFilter(req);
+        } else if (['staff', 'admin'].includes(userRole)) {
+            // Staff and admin: Check if X-Client-Context header was provided
+            // If yes, filter by that specific client
+            if (req.isContextSwitched) {
+                // Context was switched via X-Client-Context header - filter by that client
+                whereClause.client_id = clientId;
+                console.log('Staff/Admin filtering dashboard summary by client:', clientId);
+            }
+            // else: no client filter (see all work orders across all clients)
         }
-        // Staff and admin: no client filter (see all work orders across all clients)
 
         // Additional role-based filtering within the client
         if (userRole === 'client') {
@@ -208,13 +216,21 @@ exports.getAllWorkOrders = async (req, res) => {
         console.log(`GET WORK ORDERS - User: ${userId}, Role: ${userRole}, Client: ${clientId}`);
 
         // Multi-tenant: Apply client scoping ONLY for client and client_admin roles
-        // Staff and admin see all work orders across all clients (constitution principle III)
+        // Staff and admin see all work orders across all clients UNLESS they explicitly filter by client
         let whereClause = {};
 
         if (['client', 'client_admin'].includes(userRole)) {
             whereClause = clientScoping.applyClientFilter(req);
+        } else if (['staff', 'admin'].includes(userRole)) {
+            // Staff and admin: Check if X-Client-Context header was provided
+            // If yes, filter by that specific client
+            if (req.isContextSwitched) {
+                // Context was switched via X-Client-Context header - filter by that client
+                whereClause.client_id = clientId;
+                console.log('Staff/Admin filtering work orders by client:', clientId);
+            }
+            // else: no client filter (see all work orders across all clients)
         }
-        // Staff and admin: no client filter (see all work orders across all clients)
 
         let includeClause = []; // Fix: this was missing
 
