@@ -59,6 +59,14 @@ const LoginPage = () => {
 
             {/* Right side - Login form */}
             <div className="w-full lg:w-1/2 flex flex-col items-center justify-center py-8 px-4 sm:px-6 lg:px-8 bg-pure-white min-h-screen relative">
+                {/* Header with Logo - Mobile only */}
+                <div className="absolute top-0 left-0 right-0 p-6 flex justify-center bg-deep-navy lg:hidden">
+                    <img
+                        src={nextgenLogo}
+                        alt="NextGen WOM"
+                        className="h-12 object-contain"
+                    />
+                </div>
 
                 <div className="w-full max-w-md space-y-8">
                     <div className="lg:mt-0">
@@ -109,6 +117,13 @@ const LoginPage = () => {
                             </Button>
                         </div>
                     </form>
+                </div>
+
+                {/* Footer - Visible on all screens */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-center text-sm text-gray-500">
+                        © 2025 Williams Property Services. All rights reserved.
+                    </p>
                 </div>
             </div>
         </div>
