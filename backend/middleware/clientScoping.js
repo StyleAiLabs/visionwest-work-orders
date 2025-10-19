@@ -24,7 +24,6 @@ exports.addClientScope = async (req, res, next) => {
     try {
         // Skip for webhook endpoints (they bypass authentication)
         if (req.path.startsWith('/api/webhook/')) {
-            console.log('Skipping clientScoping for webhook endpoint');
             return next();
         }
 

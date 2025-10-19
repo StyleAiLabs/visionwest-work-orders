@@ -21,17 +21,19 @@ const WorkOrderDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { refreshAlerts } = useAlerts();
+    const { user } = useAuth(); // Get the current user with role
+
     // Get clientId from navigation state (passed from WorkOrdersPage when admin filters by client)
-    const clientId = location.state?.clientId;
+    // Only use clientId for staff/admin roles (context switching feature)
+    const clientId = (user?.role === 'staff' || user?.role === 'admin') ? location.state?.clientId : null;
+
     const [workOrder, setWorkOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showStatusUpdate, setShowStatusUpdate] = useState(false);
 
-    // Add alerts context
-    const { refreshAlerts } = useAlerts();
-    const { user } = useAuth(); // Get the current user with role
     const isClient = user && user.role === 'client';
 
     useEffect(() => {

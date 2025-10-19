@@ -372,7 +372,7 @@ exports.getWorkOrderById = async (req, res) => {
     try {
         const { id } = req.params;
         const clientId = req.clientId;
-        console.log(`Fetching work order with ID: ${id}, Client ID: ${clientId}`);
+        const userRole = req.userRole;
 
         // Multi-tenant: Fetch work order and validate client ownership
         const workOrder = await WorkOrder.findByPk(id);
@@ -384,9 +384,8 @@ exports.getWorkOrderById = async (req, res) => {
             });
         }
 
-        // Validate client ownership (skip for staff and admin roles)
-        const userRole = req.userRole;
-        if (!['staff', 'admin'].includes(userRole)) {
+        // Validate client ownership (skip for staff, admin, and client_admin roles)
+        if (!['staff', 'admin', 'client_admin'].includes(userRole)) {
             try {
                 clientScoping.validateClientOwnership(workOrder, clientId);
             } catch (error) {
@@ -996,9 +995,9 @@ exports.updateWorkOrder = async (req, res) => {
             });
         }
 
-        // Multi-tenant: Validate client ownership before allowing updates (skip for staff/admin)
+        // Multi-tenant: Validate client ownership before allowing updates (skip for staff, admin, and client_admin)
         const userRole = req.userRole;
-        if (!['staff', 'admin'].includes(userRole)) {
+        if (!['staff', 'admin', 'client_admin'].includes(userRole)) {
             try {
                 clientScoping.validateClientOwnership(workOrder, clientId);
             } catch (error) {
