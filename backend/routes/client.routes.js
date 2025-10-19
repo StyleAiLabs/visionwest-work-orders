@@ -11,14 +11,18 @@ router.use(authMiddleware.isAdmin);
 
 // Client Management Routes (Admin Only)
 
+// IMPORTANT: Specific routes must come before parameterized routes
+// Get simple client list for dropdown (no pagination)
+router.get('/list', clientController.getClients);
+
 // List all clients with pagination, filtering, and search
 router.get('/', clientController.getAllClients);
 
+// Get client statistics (specific route before :id)
+router.get('/:id/stats', clientController.getClientStats);
+
 // Get client by ID with stats
 router.get('/:id', clientController.getClientById);
-
-// Get client statistics
-router.get('/:id/stats', clientController.getClientStats);
 
 // Create new client
 router.post('/', clientController.createClient);

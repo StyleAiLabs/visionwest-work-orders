@@ -5,6 +5,7 @@ import MobileNavigation from '../components/layout/MobileNavigation';
 import SummaryCard from '../components/dashboard/SummaryCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
+import ClientFilter from '../components/workOrders/ClientFilter';
 import { useAuth } from '../hooks/useAuth';
 import { alertsService } from '../services/alertsService';
 import { dashboardService } from '../services/dashboardService';
@@ -22,15 +23,51 @@ const DashboardPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
+    // T048: Add client filter state
+    const [clientId, setClientId] = useState(null);
 
+    // Initialize clientId based on user role when user loads
     useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') {
+                // Admin: Load from sessionStorage or default to null (All Clients)
+                const saved = sessionStorage.getItem('dashboard_selectedClientId');
+                setClientId(saved ? parseInt(saved) : null);
+            } else {
+                // Non-admin: Always use their client_id
+                setClientId(user.client_id);
+            }
+        }
+    }, [user]);
+
+    // Save clientId to sessionStorage (admin only)
+    useEffect(() => {
+        if (user?.role === 'admin') {
+            if (clientId === null) {
+                sessionStorage.removeItem('dashboard_selectedClientId');
+            } else {
+                sessionStorage.setItem('dashboard_selectedClientId', clientId.toString());
+            }
+        }
+    }, [clientId, user]);
+
+    // T051: Add clientId dependency
+    useEffect(() => {
+        // Only fetch if user is loaded and clientId is properly initialized
+        // For non-admin users, wait until clientId is set
+        if (!user) return;
+        if (user.role !== 'admin' && clientId === null) return;
+
         const fetchDashboardData = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
 
-                // Fetch dashboard summary
-                const summaryData = await dashboardService.getDashboardSummary();
+                // T052: Fetch dashboard summary with clientId
+                // Only pass clientId for admin users (for X-Client-Context header)
+                // Non-admin users get their client from JWT token automatically
+                const contextClientId = user?.role === 'admin' ? clientId : null;
+                const summaryData = await dashboardService.getDashboardSummary(contextClientId);
                 setSummary(summaryData.data);
 
                 // Fetch unread alerts count
@@ -57,7 +94,11 @@ const DashboardPage = () => {
         };
 
         fetchDashboardData();
-    }, []);
+    }, [clientId, user]); // T051: clientId and user dependencies added
+
+    const handleClientChange = (newClientId) => {
+        setClientId(newClientId);
+    };
 
     const getActivityType = (status) => {
         switch (status) {
@@ -173,8 +214,17 @@ const DashboardPage = () => {
 
             {/* Dashboard Content */}
             <div className="flex-1 overflow-y-auto p-4">
+                {/* T049: Client Filter for admin users */}
+                <div style={{ paddingTop: '70px' }}>
+                    <ClientFilter
+                        selectedClientId={clientId}
+                        onClientChange={handleClientChange}
+                        userRole={user?.role}
+                    />
+                </div>
+
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 mb-6" style={{ paddingTop: '70px' }}>
+                <div className="grid grid-cols-2 gap-4 mb-6">
                     <SummaryCard title="Pending" value={summary.pending} color="orange" />
                     <SummaryCard title="In Progress" value={summary.inProgress} color="blue" />
                     <SummaryCard title="Completed" value={summary.completed} color="green" />

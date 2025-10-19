@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
 import { workOrderService } from '../services/workOrderService';
 import AppHeader from '../components/layout/AppHeader';
@@ -20,6 +20,9 @@ import ExportButton from '../components/common/ExportButton';
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    // Get clientId from navigation state (passed from WorkOrdersPage when admin filters by client)
+    const clientId = location.state?.clientId;
     const [workOrder, setWorkOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -38,7 +41,7 @@ const WorkOrderDetailPage = () => {
     const fetchWorkOrder = async () => {
         try {
             setIsLoading(true);
-            const response = await workOrderService.getWorkOrderById(id);
+            const response = await workOrderService.getWorkOrderById(id, clientId);
             setWorkOrder(response.data);
             setError(null);
         } catch (error) {
@@ -57,7 +60,7 @@ const WorkOrderDetailPage = () => {
     // Update handlers to refresh alerts after actions
     const handleStatusChange = async (status, notes = '') => {
         try {
-            await workOrderService.updateWorkOrderStatus(id, status, notes);
+            await workOrderService.updateWorkOrderStatus(id, status, notes, clientId);
             await fetchWorkOrder();
             await refreshAlerts(); // Refresh alerts after status change
             showToast('Status updated successfully', 'success');
@@ -75,7 +78,7 @@ const WorkOrderDetailPage = () => {
                 return false;
             }
 
-            await workOrderService.addNote(id, content);
+            await workOrderService.addNote(id, content, clientId);
             await fetchWorkOrder();
             await refreshAlerts(); // Refresh alerts after adding note
             showToast('Note added successfully', 'success');

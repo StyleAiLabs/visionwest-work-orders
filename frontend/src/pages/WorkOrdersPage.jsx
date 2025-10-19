@@ -6,6 +6,7 @@ import MobileNavigation from '../components/layout/MobileNavigation';
 import WorkOrderCard from '../components/workOrders/WorkOrderCard';
 import FilterBar from '../components/workOrders/FilterBar';
 import AuthorizedPersonFilter from '../components/workOrders/AuthorizedPersonFilter';
+import ClientFilter from '../components/workOrders/ClientFilter';
 import SearchBar from '../components/common/SearchBar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { workOrderService } from '../services/workOrderService';
@@ -17,6 +18,7 @@ const WorkOrdersPage = () => {
     const [workOrders, setWorkOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [clientId, setClientId] = useState(null);
     const [filters, setFilters] = useState({
         status: '',
         search: '',
@@ -30,14 +32,47 @@ const WorkOrdersPage = () => {
     // Check if user is client_admin (tenancy manager)
     const isClientAdmin = user && user.role === 'client_admin';
 
+    // Initialize clientId based on user role when user loads
     useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') {
+                // Admin: Load from sessionStorage or default to null (All Clients)
+                const saved = sessionStorage.getItem('workOrders_selectedClientId');
+                setClientId(saved ? parseInt(saved) : null);
+            } else {
+                // Non-admin: Always use their client_id
+                setClientId(user.client_id);
+            }
+        }
+    }, [user]);
+
+    // T041: Save clientId to sessionStorage when it changes (admin only)
+    useEffect(() => {
+        if (user?.role === 'admin') {
+            if (clientId === null) {
+                sessionStorage.removeItem('workOrders_selectedClientId');
+            } else {
+                sessionStorage.setItem('workOrders_selectedClientId', clientId.toString());
+            }
+        }
+    }, [clientId, user]);
+
+    useEffect(() => {
+        // Only fetch if user is loaded and clientId is properly initialized
+        // For non-admin users, wait until clientId is set
+        if (!user) return;
+        if (user.role !== 'admin' && clientId === null) return;
+
         fetchWorkOrders();
-    }, [filters]);
+    }, [filters, clientId, user]);
 
     const fetchWorkOrders = async () => {
         try {
             setIsLoading(true);
-            const response = await workOrderService.getWorkOrders(filters);
+            // Only pass clientId for admin users (for X-Client-Context header)
+            // Non-admin users get their client from JWT token automatically
+            const contextClientId = user?.role === 'admin' ? clientId : null;
+            const response = await workOrderService.getWorkOrders(filters, contextClientId);
             console.log('Fetched work orders response:', response);
             console.log('Individual work order sample:', response.data[0]);
             setWorkOrders(response.data);
@@ -70,8 +105,14 @@ const WorkOrdersPage = () => {
         setFilters(prev => ({ ...prev, authorized_person: authorizedPerson, page: 1 }));
     };
 
+    const handleClientChange = (newClientId) => {
+        setClientId(newClientId);
+        setFilters(prev => ({ ...prev, page: 1 })); // Reset to page 1
+    };
+
     const handleWorkOrderClick = (id) => {
-        navigate(`/work-orders/${id}`);
+        // Pass clientId in state so detail page can use it for API calls
+        navigate(`/work-orders/${id}`, { state: { clientId } });
     };
 
     const handlePageChange = (newPage) => {
@@ -96,6 +137,12 @@ const WorkOrdersPage = () => {
                     />
                 </div>
 
+                <ClientFilter
+                    selectedClientId={clientId}
+                    onClientChange={handleClientChange}
+                    userRole={user?.role}
+                />
+
                 <FilterBar
                     activeFilter={filters.status}
                     onFilterChange={handleFilterChange}
@@ -104,6 +151,7 @@ const WorkOrdersPage = () => {
                 <AuthorizedPersonFilter
                     activeFilter={filters.authorized_person}
                     onFilterChange={handleAuthorizedPersonChange}
+                    clientId={clientId}
                 />
 
                 {isLoading ? (
@@ -117,6 +165,18 @@ const WorkOrdersPage = () => {
                         >
                             Try Again
                         </button>
+                    </div>
+                ) : workOrders.length === 0 ? (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center mt-4">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No work orders found</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            {filters.status || filters.search || filters.authorized_person || clientId
+                                ? "Try adjusting your filters to see more results"
+                                : "No work orders available at this time"}
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-4 mt-4">

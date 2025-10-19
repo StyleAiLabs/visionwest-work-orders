@@ -1,21 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { workOrderService } from '../../services/workOrderService';
+import { useAuth } from '../../hooks/useAuth';
 
-const AuthorizedPersonFilter = ({ activeFilter, onFilterChange }) => {
+const AuthorizedPersonFilter = ({ activeFilter, onFilterChange, clientId }) => {
+    const { user } = useAuth();
     const [authorizedPersons, setAuthorizedPersons] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchAuthorizedPersons();
-    }, []);
+    }, [clientId]); // Re-fetch when clientId changes
 
     const fetchAuthorizedPersons = async () => {
         try {
             setIsLoading(true);
-            const response = await workOrderService.getAuthorizedPersons();
+            setError(null);
+            // Only pass clientId for admin users (for X-Client-Context header)
+            // Non-admin users get their client from JWT token automatically
+            const contextClientId = user?.role === 'admin' ? clientId : null;
+            const response = await workOrderService.getAuthorizedPersons(contextClientId);
             setAuthorizedPersons(response.data || []);
-        } catch (error) {
-            console.error('Error fetching authorized persons:', error);
+
+            // T031: Clear selected authorized person if not in new client's list
+            if (activeFilter && activeFilter !== 'all') {
+                const personExists = (response.data || []).includes(activeFilter);
+                if (!personExists) {
+                    onFilterChange('all'); // Clear filter if person doesn't exist in new client
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching authorized persons:', err);
+            setError('Failed to load authorized persons');
             setAuthorizedPersons([]);
         } finally {
             setIsLoading(false);
@@ -29,6 +45,17 @@ const AuthorizedPersonFilter = ({ activeFilter, onFilterChange }) => {
                     Authorized Person
                 </label>
                 <div className="animate-pulse bg-gray-200 h-10 rounded-md"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Authorized Person
+                </label>
+                <div className="text-red-500 text-sm">{error}</div>
             </div>
         );
     }

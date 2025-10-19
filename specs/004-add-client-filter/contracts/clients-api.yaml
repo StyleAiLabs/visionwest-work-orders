@@ -1,0 +1,471 @@
+openapi: 3.0.3
+info:
+  title: Client Filter API
+  description: API contract for admin client filtering feature
+  version: 1.0.0
+  contact:
+    name: NextGen WOM Development Team
+
+servers:
+  - url: http://localhost:5002/api
+    description: Local development server
+  - url: https://staging-api.example.com/api
+    description: Staging server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Clients
+    description: Client management and listing endpoints
+  - name: Work Orders
+    description: Work order filtering and retrieval endpoints
+
+paths:
+  /clients:
+    get:
+      tags:
+        - Clients
+      summary: Get list of active clients
+      description: |
+        Retrieves a list of all active clients in the system, sorted alphabetically by name.
+        This endpoint is used to populate the client filter dropdown on the admin dashboard.
+
+        **Authorization**: Admin role required
+      operationId: getClients
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of active clients retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clients:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+              examples:
+                success:
+                  value:
+                    clients:
+                      - id: 1
+                        name: "VisionWest Community Trust"
+                        code: "VWCT"
+                        status: "active"
+                      - id: 2
+                        name: "Auckland Council"
+                        code: "AC"
+                        status: "active"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /work-orders:
+    get:
+      tags:
+        - Work Orders
+      summary: Get filtered work orders
+      description: |
+        Retrieves work orders with optional filtering by client, status, authorized person, and search term.
+        Supports pagination and returns total count for pagination UI.
+
+        **Client Filtering**: Admin users can provide `X-Client-Context` header to filter by specific client.
+        If header is omitted, returns work orders from all clients (for admin users).
+
+        **Authorization**: All authenticated users, but results filtered by role:
+        - Admin: Can view any client's work orders via X-Client-Context header
+        - Client/Staff/Client Admin: Limited to their assigned client
+      operationId: getWorkOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: X-Client-Context
+          in: header
+          description: |
+            Client ID to filter work orders (admin users only).
+            If omitted, admin users see work orders from all clients.
+            Non-admin users cannot use this header (automatically scoped to their client).
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: status
+          in: query
+          description: Filter by work order status
+          required: false
+          schema:
+            type: string
+            enum: [pending, in-progress, completed, cancelled]
+            example: "pending"
+        - name: authorized_person
+          in: query
+          description: Filter by authorized person email
+          required: false
+          schema:
+            type: string
+            format: email
+            example: "john.doe@example.com"
+        - name: search
+          in: query
+          description: Search term for job_no, property_name, property_address, or description
+          required: false
+          schema:
+            type: string
+            example: "plumbing"
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
+            example: 10
+      responses:
+        '200':
+          description: Work orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workOrders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkOrder'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+              examples:
+                filtered_by_client:
+                  value:
+                    workOrders:
+                      - id: 123
+                        job_no: "WO-2025-001"
+                        client_id: 1
+                        client_name: "VWCT"
+                        status: "pending"
+                        date: "2025-10-19"
+                        property_name: "123 Main St Property"
+                        authorized_email: "john.doe@example.com"
+                    pagination:
+                      total: 45
+                      page: 1
+                      limit: 10
+                      totalPages: 5
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /work-orders/authorized-persons:
+    get:
+      tags:
+        - Work Orders
+      summary: Get list of authorized persons
+      description: |
+        Retrieves a list of unique authorized person emails from work orders.
+        If `X-Client-Context` header is provided, returns authorized persons for that client only.
+
+        **Authorization**: All authenticated users
+      operationId: getAuthorizedPersons
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: X-Client-Context
+          in: header
+          description: Client ID to filter authorized persons (admin users only)
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: List of authorized persons retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorizedPersons:
+                    type: array
+                    items:
+                      type: string
+                      format: email
+              examples:
+                success:
+                  value:
+                    authorizedPersons:
+                      - "john.doe@example.com"
+                      - "jane.smith@example.com"
+                      - "bob.jones@example.com"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /work-orders/summary:
+    get:
+      tags:
+        - Work Orders
+      summary: Get work order summary counts
+      description: |
+        Retrieves summary counts of work orders by status (pending, in-progress, completed, cancelled).
+        If `X-Client-Context` header is provided, returns counts for that client only.
+
+        **Authorization**: All authenticated users
+      operationId: getWorkOrderSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: X-Client-Context
+          in: header
+          description: Client ID to filter summary counts (admin users only)
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Summary counts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkOrderSummary'
+              examples:
+                client_filtered:
+                  value:
+                    pending: 12
+                    inProgress: 8
+                    completed: 145
+                    cancelled: 3
+                    total: 168
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  schemas:
+    Client:
+      type: object
+      required:
+        - id
+        - name
+        - code
+        - status
+      properties:
+        id:
+          type: integer
+          description: Unique client identifier
+          example: 1
+        name:
+          type: string
+          description: Client organization name
+          example: "VisionWest Community Trust"
+        code:
+          type: string
+          description: Short client code
+          example: "VWCT"
+        status:
+          type: string
+          description: Client status
+          enum: [active, inactive, suspended]
+          example: "active"
+
+    WorkOrder:
+      type: object
+      required:
+        - id
+        - job_no
+        - client_id
+        - status
+        - date
+      properties:
+        id:
+          type: integer
+          description: Unique work order identifier
+          example: 123
+        job_no:
+          type: string
+          description: Job number (unique within client)
+          example: "WO-2025-001"
+        client_id:
+          type: integer
+          description: Client who owns this work order
+          example: 1
+        client_name:
+          type: string
+          description: Client name (joined from clients table)
+          example: "VWCT"
+        status:
+          type: string
+          description: Current work order status
+          enum: [pending, in-progress, completed, cancelled]
+          example: "pending"
+        date:
+          type: string
+          format: date
+          description: Work order date
+          example: "2025-10-19"
+        work_order_type:
+          type: string
+          description: Type of work order
+          example: "manual"
+        property_name:
+          type: string
+          description: Property name
+          example: "123 Main St Property"
+        property_address:
+          type: string
+          description: Property address
+          example: "123 Main Street, Auckland"
+        authorized_by:
+          type: string
+          description: Name of authorizing person
+          example: "John Doe"
+        authorized_email:
+          type: string
+          format: email
+          description: Email of authorizing person
+          example: "john.doe@example.com"
+        description:
+          type: string
+          description: Work order description
+          example: "Fix leaking pipe in kitchen"
+        createdAt:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+          example: "2025-10-19T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Record last update timestamp
+          example: "2025-10-19T14:45:00Z"
+
+    Pagination:
+      type: object
+      required:
+        - total
+        - page
+        - limit
+        - totalPages
+      properties:
+        total:
+          type: integer
+          description: Total number of records matching filters
+          example: 45
+        page:
+          type: integer
+          description: Current page number (1-indexed)
+          example: 1
+        limit:
+          type: integer
+          description: Number of records per page
+          example: 10
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 5
+
+    WorkOrderSummary:
+      type: object
+      required:
+        - pending
+        - inProgress
+        - completed
+        - cancelled
+        - total
+      properties:
+        pending:
+          type: integer
+          description: Count of pending work orders
+          example: 12
+        inProgress:
+          type: integer
+          description: Count of in-progress work orders
+          example: 8
+        completed:
+          type: integer
+          description: Count of completed work orders
+          example: 145
+        cancelled:
+          type: integer
+          description: Count of cancelled work orders
+          example: 3
+        total:
+          type: integer
+          description: Total count of all work orders
+          example: 168
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Unauthorized access"
+        details:
+          type: string
+          description: Additional error details
+          example: "JWT token is missing or invalid"
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            details: "JWT token is missing or invalid"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Forbidden"
+            details: "Admin role required to access this endpoint"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            details: "An unexpected error occurred"
+
+security:
+  - BearerAuth: []

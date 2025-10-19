@@ -5,6 +5,43 @@ const User = db.user;
 const WorkOrder = db.workOrder;
 
 /**
+ * Get active clients for dropdown (simplified, no pagination)
+ * GET /api/clients/dropdown
+ * Admin-only endpoint for populating client filter dropdown
+ */
+exports.getClients = async (req, res) => {
+    try {
+        // Verify admin role
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Forbidden: Admin access required',
+                code: 'FORBIDDEN'
+            });
+        }
+
+        // Fetch active clients sorted alphabetically by name
+        const clients = await Client.findAll({
+            where: { status: 'active' },
+            attributes: ['id', 'name', 'code', 'status'],
+            order: [['name', 'ASC']]
+        });
+
+        res.json({
+            success: true,
+            clients
+        });
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch clients',
+            message: error.message
+        });
+    }
+};
+
+/**
  * Get all clients with pagination, filtering, and search
  * GET /api/clients
  * Query params: status, page, limit, search

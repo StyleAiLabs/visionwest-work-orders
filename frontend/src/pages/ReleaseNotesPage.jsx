@@ -9,7 +9,41 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
-            version: '2.6.0',
+            version: '2.5.2',
+            date: 'October 19, 2025',
+            title: ' Client Filter for Work Orders Dashboard',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Client filtering for work orders dashboard - Admins can now filter jobs by specific client organizations',
+                        'Client dropdown filter with seamless integration alongside existing authorized person and status filters',
+                        'Mobile-optimized interface with native select elements for optimal touch experience',
+                        'Dashboard integration - Client filter works consistently across work orders and dashboard summary pages'
+                    ]
+                },
+                {
+                    category: 'Improvements',
+                    items: [
+                        'Combined filtering capability - Admins can use both client and authorized person filters simultaneously',
+                        'Performance optimized with <2 second response time for filter operations',
+                        'Session persistence - Selected client filter maintains state during navigation',
+                        'Role-based access - Client filter only visible to admin users maintaining security'
+                    ]
+                },
+                {
+                    category: 'Technical',
+                    items: [
+                        'New backend endpoint /api/clients for fetching active client organizations',
+                        'Enhanced middleware with X-Client-Context header handling for client-specific data scoping',
+                        'Mobile-first responsive design following 320px-1440px+ breakpoint guidelines',
+                        'Full backward compatibility with existing user roles and functionality'
+                    ]
+                }
+            ]
+        },
+        {
+            version: '2.5.1',
             date: 'October 18, 2025',
             title: 'Manual Work Order Entry Enhancements',
             features: [

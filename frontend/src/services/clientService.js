@@ -6,6 +6,21 @@ import api from './api';
  */
 
 /**
+ * Get active clients for dropdown (simplified, no pagination)
+ * Admin-only endpoint
+ * @returns {Promise} Response with clients array
+ */
+export const getClients = async () => {
+    try {
+        const response = await api.get('/clients/list');
+        return response.data.clients;
+    } catch (error) {
+        console.error('Get clients error:', error);
+        throw error;
+    }
+};
+
+/**
  * Get all clients with pagination, filtering, and search
  * @param {Object} params - Query parameters
  * @param {string} params.status - Filter by status: 'active', 'inactive', 'archived'
@@ -109,6 +124,7 @@ export const deleteClient = async (id) => {
 };
 
 export default {
+    getClients,
     getAllClients,
     getClientById,
     getClientStats,

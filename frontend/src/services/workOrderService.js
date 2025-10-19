@@ -39,9 +39,10 @@ export const workOrderService = {
         }
     },
 
-    async getAuthorizedPersons() {
+    async getAuthorizedPersons(clientId = null) {
         try {
-            const response = await api.get('/work-orders/authorized-persons');
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.get('/work-orders/authorized-persons', config);
             return response.data;
         } catch (error) {
             console.error('Error fetching authorized persons:', error);
