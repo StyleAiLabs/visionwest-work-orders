@@ -31,7 +31,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Mobile-First Design**: Feature must be usable on smartphones (touch targets 44px+, responsive)
+- [ ] **Multi-Client Data Isolation**: All queries include `client_id` filtering where applicable
+- [ ] **Role-Based Access**: API routes protected with appropriate role middleware
+- [ ] **Brand Consistency**: Uses NextGen WOM colors from Tailwind config (no hardcoded colors)
+- [ ] **Environment Parity**: Code behaves identically across dev/staging/production
+- [ ] **Release Documentation**: Version bump and release notes prepared
+- [ ] **Integration Resilience**: External service calls are async and failure-tolerant
+
+*If any checks fail, document in Complexity Tracking table below.*
 
 ## Project Structure
 
