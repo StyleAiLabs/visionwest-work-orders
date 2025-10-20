@@ -9,6 +9,64 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.8.0',
+            date: 'October 20, 2025',
+            title: 'Work Order Cancellation with Audit Trail',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Work order cancellation - Users can now permanently cancel work orders with confirmation dialog',
+                        'Mandatory cancellation reason - All users must provide a written reason for cancelling work orders',
+                        'Confirmation dialog with React portals - Modal overlay prevents accidental cancellations',
+                        'Permanent cancellation enforcement - Cancelled work orders cannot be reactivated (prevents data integrity issues)',
+                        'Visual cancelled badge - Cancelled work orders display "Cancelled (Permanent)" status badge',
+                        'Quick Actions integration - Urgent filter button on dashboard now links to urgent work orders'
+                    ]
+                },
+                {
+                    category: 'Role-Based Permissions',
+                    items: [
+                        'Client users: Can cancel their own work orders (authorized_email match required)',
+                        'Client Admin users: Can cancel any work order within their client organization',
+                        'Admin users: Can cancel any work order across all clients',
+                        'Staff users: Cannot cancel work orders (403 Forbidden) - must contact admin',
+                        'Completed work orders: Cannot be cancelled (business rule enforcement)'
+                    ]
+                },
+                {
+                    category: 'Audit Trail & Tracking',
+                    items: [
+                        'Automatic audit trail note creation - "Work order cancelled by [User Full Name]"',
+                        'Status update tracking with user attribution - Shows who cancelled and when',
+                        'Cancellation reason captured in status_updates table with timestamp',
+                        'Notes History displays cancellation details with user full name (not "System")',
+                        'Cancelled work orders appear in dashboard statistics with dedicated count'
+                    ]
+                },
+                {
+                    category: 'User Experience',
+                    items: [
+                        'Mobile-optimized confirmation dialog - 44px+ touch targets for accessibility',
+                        'NextGen WOM design system - Deep navy header, red cancel button, pure white backgrounds',
+                        'Toast notifications for success/error feedback',
+                        'Graceful error handling - Clear messages for permission denied and already cancelled cases',
+                        'Textarea input with validation - Minimum 1 character required for cancellation reason'
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'Backend reactivation prevention - 400 error if attempting to change cancelled work order status',
+                        'Enhanced middleware authorization - handleWorkOrderStatusUpdate validates cancellation permissions',
+                        'Status updates join with users table - Fetches updater full name and email',
+                        'Frontend state management - Immediate UI updates after successful cancellation',
+                        'FilterBar integration - Cancelled filter displays only cancelled work orders'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.7.0',
             date: 'October 20, 2025',
             title: 'Staff Role Access Control Enhancements',
