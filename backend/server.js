@@ -196,10 +196,14 @@ const initializeDatabase = async () => {
     }
 };
 
-// Start server and initialize database
-app.listen(PORT, async () => {
+// Start server first (binds to port immediately for Render), then initialize database
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}.`);
-    await initializeDatabase();
+    console.log('Initializing database...');
+    initializeDatabase().catch((error) => {
+        console.error('Database initialization failed:', error);
+        process.exit(1);
+    });
 });
 
 // Handle unhandled promise rejections
