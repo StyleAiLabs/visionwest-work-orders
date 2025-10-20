@@ -168,6 +168,26 @@ const WorkOrderForm = ({
                     />
                     {errors.description && <p className={errorClasses}>{errors.description.message}</p>}
                 </div>
+
+                {/* Urgent Checkbox */}
+                <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                        <input
+                            id="is_urgent"
+                            type="checkbox"
+                            className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2"
+                            {...register('is_urgent')}
+                        />
+                    </div>
+                    <div className="ml-3 text-sm">
+                        <label htmlFor="is_urgent" className="font-medium text-gray-700 cursor-pointer">
+                            Mark as Urgent
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Check this box if this work order requires immediate attention (e.g., water leaks, electrical hazards, security concerns)
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Before Photos Section */}

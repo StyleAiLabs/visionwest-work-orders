@@ -91,6 +91,12 @@ module.exports = (sequelize, DataTypes) => {
                 key: 'id'
             }
         },
+        is_urgent: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: 'Indicates if the work order requires urgent attention'
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,

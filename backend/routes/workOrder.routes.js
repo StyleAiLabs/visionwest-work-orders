@@ -23,6 +23,9 @@ router.get('/:id', authMiddleware.isAnyValidRole, workOrderController.getWorkOrd
 // Status updates - use the specialized middleware for client cancellations
 router.patch('/:id/status', authMiddleware.handleWorkOrderStatusUpdate, workOrderController.updateWorkOrderStatus);
 
+// Update work order (including urgent flag) - all authenticated users
+router.patch('/:id', authMiddleware.isAnyValidRole, workOrderController.updateWorkOrder);
+
 // Manual work order creation - client_admin (tenancy managers) only
 // This route must be defined BEFORE the generic POST / route to avoid conflicts
 // Automatically adds client_id to the work order from JWT

@@ -208,7 +208,7 @@ exports.getAuthorizedPersons = async (req, res) => {
 // Get all work orders with filtering
 exports.getAllWorkOrders = async (req, res) => {
     try {
-        const { status, date, sort, search, authorized_person, work_order_type, page = 1, limit = 5 } = req.query;
+        const { status, date, sort, search, authorized_person, work_order_type, is_urgent, page = 1, limit = 5 } = req.query;
         const userId = req.userId;
         const userRole = req.userRole;
         const clientId = req.clientId;
@@ -254,7 +254,12 @@ exports.getAllWorkOrders = async (req, res) => {
 
         // Apply other filters (status, date, search)
         if (status && status !== 'all') {
-            whereClause.status = status;
+            // Special handling for 'urgent' filter
+            if (status === 'urgent') {
+                whereClause.is_urgent = true;
+            } else {
+                whereClause.status = status;
+            }
         }
 
         if (date === 'today') {
@@ -289,11 +294,16 @@ exports.getAllWorkOrders = async (req, res) => {
             whereClause.work_order_type = work_order_type;
         }
 
+        // Filter by urgent status
+        if (is_urgent !== undefined && is_urgent !== 'all') {
+            whereClause.is_urgent = is_urgent === 'true' || is_urgent === true;
+        }
+
         const offset = (page - 1) * limit;
-        let orderClause = [['createdAt', 'DESC']];
+        let orderClause = [['is_urgent', 'DESC'], ['createdAt', 'DESC']]; // Urgent first, then by date
 
         if (sort === 'latest') {
-            orderClause = [['createdAt', 'DESC']];
+            orderClause = [['is_urgent', 'DESC'], ['createdAt', 'DESC']]; // Maintain urgent priority
         }
 
         console.log('Where clause:', JSON.stringify(whereClause));
@@ -340,6 +350,7 @@ exports.getAllWorkOrders = async (req, res) => {
                 workDescription: workOrder.description,
                 work_description: workOrder.description, // Include both formats
                 poNumber: workOrder.po_number,
+                is_urgent: workOrder.is_urgent || false, // Include urgent flag
                 photoCount: photoCount, // Add photo count
                 photos: workOrder.photos || [] // Include photos array for debugging
             };
@@ -402,6 +413,7 @@ exports.getWorkOrderById = async (req, res) => {
             jobNo: workOrder.job_no || '',
             status: workOrder.status || 'unknown',
             description: workOrder.description || '',
+            is_urgent: workOrder.is_urgent || false,
             client_id: workOrder.client_id, // Multi-tenant: Include client_id
             createdAt: workOrder.createdAt,
             updatedAt: workOrder.updatedAt,
@@ -591,7 +603,8 @@ exports.createWorkOrder = async (req, res) => {
             po_number,
             authorized_by,
             authorized_contact,
-            authorized_email
+            authorized_email,
+            is_urgent
         } = req.body;
 
         // Validate required fields
@@ -627,6 +640,7 @@ exports.createWorkOrder = async (req, res) => {
             authorized_by,
             authorized_contact,
             authorized_email,
+            is_urgent: is_urgent || false, // Default to false if not provided
             created_by: req.userId, // From auth middleware
             client_id: req.clientId // Multi-tenant: Automatically assign client_id
         });
@@ -983,7 +997,8 @@ exports.updateWorkOrder = async (req, res) => {
             po_number,
             authorized_by,
             authorized_contact,
-            authorized_email
+            authorized_email,
+            is_urgent
         } = req.body;
 
         // Find the work order to update
@@ -1019,6 +1034,19 @@ exports.updateWorkOrder = async (req, res) => {
             }
         }
 
+        // Track is_urgent changes for audit trail
+        let urgentChanged = false;
+        let urgentChangeMessage = '';
+
+        if (is_urgent !== undefined && is_urgent !== workOrder.is_urgent) {
+            urgentChanged = true;
+            const user = await User.findByPk(req.userId);
+            const userName = user ? user.full_name || user.username : 'Unknown User';
+            urgentChangeMessage = is_urgent
+                ? `Marked as urgent by ${userName}`
+                : `Removed urgent flag by ${userName}`;
+        }
+
         // Update work order fields
         await workOrder.update({
             job_no: job_no || workOrder.job_no,
@@ -1035,8 +1063,18 @@ exports.updateWorkOrder = async (req, res) => {
             authorized_by: authorized_by || workOrder.authorized_by,
             authorized_contact: authorized_contact || workOrder.authorized_contact,
             authorized_email: authorized_email || workOrder.authorized_email,
+            is_urgent: is_urgent !== undefined ? is_urgent : workOrder.is_urgent,
             updated_by: req.userId
         });
+
+        // Create audit trail note for urgent status change
+        if (urgentChanged && urgentChangeMessage) {
+            await WorkOrderNote.create({
+                work_order_id: workOrder.id,
+                note: urgentChangeMessage,
+                created_by: req.userId
+            });
+        }
 
         return res.status(200).json({
             success: true,

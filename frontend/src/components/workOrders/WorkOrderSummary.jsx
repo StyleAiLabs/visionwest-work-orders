@@ -2,9 +2,17 @@ import React from 'react';
 import { format } from 'date-fns';
 import StatusBadge from '../common/StatusBadge';
 import DetailItem from './DetailItem';
+import { useAuth } from '../../hooks/useAuth';
 
-const WorkOrderSummary = ({ workOrder }) => {
+const WorkOrderSummary = ({ workOrder, onToggleUrgent }) => {
+    const { user } = useAuth();
+    // Allow all authenticated users to toggle urgent status
+    const canToggleUrgent = !!user;
+
     if (!workOrder) return null;
+
+    // Debug log to see the urgent status
+    console.log('WorkOrderSummary - is_urgent:', workOrder.is_urgent, 'Type:', typeof workOrder.is_urgent);
 
     const formatAddress = (workOrder) => {
         const address = workOrder.property_address ||
@@ -22,8 +30,44 @@ const WorkOrderSummary = ({ workOrder }) => {
             <div className="p-4 border-b border-gray-100">
                 <div className="flex items-start justify-between mb-3">
                     <h2 className="text-lg font-semibold text-gray-900">Summary</h2>
-                    <StatusBadge status={workOrder.status} />
+                    <div className="flex items-center gap-2">
+                        {workOrder.is_urgent && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                Urgent
+                            </span>
+                        )}
+                        <StatusBadge status={workOrder.status} />
+                    </div>
                 </div>
+
+                {/* Urgent Checkbox */}
+                {canToggleUrgent && onToggleUrgent && (
+                    <div className="mb-3 pb-3 border-b border-gray-100">
+                        <div className="flex items-center space-x-2 text-sm text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(workOrder.is_urgent)}
+                                onChange={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.nativeEvent.stopImmediatePropagation();
+                                    onToggleUrgent(e);
+                                }}
+                                className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 focus:ring-2 cursor-pointer"
+                            />
+                            <span className="font-medium select-none">
+                                Mark as Urgent
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">
+                            Check to prioritize this work order
+                        </p>
+                    </div>
+                )}
+
                 <div className="pr-0">
                     <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description}</p>
                 </div>

@@ -94,6 +94,7 @@ const WorkOrdersPage = () => {
     };
 
     const handleFilterChange = (status) => {
+        // If status is 'urgent', set it as a status filter for the backend
         setFilters(prev => ({ ...prev, status, page: 1 }));
     };
 

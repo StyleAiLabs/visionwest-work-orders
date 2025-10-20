@@ -35,6 +35,8 @@ const WorkOrderDetailPage = () => {
     const [showStatusUpdate, setShowStatusUpdate] = useState(false);
 
     const isClient = user && user.role === 'client';
+    // Allow all authenticated users to toggle urgent status
+    const canToggleUrgent = !!user;
 
     useEffect(() => {
         fetchWorkOrder();
@@ -89,6 +91,36 @@ const WorkOrderDetailPage = () => {
             console.error('Error saving note:', error);
             showToast('Failed to add note', 'error');
             return false;
+        }
+    };
+
+    const handleToggleUrgent = async () => {
+        if (!canToggleUrgent) return;
+
+        try {
+            const newUrgentStatus = !workOrder.is_urgent;
+
+            // Optimistically update the UI immediately
+            setWorkOrder(prev => ({
+                ...prev,
+                is_urgent: newUrgentStatus
+            }));
+
+            // Then update the backend
+            await workOrderService.updateWorkOrder(id, { is_urgent: newUrgentStatus }, clientId);
+
+            showToast(
+                newUrgentStatus ? 'Marked as urgent' : 'Removed urgent flag',
+                'success'
+            );
+        } catch (error) {
+            console.error('Error toggling urgent status:', error);
+            // Revert the optimistic update on error
+            setWorkOrder(prev => ({
+                ...prev,
+                is_urgent: !newUrgentStatus
+            }));
+            showToast(error.response?.data?.message || 'Failed to update urgent status', 'error');
         }
     };
 
@@ -171,7 +203,7 @@ const WorkOrderDetailPage = () => {
 
                     {/* Work Order Summary */}
                     {safeRender(() => (
-                        workOrder && <WorkOrderSummary workOrder={workOrder} />
+                        workOrder && <WorkOrderSummary workOrder={workOrder} onToggleUrgent={canToggleUrgent ? handleToggleUrgent : null} />
                     ))}
 
                     {/* Action Buttons Section */}

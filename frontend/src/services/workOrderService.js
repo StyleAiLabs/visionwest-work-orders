@@ -112,5 +112,16 @@ export const workOrderService = {
             console.error('Error creating work order:', error);
             throw error;
         }
+    },
+
+    async updateWorkOrder(id, updateData, clientId = null) {
+        try {
+            const config = addClientContextHeader({}, clientId);
+            const response = await api.patch(`/work-orders/${id}`, updateData, config);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating work order:', error);
+            throw error;
+        }
     }
 };
