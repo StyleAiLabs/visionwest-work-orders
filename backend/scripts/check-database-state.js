@@ -92,7 +92,7 @@ const checkDatabaseState = async () => {
         console.log(`Total Clients: ${clients.length}`);
         console.log(`Total Users: ${users.length}`);
         console.log(`Williams Property Users: ${wpsgUsers.length}`);
-        
+
         // Check if WPSG client exists
         const wpsgClient = clients.find(c => c.code === 'WPSG');
         if (wpsgClient) {

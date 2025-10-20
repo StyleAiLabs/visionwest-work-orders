@@ -13,10 +13,20 @@ This is a full-stack multi-client property maintenance work order management sys
 The system has 4 user roles with specific access patterns:
 - `client`: VisionWest tenants (filtered by `authorized_email` matching user's email)
 - `client_admin`: VisionWest housing admins (see all `@visionwest.org.nz` work orders)
-- `staff`: Williams Property staff (see all work orders)
+- `staff`: Williams Property staff (see all work orders across ALL clients)
 - `admin`: Williams Property admins (full system access)
 
 **Critical**: Work order filtering is implemented in `backend/controllers/workOrder.controller.js` using role-specific `whereClause` logic. This pattern must be consistent across `getSummary()`, `getAllWorkOrders()`, and `getAuthorizedPersons()`.
+
+### WPSG Client - Special Consideration
+Williams Property Services Group (WPSG) exists in the `clients` table but is **NOT a client organization** - it's the **supplier/service provider**.
+
+- **Purpose**: User management for Williams Property staff (`client_id = 8`)
+- **Work Orders**: No work orders should be assigned to WPSG
+- **Filters**: WPSG is **excluded** from client filter dropdowns (`client.controller.js`)
+- **Access**: WPSG staff/admin see ALL work orders across ALL actual clients
+
+See `WPSG-CLARIFICATION.md` for full details.
 
 ### Database Relationships (Sequelize)
 All models in `backend/models/` follow this relationship structure:

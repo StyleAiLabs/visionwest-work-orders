@@ -10,7 +10,7 @@ const testLogin = async () => {
         console.log('🧪 Testing Williams Property Admin Login...\n');
 
         const API_URL = 'http://localhost:5002/api/auth/login';
-        
+
         const credentials = {
             email: 'admin@williamspropertyservices.co.nz',
             password: 'password@123'
@@ -33,7 +33,7 @@ const testLogin = async () => {
             console.log('  Client ID:', response.data.user.client.id);
             console.log('  Client Name:', response.data.user.client.name);
             console.log('  Client Code:', response.data.user.client.code);
-            
+
             if (response.data.user.client.code === 'WPSG') {
                 console.log('\n✅ ✅ SUCCESS! User is correctly assigned to WPSG client!');
             } else {
@@ -47,7 +47,7 @@ const testLogin = async () => {
 
     } catch (error) {
         console.error('\n❌ Login failed!');
-        
+
         if (error.response) {
             console.error('\n📛 Error Response:');
             console.error('  Status:', error.response.status);

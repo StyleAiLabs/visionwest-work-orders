@@ -23,8 +23,12 @@ exports.getClients = async (req, res) => {
         }
 
         // Fetch active clients sorted alphabetically by name
+        // EXCLUDE WPSG - it's the supplier company, not a client organization
         const clients = await Client.findAll({
-            where: { status: 'active' },
+            where: {
+                status: 'active',
+                code: { [Op.ne]: 'WPSG' } // Exclude Williams Property Services Group
+            },
             attributes: ['id', 'name', 'code', 'status'],
             order: [['name', 'ASC']]
         });
@@ -410,6 +414,14 @@ exports.deleteClient = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 message: 'Cannot delete the Visionwest client'
+            });
+        }
+
+        // Prevent deletion of WPSG (supplier company - needed for user management)
+        if (client.code === 'WPSG') {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot delete WPSG - it is the supplier company used for Williams Property staff user management'
             });
         }
 

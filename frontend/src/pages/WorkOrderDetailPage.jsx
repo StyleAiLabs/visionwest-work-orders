@@ -288,8 +288,8 @@ const WorkOrderDetailPage = () => {
                                     </button>
                                 )}
 
-                                {/* Update Status Button - For staff users only (admin uses Cancel button, client_admin uses Cancel button) */}
-                                {user?.role === 'staff' && (
+                                {/* Update Status Button - For staff and admin users */}
+                                {(user?.role === 'staff' || user?.role === 'admin') && (
                                     <button
                                         onClick={() => setShowStatusUpdate(true)}
                                         className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-deep-navy hover:bg-deep-navy-dark text-pure-white rounded-lg text-sm font-medium transition-colors"
