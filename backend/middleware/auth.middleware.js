@@ -187,8 +187,25 @@ exports.handleWorkOrderStatusUpdate = (req, res, next) => {
         }
     }
 
-    // For staff/admin, allow any status update
-    if (['admin', 'staff'].includes(req.userRole)) {
+    // For client_admin users, allow all status updates including cancellation
+    if (req.userRole === 'client_admin') {
+        return next();
+    }
+
+    // For staff users, REJECT cancellation attempts
+    if (req.userRole === 'staff') {
+        if (req.body && req.body.status === 'cancelled') {
+            return res.status(403).json({
+                success: false,
+                message: 'Staff users cannot cancel work orders. Please contact an administrator.'
+            });
+        }
+        // Allow other status updates for staff
+        return next();
+    }
+
+    // For admin, allow any status update
+    if (req.userRole === 'admin') {
         return next();
     }
 

@@ -23,16 +23,17 @@ const NotesHistory = ({ notes = [], statusUpdates = [] }) => {
 
     // Combine notes and status updates into a single timeline
     const createTimeline = () => {
+        // Show ALL status updates (with or without notes)
         const statusNotes = (statusUpdates || [])
-            .filter(update => update && update.notes && update.notes.trim() !== '')
+            .filter(update => update) // Only filter out null/undefined
             .map(update => ({
                 id: `status-${update.id}`,
-                content: update.notes,
+                content: update.notes || '', // May be empty
                 type: 'status',
                 status: update.newStatus,
                 previousStatus: update.previousStatus,
                 createdAt: update.updatedAt,
-                user: update.updatedBy ? update.updatedBy.name : 'System',
+                user: update.updatedBy ? (update.updatedBy.fullName || update.updatedBy.name) : 'System',
                 timestamp: new Date(update.updatedAt || Date.now()).getTime()
             }));
 

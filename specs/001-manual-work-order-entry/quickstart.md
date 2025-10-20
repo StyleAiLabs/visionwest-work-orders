@@ -410,10 +410,217 @@ Add floating action button (FAB) for client_admin users only:
 
 ## Questions or Issues?
 
-Refer back to the constitution for architectural decisions and principles. All implementation choices should align with the 5 core principles, especially:
+Refer back to the constitution for architectural decisions and principles. All implementation choices should align with the 7 core principles, especially:
 
 1. Mobile-First Design (test on real devices)
-2. Progressive Enhancement (PWA caching)
-3. Integration Integrity (don't break n8n webhook)
-4. User Story-Driven (implement P1 first)
-5. Security & Data Protection (enforce client_admin role)
+2. Multi-Client Data Isolation (client_id filtering)
+3. Role-Based Access Control (enforce permissions)
+4. Brand Consistency (NextGen WOM colors)
+5. Environment Parity (dev/staging/production identical)
+6. Release Documentation (version bump + notes)
+7. Integration Resilience (async external calls)
+
+---
+
+## Addendum: Work Order Cancellation Implementation (2025-10-20)
+
+### Quick Implementation Guide
+
+**Estimated Time**: 2-3 hours
+
+#### Backend Changes
+
+**File**: `backend/middleware/auth.middleware.js`
+
+Update `handleWorkOrderStatusUpdate` to reject staff cancellations:
+
+```javascript
+exports.handleWorkOrderStatusUpdate = (req, res, next) => {
+  const { status } = req.body;
+  
+  if (req.userRole === 'client') {
+    if (status === 'cancelled') return next();
+    return res.status(403).json({ message: 'Clients can only request cancellation.' });
+  }
+  
+  // NEW: Reject staff cancellations
+  if (req.userRole === 'staff') {
+    if (status === 'cancelled') {
+      return res.status(403).json({ 
+        message: 'Staff users cannot cancel work orders. Contact an administrator.' 
+      });
+    }
+    return next();
+  }
+  
+  if (['admin', 'client_admin'].includes(req.userRole)) {
+    return next();
+  }
+  
+  return res.status(403).json({ message: 'Unauthorized.' });
+};
+```
+
+**File**: `backend/controllers/workOrder.controller.js`
+
+Update `updateWorkOrderStatus` to prevent reactivation and create audit trail:
+
+```javascript
+exports.updateWorkOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  const workOrder = await WorkOrder.findByPk(id);
+  if (!workOrder) {
+    return res.status(404).json({ success: false, message: 'Work order not found' });
+  }
+  
+  // NEW: Prevent reactivation of cancelled work orders
+  if (workOrder.status === 'cancelled') {
+    return res.status(400).json({
+      success: false,
+      message: 'Cancelled work orders cannot be reactivated. Please create a new work order if needed.'
+    });
+  }
+  
+  // Update status
+  workOrder.status = status;
+  await workOrder.save();
+  
+  // NEW: Create audit trail for cancellation
+  if (status === 'cancelled') {
+    await WorkOrderNote.create({
+      work_order_id: workOrder.id,
+      note: `Work order cancelled by ${req.user.full_name}`,
+      created_by: req.userId,
+      client_id: workOrder.client_id
+    });
+  }
+  
+  return res.status(200).json({ success: true, data: workOrder });
+};
+```
+
+#### Frontend Changes
+
+**File**: `frontend/src/components/workOrders/ConfirmCancelDialog.jsx` (NEW)
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+const ConfirmCancelDialog = ({ isOpen, onConfirm, onCancel, workOrderId }) => {
+  if (!isOpen) return null;
+  
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-rich-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-pure-white rounded-lg max-w-md w-full p-6">
+        <h3 className="text-lg font-semibold text-deep-navy mb-4">
+          Cancel Work Order?
+        </h3>
+        <p className="text-rich-black mb-6">
+          Are you sure you want to cancel this work order? This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button 
+            onClick={onCancel} 
+            className="flex-1 px-4 py-3 bg-gray-200 text-rich-black rounded-md hover:bg-gray-300 min-h-[44px]"
+          >
+            No, Keep It
+          </button>
+          <button 
+            onClick={onConfirm} 
+            className="flex-1 px-4 py-3 bg-red-600 text-pure-white rounded-md hover:bg-red-700 min-h-[44px]"
+          >
+            Yes, Cancel It
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+export default ConfirmCancelDialog;
+```
+
+**File**: `frontend/src/components/workOrders/WorkOrderSummary.jsx`
+
+Add cancel button in status section:
+
+```jsx
+import { useState } from 'react';
+import ConfirmCancelDialog from './ConfirmCancelDialog';
+
+// Inside component:
+const [showCancelDialog, setShowCancelDialog] = useState(false);
+const canCancel = user && ['client', 'client_admin', 'admin'].includes(user.role);
+
+const handleCancelClick = () => {
+  setShowCancelDialog(true);
+};
+
+const handleConfirmCancel = async () => {
+  try {
+    await workOrderService.updateWorkOrderStatus(workOrder.id, 'cancelled');
+    setWorkOrder(prev => ({ ...prev, status: 'cancelled' }));
+    setShowCancelDialog(false);
+    toast.success('Work order cancelled successfully');
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to cancel');
+  }
+};
+
+// In JSX (after status display):
+{canCancel && workOrder.status !== 'cancelled' && (
+  <button 
+    onClick={handleCancelClick}
+    className="mt-3 w-full px-4 py-3 bg-red-100 text-red-700 border border-red-300 rounded-md hover:bg-red-200 min-h-[44px] flex items-center justify-center"
+  >
+    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    Cancel Work Order
+  </button>
+)}
+
+{workOrder.status === 'cancelled' && (
+  <div className="mt-3 bg-red-50 border border-red-200 px-4 py-3 rounded-md">
+    <span className="text-red-700 font-medium">Cancelled (Permanent)</span>
+  </div>
+)}
+
+<ConfirmCancelDialog 
+  isOpen={showCancelDialog}
+  onConfirm={handleConfirmCancel}
+  onCancel={() => setShowCancelDialog(false)}
+  workOrderId={workOrder.id}
+/>
+```
+
+### Testing Checklist
+
+- [ ] Client user can cancel their own work order (authorized_email match)
+- [ ] Client_admin can cancel any work order for their client
+- [ ] Admin can cancel any work order
+- [ ] **Staff user receives 403 error when attempting cancellation**
+- [ ] Confirmation dialog appears on cancel button click
+- [ ] Cancellation creates audit trail note with user's name
+- [ ] Cancelled work orders show "Cancelled (Permanent)" badge
+- [ ] **Cancelled work orders cannot be reactivated (400 error)**
+- [ ] Mobile: Touch targets are 44px minimum
+- [ ] Mobile: Dialog is responsive and readable
+- [ ] Cancelled filter works in work order list
+
+### Version Update
+
+Update these files for version 2.8.0:
+
+- `frontend/package.json` → version: "2.8.0"
+- `backend/package.json` → version: "2.8.0"
+- `frontend/src/pages/ReleaseNotesPage.jsx` → Add 2.8.0 entry
+- Create `release-notes/release-2.8.0-summary.md` with cancellation details
+
+### Contract Reference
+
+See `contracts/cancel-work-order.md` for complete API documentation.

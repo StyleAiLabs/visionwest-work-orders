@@ -223,3 +223,71 @@ Proceed to Phase 1:
 - Generate `data-model.md` detailing the work order schema
 - Generate API contracts in `contracts/` directory
 - Generate `quickstart.md` for developer onboarding
+
+---
+
+## Addendum: Work Order Cancellation Research (2025-10-20)
+
+### 6. Confirmation Dialog Implementation
+
+**Decision**: Use controlled modal component with React state, render as portal to prevent z-index issues
+
+**Rationale**:
+- React portals allow rendering outside normal DOM hierarchy, preventing modal overlay conflicts
+- Controlled components (state-driven visibility) align with React best practices
+- Mobile-friendly touch targets (44px minimum) require careful button sizing
+- Tailwind CSS provides responsive breakpoints for mobile/desktop adaptation
+
+**Alternatives Considered**:
+- Browser `window.confirm()` - Rejected: Not styleable, poor mobile UX, inconsistent across browsers
+- Third-party library (SweetAlert2, react-modal) - Rejected: Adds dependency, overkill for simple confirmation
+- Inline confirmation (expand UI) - Rejected: Doesn't block user interaction, less clear intent
+
+### 7. Status Dropdown vs Dedicated Cancel Button
+
+**Decision**: Dedicated cancel button separate from status dropdown
+
+**Rationale**:
+- Status dropdown is for staff/admin to manage workflow states (pending → in-progress → completed)
+- Cancellation is a distinct action with different permissions (client can cancel but not change to in-progress)
+- Separate button makes destructive action more explicit and harder to trigger accidentally
+- Aligns with existing UI pattern where urgent toggle is separate from status controls
+
+### 8. Audit Trail Message Format
+
+**Decision**: "Work order cancelled by [User Full Name]" with automatic timestamp from WorkOrderNote.created_at
+
+**Rationale**:
+- Consistent with existing audit trail pattern: "Marked as urgent by [User Name]" (FR-026)
+- Uses user.full_name from JWT token for accountability
+- Timestamp automatically added by Sequelize model (no manual date formatting needed)
+- Simple, human-readable format for compliance and transparency
+
+### 9. Role Permission Implementation for Cancellation
+
+**Decision**: Update auth.middleware.js handleWorkOrderStatusUpdate to reject staff role for cancellation
+
+**Rationale**:
+- Existing middleware already handles client-only cancellation
+- Need to add staff rejection: staff can update to pending/in-progress/completed but NOT cancelled
+- Preserves existing role hierarchy while adding granular cancellation control
+- Error message: "Staff users cannot cancel work orders. Contact an administrator."
+
+### 10. Preventing Reactivation of Cancelled Work Orders
+
+**Decision**: Frontend validation + backend rejection on status change attempts from 'cancelled'
+
+**Rationale**:
+- Frontend: Disable/hide status dropdown when status === 'cancelled', show "Cancelled (permanent)" badge
+- Backend: In updateWorkOrderStatus, check if current status is 'cancelled' and reject any changes
+- Allows viewing cancelled work orders for historical reference (dashboard counts, filtered lists)
+- Prevents accidental or intentional reactivation per spec requirement (FR-032)
+
+**Performance Validation**:
+- Cancellation: 1 UPDATE + 1 INSERT (audit note) = 2 queries per cancellation
+- Expected volume: < 10 cancellations per day (estimated 5% of work orders)
+- Confirmation dialog: Portal rendering ~50ms overhead (acceptable for SC-013)
+- Status update + audit trail: ~200ms (meets SC-014 and SC-015 requirements)
+
+**No new dependencies required**. Feature uses existing infrastructure (React portals, Sequelize, existing auth middleware).
+

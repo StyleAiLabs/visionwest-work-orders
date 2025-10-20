@@ -14,6 +14,11 @@
 - Q: How should the urgent flag be displayed and managed in the UI after creation? → A: Toggle switch on detail page + urgent indicator badge on list views with filter/sort options
 - Q: Who should be able to toggle the urgent flag after a work order is created? → A: Only staff and admin roles (elevated permissions required to change urgency)
 - Q: Should changing the urgent flag create an audit trail entry (system note)? → A: Yes, audit trail required
+- Q: Who should have permission to cancel work orders? → A: client, client_admin, and admin
+- Q: Should cancelling a work order require user confirmation (e.g., "Are you sure you want to cancel this work order?")? → A: Yes, with confirmation dialog
+- Q: Should cancelling a work order create an audit trail note documenting who cancelled it and when? → A: Yes, create audit trail note
+- Q: Where in the UI should users be able to cancel work orders? → A: Detail page only (via status dropdown or dedicated cancel button)
+- Q: Can a cancelled work order be reactivated/uncancelled? → A: No, cancellation is permanent (cannot be undone)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -91,6 +96,26 @@ As a tenancy manager, I want to select properties from existing lists (if availa
 
 ---
 
+### User Story 5 - Cancel Work Order (Priority: P2)
+
+As a client, tenancy manager, or admin, I want to cancel work orders that are no longer needed so that resources are not wasted on unnecessary maintenance tasks and the work order list reflects current priorities.
+
+**Why this priority**: Work orders may become obsolete due to changing circumstances (issue resolved by other means, property sold, tenant moved out, duplicate request). Cancellation capability prevents unnecessary work and keeps the system accurate.
+
+**Independent Test**: Can be tested by navigating to a work order detail page, selecting "Cancel" from the status dropdown or clicking a dedicated cancel button, confirming the cancellation dialog, and verifying the work order status changes to "cancelled" with an audit trail note created.
+
+**Acceptance Scenarios**:
+
+1. **Given** a client, client_admin, or admin user is viewing a work order detail page, **When** they select "Cancel" from the status dropdown or click the cancel button, **Then** the system displays a confirmation dialog asking "Are you sure you want to cancel this work order?"
+2. **Given** a user has initiated work order cancellation, **When** they confirm the cancellation dialog, **Then** the work order status changes to "cancelled" and an audit trail note is created documenting who cancelled it and when
+3. **Given** a user has initiated work order cancellation, **When** they dismiss or cancel the confirmation dialog, **Then** no changes are made and the work order remains in its current status
+4. **Given** a work order has been cancelled, **When** any user views the work order detail page, **Then** the status shows as "cancelled" and the audit trail displays the cancellation note
+5. **Given** a work order has been cancelled, **When** any user attempts to reactivate it, **Then** the system prevents reactivation as cancellation is permanent
+6. **Given** a staff user is viewing a work order detail page, **When** they look for cancellation options, **Then** they see the cancel option but it is disabled or hidden (only client, client_admin, and admin can cancel)
+7. **Given** cancelled work orders exist in the system, **When** users apply the "cancelled" filter on the work order list, **Then** only cancelled work orders are displayed
+
+---
+
 ### Edge Cases
 
 - What happens when a tenancy manager tries to create a work order with a job number that already exists? (System should prevent duplicates or warn the user)
@@ -102,6 +127,11 @@ As a tenancy manager, I want to select properties from existing lists (if availa
 - How does the system handle work orders created via n8n webhook with no urgent flag? (Default to is_urgent = false; webhook can be updated later to accept optional urgent parameter)
 - What happens when filtering by urgent status and no urgent work orders exist? (Display empty state message: "No urgent work orders found")
 - Should urgent work orders generate different notifications? (Not in initial scope; notifications sent regardless of urgency, but future enhancement could add urgent-specific notification channels)
+- What happens when a user tries to cancel an already cancelled work order? (System should prevent duplicate cancellation or show "Already cancelled" message)
+- What happens when a user tries to cancel a completed work order? (System should allow cancellation with confirmation, as billing/admin may need to mark completed work as cancelled)
+- Can users cancel work orders from the list view? (No, cancellation only available on detail page to ensure users review full context before cancelling)
+- What happens if a user loses network connection while confirming cancellation? (Cancellation fails; user must retry when connection is restored)
+- Should cancelled work orders be excluded from dashboard counts? (No, cancelled work orders appear in dashboard summary with their own count, same as other statuses)
 
 ## Requirements *(mandatory)*
 
@@ -134,14 +164,22 @@ As a tenancy manager, I want to select properties from existing lists (if availa
 - **FR-025**: System MUST display the urgent status as read-only (badge only, no toggle) on work order detail pages for client and client_admin roles
 - **FR-026**: System MUST create an audit trail note when the urgent flag is changed, recording the action ("Marked as urgent" or "Removed urgent flag") and the user who made the change
 - **FR-027**: System MUST default the is_urgent field to false if not explicitly set during work order creation
+- **FR-028**: System MUST allow client, client_admin, and admin users to cancel work orders by changing the status to "cancelled"
+- **FR-029**: System MUST display a confirmation dialog when a user initiates work order cancellation, asking "Are you sure you want to cancel this work order?"
+- **FR-030**: System MUST create an audit trail note when a work order is cancelled, documenting who cancelled it and when (e.g., "Work order cancelled by [User Name]")
+- **FR-031**: System MUST provide cancellation functionality only on the work order detail page (not in list views)
+- **FR-032**: System MUST prevent reactivation of cancelled work orders (cancellation is permanent and irreversible)
+- **FR-033**: System MUST include cancelled work orders in the dashboard summary statistics with a dedicated "Cancelled" count
+- **FR-034**: System MUST allow filtering of work orders by "cancelled" status in the work order list view
+- **FR-035**: System MUST restrict work order cancellation permission to client, client_admin, and admin roles only (staff users cannot cancel)
 
 ### Key Entities
 
-- **Work Order (existing, modified)**: Represents a maintenance or repair task. Key attributes include job_no (unique identifier), date, status (pending/in_progress/completed), supplier information (name, phone, email), property information (name, address, phone), description, PO number, authorization details, work_order_type (email/manual), is_urgent (boolean flag for priority), created_by (user ID), and metadata (email details for automated work orders)
+- **Work Order (existing, modified)**: Represents a maintenance or repair task. Key attributes include job_no (unique identifier), date, status (pending/in-progress/completed/cancelled), supplier information (name, phone, email), property information (name, address, phone), description, PO number, authorization details, work_order_type (email/manual), is_urgent (boolean flag for priority), created_by (user ID), and metadata (email details for automated work orders). The status field accepts "cancelled" as a valid terminal state that cannot be reversed.
 
-- **User (existing)**: Represents system users. Key attributes include id, username, email, role (client/client_admin/staff/admin), full_name, organization. The "tenancy manager" role needs to be mapped to one of these existing roles.
+- **User (existing)**: Represents system users. Key attributes include id, username, email, role (client/client_admin/staff/admin), full_name, organization. The "tenancy manager" role needs to be mapped to one of these existing roles. Cancellation permissions are granted to client, client_admin, and admin roles.
 
-- **Work Order Note (existing)**: Represents audit trail entries and comments on work orders. Used to track edits and changes made to work orders.
+- **Work Order Note (existing)**: Represents audit trail entries and comments on work orders. Used to track edits, changes, and status transitions including cancellations made to work orders.
 
 ## Success Criteria *(mandatory)*
 
@@ -159,6 +197,10 @@ As a tenancy manager, I want to select properties from existing lists (if availa
 - **SC-010**: Staff and admin users can toggle urgent status on detail pages with changes persisting immediately
 - **SC-011**: Urgent work orders appear at the top of default-sorted work order lists (above non-urgent work orders with the same status)
 - **SC-012**: All urgency changes create audit trail notes visible in the work order timeline within 2 seconds
+- **SC-013**: Users can cancel a work order from the detail page with confirmation dialog appearing within 1 second
+- **SC-014**: Cancelled work orders display with "cancelled" status immediately after confirmation (within 2 seconds)
+- **SC-015**: All cancellation actions create audit trail notes documenting who cancelled and when, visible within 2 seconds
+- **SC-016**: Cancelled work orders can be filtered in list views and appear in dashboard statistics with accurate counts
 
 ### Assumptions
 
@@ -177,5 +219,10 @@ As a tenancy manager, I want to select properties from existing lists (if availa
 13. **Urgent Permission Model**: Client and client_admin can set urgency during creation only. Staff and admin can toggle urgency at any time (during creation or after). This prevents urgency flag abuse while allowing operational oversight.
 14. **Urgent Sorting**: Urgent work orders sort before non-urgent ones within the same status category. For example, urgent pending work orders appear before non-urgent pending work orders.
 15. **Urgent Visual Design**: The urgent badge uses attention-grabbing colors (e.g., red or orange) consistent with the NextGen WOM brand guidelines to ensure immediate visibility.
+16. **Cancellation Permissions**: Only client, client_admin, and admin roles can cancel work orders. Staff users can view cancelled work orders but cannot initiate cancellation.
+17. **Cancellation Location**: Cancellation is only available on the work order detail page (via status dropdown or dedicated cancel button), not in list views, to ensure users review full context before cancelling.
+18. **Cancellation Confirmation**: All cancellation actions require explicit user confirmation via a dialog to prevent accidental cancellations.
+19. **Cancellation Permanence**: Cancelled work orders cannot be reactivated or uncancelled. This is a terminal state. If work needs to resume, a new work order should be created with reference to the cancelled one.
+20. **Cancellation Audit Trail**: All cancellations create audit trail notes automatically, documenting who cancelled the work order and when, maintaining complete traceability of work order lifecycle.
 
 ```

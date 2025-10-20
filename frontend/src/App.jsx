@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { ClientProvider } from './context/ClientContext';
 import { AlertProvider } from './context/AlertContext';
@@ -97,6 +99,18 @@ const App = () => {
         <AlertProvider>
           <Router>
             <InstallPrompt />
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
             <div className="app-container">
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
@@ -110,110 +124,110 @@ const App = () => {
                   }
                 />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/work-orders"
-                element={
-                  <ProtectedRoute>
-                    <WorkOrdersPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/work-orders"
+                  element={
+                    <ProtectedRoute>
+                      <WorkOrdersPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/work-orders/create"
-                element={
-                  <ProtectedRoute>
-                    <CreateWorkOrder />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/work-orders/create"
+                  element={
+                    <ProtectedRoute>
+                      <CreateWorkOrder />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/work-orders/:id"
-                element={
-                  <ProtectedRoute>
-                    <WorkOrderDetailPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/work-orders/:id"
+                  element={
+                    <ProtectedRoute>
+                      <WorkOrderDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/work-orders/:id/photos/add"
-                element={
-                  <ProtectedRoute>
-                    <PhotoUploadPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/work-orders/:id/photos/add"
+                  element={
+                    <ProtectedRoute>
+                      <PhotoUploadPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/alerts"
-                element={
-                  <ProtectedRoute>
-                    <AlertsPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/alerts"
+                  element={
+                    <ProtectedRoute>
+                      <AlertsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/release-notes"
-                element={
-                  <ProtectedRoute>
-                    <ReleaseNotesPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/release-notes"
+                  element={
+                    <ProtectedRoute>
+                      <ReleaseNotesPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/work-orders/:id/update-status"
-                element={
-                  <ProtectedRoute>
-                    <StatusUpdatePage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/work-orders/:id/update-status"
+                  element={
+                    <ProtectedRoute>
+                      <StatusUpdatePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminPanel />
-                  </AdminRoute>
-                }
-              />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminPanel />
+                    </AdminRoute>
+                  }
+                />
 
-              <Route
-                path="/users"
-                element={
-                  <ProtectedRoute>
-                    <UserManagementPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/users"
+                  element={
+                    <ProtectedRoute>
+                      <UserManagementPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </div>
-        </Router>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </div>
+          </Router>
         </AlertProvider>
       </ClientProvider>
     </AuthProvider>

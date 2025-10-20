@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 const WorkOrderSummary = ({ workOrder, onToggleUrgent }) => {
     const { user } = useAuth();
+
     // Allow all authenticated users to toggle urgent status
     const canToggleUrgent = !!user;
 
@@ -65,6 +66,18 @@ const WorkOrderSummary = ({ workOrder, onToggleUrgent }) => {
                         <p className="text-xs text-gray-500 mt-1 ml-6">
                             Check to prioritize this work order
                         </p>
+                    </div>
+                )}
+
+                {/* Cancelled Badge - Show when work order is cancelled */}
+                {workOrder.status === 'cancelled' && (
+                    <div className="mb-3 pb-3 border-b border-gray-100">
+                        <div className="bg-red-50 border border-red-200 px-4 py-3 rounded-md">
+                            <span className="text-red-700 font-medium">Cancelled (Permanent)</span>
+                            <p className="text-red-600 text-xs mt-1">
+                                This work order has been cancelled and cannot be reactivated.
+                            </p>
+                        </div>
                     </div>
                 )}
 

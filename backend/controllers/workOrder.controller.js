@@ -553,11 +553,18 @@ exports.getWorkOrderById = async (req, res) => {
             formattedWorkOrder.notesError = notesError.message || 'Unknown error fetching notes';
         }
 
-        // Try to fetch status updates
+        // Try to fetch status updates with user information
         try {
             const statusUpdates = await StatusUpdate.findAll({
                 where: { work_order_id: id },
-                attributes: ['id', 'previous_status', 'new_status', 'notes', 'updated_by', 'createdAt']
+                attributes: ['id', 'previous_status', 'new_status', 'notes', 'updated_by', 'createdAt'],
+                include: [
+                    {
+                        model: User,
+                        as: 'updater',
+                        attributes: ['id', 'full_name', 'email']
+                    }
+                ]
             });
 
             formattedWorkOrder.statusUpdates = statusUpdates.map(update => ({
@@ -566,6 +573,11 @@ exports.getWorkOrderById = async (req, res) => {
                 newStatus: update.new_status || '',
                 notes: update.notes || '',
                 updatedById: update.updated_by,
+                updatedBy: update.updater ? {
+                    id: update.updater.id,
+                    fullName: update.updater.full_name,
+                    email: update.updater.email
+                } : null,
                 updatedAt: update.createdAt
             }));
         } catch (statusError) {
@@ -678,6 +690,13 @@ exports.updateWorkOrderStatus = async (req, res) => {
         const { id } = req.params;
         const { status, notes } = req.body;
 
+        console.log('🔵 UPDATE STATUS REQUEST:');
+        console.log('- Work Order ID:', id);
+        console.log('- New Status:', status);
+        console.log('- User Role:', req.userRole);
+        console.log('- User ID:', req.userId);
+        console.log('- Notes:', notes);
+
         // Validate status
         if (!status || !['pending', 'in-progress', 'completed', 'cancelled'].includes(status)) {
             return res.status(400).json({
@@ -694,11 +713,11 @@ exports.updateWorkOrderStatus = async (req, res) => {
             });
         }
 
-        // Check if notes are required for client cancellations
-        if (req.userRole === 'client' && status === 'cancelled' && (!notes || !notes.trim())) {
+        // ENFORCE: Notes are required for ALL cancellations (client, client_admin, admin)
+        if (status === 'cancelled' && (!notes || !notes.trim())) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide a reason for the cancellation request.'
+                message: 'Please provide a reason for the cancellation.'
             });
         }
 
@@ -708,6 +727,14 @@ exports.updateWorkOrderStatus = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Work order not found.'
+            });
+        }
+
+        // PREVENT REACTIVATION: Check if work order is already cancelled
+        if (workOrder.status === 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cancelled work orders cannot be reactivated. Please create a new work order if needed.'
             });
         }
 
@@ -723,8 +750,27 @@ exports.updateWorkOrderStatus = async (req, res) => {
             });
         }
 
+        // Get user's full name for audit trail
+        const user = await User.findByPk(req.userId);
+        const userFullName = user ? user.full_name : 'Unknown User';
+
         // Update the work order status
         await workOrder.update({ status });
+
+        // CREATE AUDIT TRAIL: If cancelling, create a work order note
+        if (status === 'cancelled') {
+            try {
+                await WorkOrderNote.create({
+                    work_order_id: id,
+                    note: `Work order cancelled by ${userFullName}`,
+                    created_by: req.userId,
+                    client_id: workOrder.client_id
+                });
+                console.log(`✅ Audit trail created for cancellation by ${userFullName}`);
+            } catch (noteError) {
+                console.error('Error creating audit trail note:', noteError);
+            }
+        }
 
         // Create status update record
         try {
@@ -744,7 +790,7 @@ exports.updateWorkOrderStatus = async (req, res) => {
             success: true,
             message: req.userRole === 'client' ?
                 'Cancellation request submitted successfully!' :
-                'Work order status updated successfully!',
+                (status === 'cancelled' ? 'Work order cancelled successfully!' : 'Work order status updated successfully!'),
             data: { id: workOrder.id, status: workOrder.status }
         };
 

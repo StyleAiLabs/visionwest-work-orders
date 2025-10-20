@@ -210,3 +210,116 @@ The following existing models are used but not modified by this feature:
 - **Adds one new value** for `work_order_type`: `'manual'`
 - **Leverages existing relationships** - User, WorkOrderNote, Notification models
 - **Recommended optimization** - Add database index on `work_order_type`
+
+---
+
+## Addendum: Work Order Cancellation Data Model (2025-10-20)
+
+### Cancellation Status Flow
+
+**No schema changes required**. The existing `status` ENUM field already includes `'cancelled'` as a valid value.
+
+**Status State Machine**:
+```
+pending ────────────────┐
+   ↓                    │
+in-progress ────────────┤
+   ↓                    │
+completed               │
+                        ↓
+                   cancelled (TERMINAL STATE)
+```
+
+**Termination Rules**:
+- Once status = 'cancelled', NO transitions allowed (FR-032)
+- Backend enforces via updateWorkOrderStatus validation
+- Frontend disables status controls when status = 'cancelled'
+
+### Cancellation Audit Trail
+
+Uses existing `work_order_notes` table with new system-generated note pattern:
+
+**Example Note**:
+```
+Work order cancelled by Jane Manager
+```
+
+**Creation Logic**:
+```javascript
+// In workOrder.controller.js updateWorkOrderStatus()
+if (status === 'cancelled') {
+  await WorkOrderNote.create({
+    work_order_id: workOrder.id,
+    note: `Work order cancelled by ${req.user.full_name}`,
+    created_by: req.userId,
+    client_id: workOrder.client_id // Multi-tenant compliance
+  });
+}
+```
+
+### Cancellation Permission Matrix
+
+Extends existing role-based access control:
+
+| Role | Can Cancel? | Implementation |
+|------|-------------|----------------|
+| `client` | ✅ Yes | handleWorkOrderStatusUpdate allows if status === 'cancelled' |
+| `client_admin` | ✅ Yes | handleWorkOrderStatusUpdate allows all status changes |
+| `staff` | ❌ No | NEW: Reject if status === 'cancelled' with error message |
+| `admin` | ✅ Yes | handleWorkOrderStatusUpdate allows all status changes |
+
+**Middleware Update Required** in `backend/middleware/auth.middleware.js`:
+```javascript
+exports.handleWorkOrderStatusUpdate = (req, res, next) => {
+  const { status } = req.body;
+  
+  if (req.userRole === 'client') {
+    if (status === 'cancelled') return next();
+    return res.status(403).json({ message: 'Clients can only request cancellation.' });
+  }
+  
+  // NEW: Staff cannot cancel
+  if (req.userRole === 'staff') {
+    if (status === 'cancelled') {
+      return res.status(403).json({ 
+        message: 'Staff users cannot cancel work orders. Contact an administrator.' 
+      });
+    }
+    return next();
+  }
+  
+  if (['admin', 'client_admin'].includes(req.userRole)) {
+    return next();
+  }
+  
+  return res.status(403).json({ message: 'Unauthorized to update work order status.' });
+};
+```
+
+### Data Integrity Rules
+
+**Cancellation Constraints**:
+1. **Uniqueness**: Work orders maintain unique job_no even after cancellation (no reuse of cancelled job numbers)
+2. **Immutability**: Once cancelled, work order data remains intact for historical reference
+3. **Audit Trail**: Cancellation action MUST create WorkOrderNote (FR-030)
+4. **Multi-Client Isolation**: Cancelled work orders respect client_id filtering (constitution compliance)
+5. **Dashboard Visibility**: Cancelled count included in summary statistics (not hidden)
+
+**Query Patterns**:
+```sql
+-- Get all cancelled work orders for dashboard count
+SELECT COUNT(*) FROM work_orders 
+WHERE status = 'cancelled' AND client_id = ?;
+
+-- Prevent reactivation (backend validation)
+SELECT status FROM work_orders WHERE id = ?;
+-- If status = 'cancelled', reject UPDATE with error
+
+-- Audit trail for cancelled work order
+SELECT * FROM work_order_notes 
+WHERE work_order_id = ? 
+AND note LIKE '%cancelled by%'
+ORDER BY created_at DESC;
+```
+
+**No database migrations required**. Feature uses existing schema and indexes.

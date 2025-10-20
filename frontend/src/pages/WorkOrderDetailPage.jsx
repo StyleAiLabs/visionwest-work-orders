@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
+import { toast } from 'react-toastify';
 import { workOrderService } from '../services/workOrderService';
 import AppHeader from '../components/layout/AppHeader';
 import MobileNavigation from '../components/layout/MobileNavigation';
@@ -16,6 +17,7 @@ import { useAuth } from '../hooks/useAuth'; // Correct import path
 import ClientStatusUpdateForm from '../components/workOrders/ClientStatusUpdateForm';
 import WorkOrderSummary from '../components/workOrders/WorkOrderSummary';
 import ExportButton from '../components/common/ExportButton';
+import ConfirmCancelDialog from '../components/workOrders/ConfirmCancelDialog';
 
 const WorkOrderDetailPage = () => {
     const { id } = useParams();
@@ -31,12 +33,16 @@ const WorkOrderDetailPage = () => {
     const [workOrder, setWorkOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+    const [toastState, setToastState] = useState({ show: false, message: '', type: 'error' });
     const [showStatusUpdate, setShowStatusUpdate] = useState(false);
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
 
     const isClient = user && user.role === 'client';
     // Allow all authenticated users to toggle urgent status
     const canToggleUrgent = !!user;
+    // Determine if user can cancel (client, client_admin, admin only - NOT staff)
+    const canCancel = user && ['client', 'client_admin', 'admin'].includes(user.role);
 
     useEffect(() => {
         fetchWorkOrder();
@@ -57,8 +63,53 @@ const WorkOrderDetailPage = () => {
     };
 
     const showToast = (message, type = 'error') => {
-        setToast({ show: true, message, type });
-        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+        setToastState({ show: true, message, type });
+        setTimeout(() => setToastState({ show: false, message: '', type: 'error' }), 3000);
+    };
+
+    // Handle work order cancellation
+    const handleCancelClick = () => {
+        setShowCancelDialog(true);
+    };
+
+    const handleConfirmCancel = async (notes) => {
+        setIsCancelling(true);
+        try {
+            // Pass notes from dialog (required for clients, optional for others)
+            const response = await workOrderService.updateWorkOrderStatus(workOrder.id, 'cancelled', notes);
+
+            if (response.success) {
+                setShowCancelDialog(false);
+                toast.success('Work order cancelled successfully');
+
+                // Refresh work order data from server to ensure UI is in sync
+                await fetchWorkOrder();
+
+                // Refresh alerts
+                await refreshAlerts();
+            } else {
+                toast.error(response.message || 'Failed to cancel work order');
+            }
+        } catch (error) {
+            console.error('Error cancelling work order:', error);
+
+            // Handle specific error cases
+            if (error.response?.status === 400) {
+                // Close dialog and update state if already cancelled
+                setShowCancelDialog(false);
+                toast.error(error.response.data?.message || 'This work order is already cancelled');
+
+                // Update local state to reflect cancelled status
+                setWorkOrder({ ...workOrder, status: 'cancelled' });
+            } else if (error.response?.status === 403) {
+                setShowCancelDialog(false);
+                toast.error(error.response.data?.message || 'You do not have permission to cancel this work order');
+            } else {
+                toast.error('Failed to cancel work order. Please try again.');
+            }
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
     // Update handlers to refresh alerts after actions
@@ -203,7 +254,10 @@ const WorkOrderDetailPage = () => {
 
                     {/* Work Order Summary */}
                     {safeRender(() => (
-                        workOrder && <WorkOrderSummary workOrder={workOrder} onToggleUrgent={canToggleUrgent ? handleToggleUrgent : null} />
+                        workOrder && <WorkOrderSummary
+                            workOrder={workOrder}
+                            onToggleUrgent={canToggleUrgent ? handleToggleUrgent : null}
+                        />
                     ))}
 
                     {/* Action Buttons Section */}
@@ -219,8 +273,23 @@ const WorkOrderDetailPage = () => {
                                     className="w-full"
                                 />
 
-                                {/* For staff/admin users */}
-                                {!isClient && (
+                                {/* Cancel Work Order Button - For client, client_admin, admin (NOT staff) */}
+                                {canCancel && workOrder.status !== 'cancelled' && workOrder.status !== 'completed' && (
+                                    <button
+                                        onClick={handleCancelClick}
+                                        disabled={isCancelling}
+                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-pure-white rounded-lg text-sm font-medium transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        aria-label="Cancel work order"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        <span>{isCancelling ? 'Cancelling...' : 'Cancel Work Order'}</span>
+                                    </button>
+                                )}
+
+                                {/* Update Status Button - For staff users only (admin uses Cancel button, client_admin uses Cancel button) */}
+                                {user?.role === 'staff' && (
                                     <button
                                         onClick={() => setShowStatusUpdate(true)}
                                         className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-deep-navy hover:bg-deep-navy-dark text-pure-white rounded-lg text-sm font-medium transition-colors"
@@ -232,23 +301,18 @@ const WorkOrderDetailPage = () => {
                                         <span>Update Status</span>
                                     </button>
                                 )}
-
-                                {/* For client users - only show cancel button if not already completed/cancelled */}
-                                {isClient && workOrder.status !== 'completed' && workOrder.status !== 'cancelled' && (
-                                    <button
-                                        onClick={() => setShowStatusUpdate(true)}
-                                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        <span>Request Cancellation</span>
-                                    </button>
-                                )}
                             </div>
                         </div>
                     )}
+
+                    {/* Confirmation Dialog */}
+                    <ConfirmCancelDialog
+                        isOpen={showCancelDialog}
+                        onConfirm={handleConfirmCancel}
+                        onCancel={() => setShowCancelDialog(false)}
+                        workOrderId={workOrder?.id}
+                        userRole={user?.role}
+                    />
 
                     {/* Status Update Form */}
                     {safeRender(() => (
@@ -326,11 +390,11 @@ const WorkOrderDetailPage = () => {
             <MobileNavigation />
 
             {/* Toast notification */}
-            {toast.show && (
+            {toastState.show && (
                 <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast({ ...toast, show: false })}
+                    message={toastState.message}
+                    type={toastState.type}
+                    onClose={() => setToastState({ ...toastState, show: false })}
                 />
             )}
         </div>

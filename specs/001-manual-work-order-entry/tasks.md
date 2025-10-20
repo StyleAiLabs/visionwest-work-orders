@@ -1,363 +1,382 @@
-# Implementation Tasks: Manual Work Order Entry
-
-**Feature**: Manual Work Order Entry
-**Branch**: `001-manual-work-order-entry`
-**Generated**: 2025-10-16
-**Status**: Ready for Implementation
-
-## Task Overview
-
-This document breaks down the implementation of manual work order entry into actionable tasks organized by phase and user story. Tasks are marked with:
-- **Priority**: P1 (MVP), P2 (Post-MVP), P3 (Enhancement)
-- **User Story**: US#1 (Create), US#2 (Edit), US#3 (Autocomplete)
-- **Task ID**: T### for tracking and cross-referencing
-
-## Task Statistics
-
-- **Total Tasks**: 39
-- **P1 (MVP)**: 24 tasks
-- **P2 (Post-MVP)**: 9 tasks
-- **P3 (Enhancement)**: 6 tasks
-- **Estimated Total Time**: 12-15 hours
-
-## Implementation Status
-
-### ✅ P1 MVP (COMPLETE)
-**Status**: Implementation complete, manual testing pending
-**Completed**: 2025-10-17
-
-**What's Done:**
-- ✅ Phase 0: Environment setup (T001-T008)
-- ✅ Phase 1: Backend API for manual work order creation (T010-T025)
-  - Email notification service with nodemailer
-  - Role-based access control (client_admin only)
-  - Validation and error handling
-- ✅ Phase 2: Frontend form and UI (T026-T045)
-  - Mobile-first WorkOrderForm component with React Hook Form
-  - CreateWorkOrder page with success/error handling
-  - FAB (Floating Action Button) for client_admin users
-  - Routing integration
-
-**Manual Testing Required** (T046-T052):
-- Form validation behavior
-- Work order creation end-to-end
-- FAB visibility for client_admin role
-- Mobile responsiveness (320px-414px breakpoints)
-- Touch target accessibility (44x44px minimum)
+# Tasks: Work Order Cancellation
 
-**Integration Testing Pending** (T088-T096):
-- n8n webhook compatibility
-- Manual + email work orders in same list
-- Mobile device testing (iOS/Android)
-- PWA offline caching
+**Input**: Design documents from `/specs/001-manual-work-order-entry/`
+**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Servers Running:**
-- Backend: http://localhost:5002
-- Frontend: http://localhost:5174
+**Tests**: Tests are NOT included in this feature as the specification requests manual testing via Postman/curl for backend and browser testing for frontend.
 
-### 📋 P2 Edit Work Order (BACKLOG)
-**Status**: Deferred to post-MVP
-**Tasks**: T053-T070 (Phase 3)
-**Features**:
-- Edit existing work order details
-- Audit trail via system-generated notes
-- Field change tracking
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-### 📋 P3 Autocomplete (BACKLOG)
-**Status**: Deferred to post-MVP
-**Tasks**: T071-T087 (Phase 4)
-**Features**:
-- Property name autocomplete with address/phone auto-fill
-- Supplier name autocomplete with email/phone auto-fill
-- Debounced API calls for performance
+## Format: `[ID] [P?] [Story] Description`
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4, US5)
+- Include exact file paths in descriptions
 
-## Phase 0: Setup & Prerequisites
-
-**Goal**: Ensure development environment is ready and all prerequisites are met.
+## Path Conventions
+- Web app structure: `backend/` and `frontend/` directories at repository root
+- Backend: `backend/controllers/`, `backend/middleware/`, `backend/models/`
+- Frontend: `frontend/src/components/`, `frontend/src/pages/`, `frontend/src/services/`
 
-### Environment Setup
+---
 
-- [X] T001 [P1] Checkout feature branch `001-manual-work-order-entry`
-- [X] T002 [P1] Install backend dependencies: `cd backend && npm install`
-- [X] T003 [P1] Install nodemailer for email notifications: `cd backend && npm install nodemailer`
-- [X] T004 [P1] Install frontend dependencies: `cd frontend && npm install`
-- [X] T005 [P1] Start backend dev server: `cd backend && npm run dev` (port 5002)
-- [X] T006 [P1] Start frontend dev server: `cd frontend && npm run dev` (port 5174)
-- [X] T007 [P1] Verify database connection and existing work_order_type field
-
-### Configuration
+## Phase 1: Setup (Shared Infrastructure)
 
-- [X] T008 [P1] Add email environment variables to `backend/.env`: EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, EMAIL_NOTIFICATION_RECIPIENT=mark@williamspropertyservices.co.nz
-- [ ] T009 [P1] (Optional) Add database index on `work_order_type` for query performance
+**Purpose**: Project initialization and basic structure verification
 
-## Phase 1: Backend Foundation (P1 - Create Work Order)
+- [ ] T001 Verify project structure matches plan.md (backend/ and frontend/ directories)
+- [ ] T002 Verify Node.js 18+ installed and dependencies current (package.json versions)
+- [ ] T003 [P] Verify PostgreSQL database contains work_orders table with status ENUM including 'cancelled'
+- [ ] T004 [P] Verify work_order_notes table exists for audit trail
+- [ ] T005 Verify backend server starts successfully on port 5002
+- [ ] T006 Verify frontend dev server starts successfully on port 5173
 
-**Goal**: Implement backend API for manual work order creation with email notifications.
+---
 
-**Estimated Time**: 2-3 hours
+## Phase 2: Foundational (Blocking Prerequisites)
 
-### Backend Middleware
+**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-- [X] T010 [P1] [US#1] Verify or create `isClientAdmin` middleware in `backend/middleware/auth.middleware.js` that checks `req.userRole === 'client_admin'` and returns 403 if unauthorized
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-### Backend Email Service
+- [ ] T007 Verify existing PATCH /api/work-orders/:id/status endpoint exists in backend/routes/workOrder.routes.js
+- [ ] T008 Verify auth.middleware.js contains verifyToken and isAnyValidRole middleware
+- [ ] T009 Verify workOrder.controller.js contains updateWorkOrderStatus function
+- [ ] T010 Verify WorkOrder model in backend/models/workOrder.model.js includes is_urgent boolean field
+- [ ] T011 Verify WorkOrderNote model in backend/models/workOrderNote.model.js for audit trail
 
-- [X] T011 [P1] [US#1] Create email service utility at `backend/utils/emailService.js`
-- [X] T012 [P1] [US#1] Implement `sendWorkOrderCreatedEmail(workOrder, createdBy)` function using nodemailer with email template containing job_no, property_name, supplier_name, description, created_by details
-- [X] T013 [P1] [US#1] Configure nodemailer transporter with SMTP settings from environment variables
-- [X] T014 [P1] [US#1] Add error handling for email failures (log error but don't throw exception)
+**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
-### Backend Controller (Create)
+---
 
-- [X] T015 [P1] [US#1] Create or update `backend/controllers/workOrder.controller.js`
-- [X] T016 [P1] [US#1] Implement `createManualWorkOrder` controller function:
-  - Validate required fields: job_no, supplier_name, property_name, description
-  - Check for duplicate job_no
-  - Create work order with work_order_type='manual', created_by=req.userId, status='pending'
-  - Default date to current date if not provided
-  - Save to database
-  - Trigger in-app notifications (reuse existing notification helper)
-  - Call email service asynchronously (non-blocking)
-  - Return success response with work order ID
-- [X] T017 [P1] [US#1] Add validation for optional email fields (supplier_email, authorized_email must be valid email format)
-- [X] T018 [P1] [US#1] Handle database errors and return appropriate 500 error responses
+## Phase 3: User Story 1 - Create Work Order Manually (Priority: P1) 🎯 MVP
 
-### Backend Routes (Create)
+**Status**: ✅ COMPLETE (Implementation done 2025-10-17)
 
-- [X] T019 [P1] [US#1] Add POST route in `backend/routes/workOrder.routes.js`: `router.post('/', verifyToken, isClientAdmin, workOrderController.createManualWorkOrder)`
-- [X] T020 [P1] [US#1] Ensure route is registered in Express app before webhook routes (to avoid path conflicts)
+**Goal**: Enable tenancy managers (client_admin role) to manually create work orders with all required fields, auto-populated supplier/authorization details, and optional photo uploads
 
-### Backend Testing (Create)
+**Independent Test**: Log in as client_admin user, navigate to work order creation form, fill required fields (property name, property address, property phone, description, job number), verify supplier auto-fills to "Williams Property Service", verify authorized by auto-fills from user profile, submit form, verify work order appears in list with "manual" type
 
-- [X] T021 [P1] [US#1] Test POST /api/work-orders with all required fields using curl/Postman
-- [X] T022 [P1] [US#1] Test validation errors (missing fields, duplicate job_no, invalid email format)
-- [X] T023 [P1] [US#1] Test role authorization (403 for non-client_admin users)
-- [⚠️] T024 [P1] [US#1] Verify email sent to mark@williamspropertyservices.co.nz with correct work order details (Email attempted but failed due to placeholder SMTP credentials - requires real Gmail credentials in production)
-- [X] T025 [P1] [US#1] Verify in-app notifications sent to staff/admin/client users
+### Implementation for User Story 1
 
-## Phase 2: Frontend Foundation (P1 - Create Work Order)
+- [x] T012 [P] [US1] Create manual work order creation form component in frontend/src/components/workOrders/CreateWorkOrderForm.jsx
+- [x] T013 [P] [US1] Add form validation for required fields (job_no, property_name, property_address, property_phone, description) in CreateWorkOrderForm.jsx
+- [x] T014 [US1] Auto-populate supplier_name to "Williams Property Service" in CreateWorkOrderForm.jsx
+- [x] T015 [US1] Auto-populate supplier_phone to "021 123 4567" and supplier_email to "info@williamspropertyservices.co.nz" in CreateWorkOrderForm.jsx
+- [x] T016 [US1] Auto-populate authorized_by field from user.full_name in CreateWorkOrderForm.jsx
+- [x] T017 [US1] Auto-populate authorized_contact field from user.phone (if available) in CreateWorkOrderForm.jsx
+- [x] T018 [US1] Auto-populate authorized_email field from user.email in CreateWorkOrderForm.jsx
+- [x] T019 [US1] Add photo upload interface with multiple file support in CreateWorkOrderForm.jsx
+- [x] T020 [US1] Implement createWorkOrder API endpoint POST /api/work-orders in backend/controllers/workOrder.controller.js
+- [x] T021 [US1] Add job number uniqueness validation in createWorkOrder controller
+- [x] T022 [US1] Set work_order_type to "manual" and status to "pending" in createWorkOrder controller
+- [x] T023 [US1] Set created_by to logged-in user ID in createWorkOrder controller
+- [x] T024 [US1] Add route POST /api/work-orders with client_admin role check in backend/routes/workOrder.routes.js
+- [x] T025 [US1] Send notifications to staff/admin/client users on work order creation in backend/controllers/workOrder.controller.js
+- [x] T026 [US1] Add "Create Work Order" button to dashboard/work order list page in frontend/src/pages/WorkOrdersPage.jsx
+- [x] T027 [US1] Add navigation to CreateWorkOrderForm from work order list page
+- [x] T028 [US1] Display success message and redirect to work order detail page after creation
+- [x] T029 [US1] Display validation errors for missing required fields in CreateWorkOrderForm.jsx
 
-**Goal**: Build mobile-first React form for manual work order creation.
+**Checkpoint**: ✅ User Story 1 complete - client_admin users can create manual work orders
 
-**Estimated Time**: 3-4 hours
+---
 
-### Frontend Service Layer
+## Phase 4: User Story 2 - Edit Work Order Fields (Priority: P2)
 
-- [X] T026 [P1] [US#1] Create or update `frontend/src/services/workOrderService.js`
-- [X] T027 [P1] [US#1] Implement `createWorkOrder(formData)` function that POSTs to /api/work-orders with JWT authentication
+**Goal**: Enable tenancy managers to edit work order details after initial creation, adding missing information like PO numbers or updating descriptions, with audit trail tracking
 
-### Frontend Form Component
+**Independent Test**: Create a manual work order with minimal info, navigate to detail page, click "Edit", update optional fields (PO number, property phone), save changes, verify changes persist and audit trail note created
 
-- [X] T028 [P1] [US#1] Create reusable `frontend/src/components/WorkOrderForm.jsx` component
-- [X] T029 [P1] [US#1] Implement React Hook Form for form state management and validation
-- [X] T030 [P1] [US#1] Add controlled inputs for required fields: job_no, supplier_name, property_name, description
-- [X] T031 [P1] [US#1] Add controlled inputs for optional fields: date, supplier_phone, supplier_email, property_address, property_phone, po_number, authorized_by, authorized_contact, authorized_email
-- [X] T032 [P1] [US#1] Apply Tailwind CSS mobile-first styling with minimum 44x44px touch targets (h-11 class)
-- [X] T033 [P1] [US#1] Implement field-level validation with immediate error feedback
-- [X] T034 [P1] [US#1] Add focus states for accessibility: focus:ring-2 focus:border-blue-500
+### Implementation for User Story 2
 
-### Frontend Create Page
+- [ ] T030 [P] [US2] Create edit work order form component in frontend/src/components/workOrders/EditWorkOrderForm.jsx
+- [ ] T031 [US2] Pre-fill EditWorkOrderForm with current work order data from detail page
+- [ ] T032 [US2] Allow editing of optional fields (PO number, property_phone, authorized_contact, description) in EditWorkOrderForm.jsx
+- [ ] T033 [US2] Prevent editing of email metadata fields (email_subject, email_sender, email_received_date) in EditWorkOrderForm.jsx
+- [ ] T034 [US2] Implement updateWorkOrder API endpoint PATCH /api/work-orders/:id in backend/controllers/workOrder.controller.js
+- [ ] T035 [US2] Create audit trail note documenting changes in updateWorkOrder controller using WorkOrderNote.create()
+- [ ] T036 [US2] Add route PATCH /api/work-orders/:id with client_admin role check in backend/routes/workOrder.routes.js
+- [ ] T037 [US2] Add "Edit" button to work order detail page in frontend/src/components/workOrders/WorkOrderSummary.jsx
+- [ ] T038 [US2] Display success message after edit and refresh detail view
+- [ ] T039 [US2] Display audit trail notes showing edit history in work order timeline
 
-- [X] T035 [P1] [US#1] Create `frontend/src/pages/CreateWorkOrder.jsx` page component
-- [X] T036 [P1] [US#1] Import and render WorkOrderForm component
-- [X] T037 [P1] [US#1] Implement form submission handler that calls workOrderService.createWorkOrder
-- [X] T038 [P1] [US#1] Display success message on successful creation
-- [X] T039 [P1] [US#1] Navigate back to work order list on success using React Router
-- [X] T040 [P1] [US#1] Display error messages for failed submissions
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - users can create and edit work orders
 
-### Frontend Routing & Navigation
+---
 
-- [X] T041 [P1] [US#1] Add route in `frontend/src/App.jsx`: `<Route path="/work-orders/create" element={<CreateWorkOrder />} />`
-- [X] T042 [P1] [US#1] Update `frontend/src/pages/WorkOrderList.jsx` to add floating action button (FAB) for client_admin users only
-- [X] T043 [P1] [US#1] Style FAB with Tailwind: `fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg`
-- [X] T044 [P1] [US#1] Add PlusIcon or similar icon to FAB button
-- [X] T045 [P1] [US#1] Link FAB to `/work-orders/create` route
+## Phase 5: User Story 3 - Mark Work Order as Urgent (Priority: P2)
 
-### Frontend Testing (Create)
+**Status**: ⚠️ PARTIALLY COMPLETE (Filter UI completed, toggle functionality pending)
+
+**Goal**: Allow clients/client_admins to mark work orders as urgent during creation, display urgent badge in list views, enable staff/admin to toggle urgency on detail pages with audit trail
+
+**Independent Test**: Create work order with urgent checkbox enabled, verify urgent badge appears in list view, verify urgent filter works, as staff/admin toggle urgent status on detail page, verify audit trail note created
+
+### Implementation for User Story 3
 
-- [MANUAL] T046 [P1] [US#1] Test form validation displays errors for missing required fields
-- [MANUAL] T047 [P1] [US#1] Test form submission creates work order successfully
-- [MANUAL] T048 [P1] [US#1] Test success message displays after creation
-- [MANUAL] T049 [P1] [US#1] Test work order appears in list immediately after creation
-- [MANUAL] T050 [P1] [US#1] Test FAB button only visible to client_admin users
-- [MANUAL] T051 [P1] [US#1] Test mobile responsiveness at 320px, 375px, 390px, 414px breakpoints
-- [MANUAL] T052 [P1] [US#1] Test touch targets meet 44x44px minimum on actual mobile device
+- [ ] T040 [P] [US3] Add urgent checkbox/toggle to CreateWorkOrderForm.jsx for client and client_admin roles
+- [ ] T041 [P] [US3] Set is_urgent field to checkbox value in createWorkOrder API call from CreateWorkOrderForm.jsx
+- [ ] T042 [US3] Update createWorkOrder controller to accept is_urgent field and default to false in backend/controllers/workOrder.controller.js
+- [ ] T043 [US3] Add urgent badge display component in frontend/src/components/workOrders/UrgentBadge.jsx
+- [ ] T044 [US3] Display UrgentBadge in work order list items when is_urgent is true in frontend/src/components/workOrders/WorkOrderCard.jsx
+- [x] T045 [US3] Add urgent filter option to FilterBar in frontend/src/components/workOrders/FilterBar.jsx (✅ Completed in previous session)
+- [x] T046 [US3] Update backend getAllWorkOrders to filter by is_urgent when status='urgent' in backend/controllers/workOrder.controller.js (✅ Completed in previous session)
+- [ ] T047 [US3] Sort urgent work orders before non-urgent within same status in getAllWorkOrders controller
+- [ ] T048 [US3] Add urgent toggle control for staff/admin roles on detail page in frontend/src/components/workOrders/WorkOrderSummary.jsx
+- [ ] T049 [US3] Display urgent status as read-only badge for client/client_admin roles on detail page in WorkOrderSummary.jsx
+- [ ] T050 [US3] Implement updateUrgentStatus API endpoint PATCH /api/work-orders/:id/urgent in backend/controllers/workOrder.controller.js
+- [ ] T051 [US3] Create audit trail note when urgent flag changed ("Marked as urgent by [Name]" or "Removed urgent flag by [Name]") in updateUrgentStatus controller
+- [ ] T052 [US3] Add route PATCH /api/work-orders/:id/urgent with staff/admin role check in backend/routes/workOrder.routes.js
+- [ ] T053 [US3] Handle urgent toggle change event in WorkOrderSummary.jsx with immediate state update
+- [ ] T054 [US3] Display urgent audit trail notes in work order timeline
 
-## Phase 3: Edit Work Order (P2)
+**Checkpoint**: All user stories (1, 2, 3) should now be independently functional - urgent flag management complete
+
+---
 
-**Goal**: Allow tenancy managers to edit work order details with audit trail.
+## Phase 6: User Story 4 - Attach Property Details with Autocomplete (Priority: P3)
 
-**Estimated Time**: 2-3 hours
+**Goal**: Provide property name autocomplete suggesting previously used properties, auto-fill associated property details when selected, maintain ability to enter new properties
 
-### Backend Controller (Edit)
+**Independent Test**: Start typing property name in creation form, verify suggestions appear from existing work orders, select suggestion, verify property address and phone auto-fill, test entering new property name not in suggestions works
+
+### Implementation for User Story 4
 
-- [ ] T053 [P2] [US#2] Add `editWorkOrder` controller function in `backend/controllers/workOrder.controller.js`:
-  - Verify client_admin role
-  - Fetch existing work order by ID
-  - Return 404 if not found
-  - Compare old vs new values to determine changed fields
-  - Update only fields included in request body
-  - Create system note: "Work order updated by [user.full_name]. Changed: [field_list]"
-  - Save changes and note to database
-  - Trigger update notifications
-  - Return success response with updated_fields array
-- [ ] T054 [P2] [US#2] Add validation to preserve email metadata fields (email_subject, email_sender, email_received_date) - silently ignore if client attempts to edit
-
-### Backend Routes (Edit)
-
-- [ ] T055 [P2] [US#2] Add PUT route in `backend/routes/workOrder.routes.js`: `router.put('/:id', verifyToken, isClientAdmin, workOrderController.editWorkOrder)`
-
-### Backend Testing (Edit)
-
-- [ ] T056 [P2] [US#2] Test PUT /api/work-orders/:id with partial updates
-- [ ] T057 [P2] [US#2] Verify audit trail note created with correct field list
-- [ ] T058 [P2] [US#2] Test 404 response for non-existent work order ID
-- [ ] T059 [P2] [US#2] Verify email metadata fields cannot be modified
-
-### Frontend Edit Page
-
-- [ ] T060 [P2] [US#2] Create `frontend/src/pages/EditWorkOrder.jsx` page component
-- [ ] T061 [P2] [US#2] Fetch existing work order data using work order ID from route params
-- [ ] T062 [P2] [US#2] Render WorkOrderForm component pre-populated with existing data
-- [ ] T063 [P2] [US#2] Implement `editWorkOrder(workOrderId, updates)` function in `frontend/src/services/workOrderService.js`
-- [ ] T064 [P2] [US#2] Handle form submission to update work order via PUT request
-- [ ] T065 [P2] [US#2] Display success message and navigate back to work order detail page
-
-### Frontend Routing & Navigation (Edit)
-
-- [ ] T066 [P2] [US#2] Add route in `frontend/src/App.jsx`: `<Route path="/work-orders/:id/edit" element={<EditWorkOrder />} />`
-- [ ] T067 [P2] [US#2] Add "Edit" button on work order detail page (visible to client_admin only)
-
-### Frontend Testing (Edit)
-
-- [ ] T068 [P2] [US#2] Test edit form pre-populates with existing data
-- [ ] T069 [P2] [US#2] Test partial updates save successfully
-- [ ] T070 [P2] [US#2] Test audit trail note appears in work order detail view
-
-## Phase 4: Autocomplete Suggestions (P3)
-
-**Goal**: Provide autocomplete for property and supplier names to reduce data entry errors.
-
-**Estimated Time**: 3-4 hours
-
-### Backend Controller (Autocomplete)
-
-- [ ] T071 [P3] [US#3] Add `getSuggestions` controller function in `backend/controllers/workOrder.controller.js`:
-  - Validate query parameters: type (property/supplier), q (min 2 chars), limit (default 10, max 50)
-  - Return 400 if invalid parameters
-  - Query database for distinct property_name or supplier_name matching query (case-insensitive, partial match)
-  - Group by name with associated details (address, phone, email)
-  - Order by match_count DESC (frequency of use)
-  - Return suggestions array with match counts
-
-### Backend Routes (Autocomplete)
-
-- [ ] T072 [P3] [US#3] Add GET route in `backend/routes/workOrder.routes.js`: `router.get('/suggestions', verifyToken, workOrderController.getSuggestions)`
-- [ ] T073 [P3] [US#3] Ensure route is defined BEFORE `/:id` route to avoid path conflicts
-
-### Backend Testing (Autocomplete)
-
-- [ ] T074 [P3] [US#3] Test GET /api/work-orders/suggestions?type=property&q=sunset returns property suggestions
-- [ ] T075 [P3] [US#3] Test GET /api/work-orders/suggestions?type=supplier&q=abc returns supplier suggestions
-- [ ] T076 [P3] [US#3] Test validation errors for missing/invalid parameters
-
-### Frontend Autocomplete UI
-
-- [ ] T077 [P3] [US#3] Add debounced input handler (300ms delay) to WorkOrderForm component for property_name field
-- [ ] T078 [P3] [US#3] Implement `fetchSuggestions(type, query)` function in `frontend/src/services/workOrderService.js`
-- [ ] T079 [P3] [US#3] Add dropdown UI below property_name input to display suggestions
-- [ ] T080 [P3] [US#3] Implement suggestion selection handler that auto-fills property_address and property_phone
-- [ ] T081 [P3] [US#3] Repeat autocomplete implementation for supplier_name field (auto-fill supplier_phone and supplier_email)
-- [ ] T082 [P3] [US#3] Add keyboard navigation support (arrow keys, enter to select, escape to close)
-- [ ] T083 [P3] [US#3] Style dropdown with Tailwind CSS for mobile-friendly touch targets
-
-### Frontend Testing (Autocomplete)
-
-- [ ] T084 [P3] [US#3] Test autocomplete displays suggestions after typing 2+ characters
-- [ ] T085 [P3] [US#3] Test suggestion selection auto-fills related fields
-- [ ] T086 [P3] [US#3] Test free text entry still works if no suggestions match
-- [ ] T087 [P3] [US#3] Test debouncing reduces API calls during rapid typing
-
-## Phase 5: Integration & Polish
-
-**Goal**: Ensure feature works end-to-end and doesn't break existing functionality.
-
-**Estimated Time**: 1-2 hours
-
-### Integration Testing
-
-- [ ] T088 [P1] Verify n8n webhook still creates work orders successfully (POST /api/webhook/work-orders unchanged)
-- [ ] T089 [P1] Verify manual and email work orders appear together in work order list
-- [ ] T090 [P1] Verify work_order_type filter works correctly (if implemented in UI)
-- [ ] T091 [P1] Test creating work order on 3G connection (mobile performance)
-- [ ] T092 [P1] Test offline PWA caching of form page (should load offline)
-
-### Mobile Device Testing
-
-- [ ] T093 [P1] Test form on actual iOS device (iPhone)
-- [ ] T094 [P1] Test form on actual Android device
-- [ ] T095 [P1] Verify responsive breakpoints work correctly
-- [ ] T096 [P1] Verify touch targets meet accessibility standards
-
-### Documentation & Cleanup
-
-- [ ] T097 [P1] Review quickstart.md and ensure all implementation steps are accurate
-- [ ] T098 [P1] Update CLAUDE.md if any new architectural decisions were made
-- [ ] T099 [P1] Remove any debug console.log statements from code
-
-## Dependency Graph & Parallel Execution Opportunities
-
-### Critical Path (Sequential Dependencies)
-
-```
-Phase 0 (T001-T009) → Phase 1 Backend (T010-T025) → Phase 2 Frontend (T026-T052)
-                                                      ↓
-Phase 3 Backend (T053-T059) → Phase 3 Frontend (T060-T070)
-                                                      ↓
-Phase 4 Backend (T071-T076) → Phase 4 Frontend (T077-T087)
-                                                      ↓
-Phase 5 Integration & Polish (T088-T099)
+- [ ] T055 [P] [US4] Create getPropertySuggestions API endpoint GET /api/work-orders/suggestions/properties in backend/controllers/workOrder.controller.js
+- [ ] T056 [P] [US4] Query distinct property names, addresses, phones from existing work orders in getPropertySuggestions controller
+- [ ] T057 [US4] Add route GET /api/work-orders/suggestions/properties in backend/routes/workOrder.routes.js
+- [ ] T058 [US4] Add autocomplete input component for property_name in CreateWorkOrderForm.jsx
+- [ ] T059 [US4] Fetch property suggestions from API on property_name input change
+- [ ] T060 [US4] Display property suggestions dropdown below property_name input
+- [ ] T061 [US4] Auto-fill property_address and property_phone when suggestion selected
+- [ ] T062 [US4] Allow manual entry of new property details if no suggestion selected
+- [ ] T063 [US4] Verify supplier remains "Williams Property Service" (no autocomplete needed per spec assumption 8)
+
+**Checkpoint**: All user stories (1, 2, 3, 4) complete - autocomplete enhances data entry
+
+---
+
+## Phase 7: User Story 5 - Cancel Work Order (Priority: P2) 🎯 CURRENT FOCUS
+
+**Goal**: Enable client, client_admin, and admin users to cancel work orders via detail page with confirmation dialog, create audit trail, prevent reactivation, exclude staff from cancellation permissions
+
+**Independent Test**: Navigate to work order detail page as client_admin, click "Cancel" button or select cancelled from status dropdown, confirm cancellation dialog, verify status changes to "cancelled", verify audit trail note created, verify staff user cannot cancel
+
+### Implementation for User Story 5
+
+- [x] T064 [P] [US5] Update handleWorkOrderStatusUpdate middleware to reject staff cancellations in backend/middleware/auth.middleware.js
+- [x] T065 [P] [US5] Add 403 error response for staff users attempting cancellation in auth.middleware.js
+- [x] T066 [US5] Update updateWorkOrderStatus controller to prevent reactivation of cancelled work orders in backend/controllers/workOrder.controller.js
+- [x] T067 [US5] Add 400 error response "Cancelled work orders cannot be reactivated" in updateWorkOrderStatus controller
+- [x] T068 [US5] Create audit trail note on cancellation "Work order cancelled by [User Full Name]" in updateWorkOrderStatus controller
+- [x] T069 [P] [US5] Create ConfirmCancelDialog component with React portals in frontend/src/components/workOrders/ConfirmCancelDialog.jsx
+- [x] T070 [US5] Add confirmation dialog UI with "Are you sure?" message and Yes/No buttons in ConfirmCancelDialog.jsx
+- [x] T071 [US5] Style ConfirmCancelDialog with NextGen WOM colors (deep-navy header, red cancel button, 44px+ touch targets)
+- [x] T072 [US5] Add cancel button to WorkOrderSummary.jsx for client, client_admin, admin roles only
+- [x] T073 [US5] Hide/disable cancel button for staff users in WorkOrderSummary.jsx
+- [x] T074 [US5] Add handleCancelClick function to show ConfirmCancelDialog in WorkOrderSummary.jsx
+- [x] T075 [US5] Add handleConfirmCancel function to call updateWorkOrderStatus API with status='cancelled' in WorkOrderSummary.jsx
+- [x] T076 [US5] Update work order state to 'cancelled' on successful API response in WorkOrderSummary.jsx
+- [x] T077 [US5] Close ConfirmCancelDialog and show success toast on cancellation
+- [x] T078 [US5] Display "Cancelled (Permanent)" badge when work order status is cancelled in WorkOrderSummary.jsx
+- [x] T079 [US5] Verify cancelled filter in FilterBar.jsx displays only cancelled work orders (✅ Filter already exists from previous implementation)
+- [x] T080 [US5] Verify cancelled work orders appear in dashboard summary statistics with dedicated count
+- [x] T081 [US5] Add error handling for 400 (reactivation attempt) and 403 (staff permission denied) in WorkOrderSummary.jsx
+- [x] T082 [US5] Display error toast for reactivation attempts and permission denied errors
+
+**Checkpoint**: All user stories complete - cancellation feature fully functional with confirmation, audit trail, and role restrictions
+
+---
+
+## Phase 8: Polish & Cross-Cutting Concerns
+
+**Purpose**: Improvements that affect multiple user stories and finalize the feature
+
+- [ ] T083 [P] Update frontend/package.json version to 2.8.0
+- [ ] T084 [P] Update backend/package.json version to 2.8.0
+- [ ] T085 Create release notes entry for version 2.8.0 in frontend/src/pages/ReleaseNotesPage.jsx
+- [ ] T086 Create release-notes/release-2.8.0-summary.md with cancellation feature details
+- [ ] T087 Verify mobile responsiveness of CreateWorkOrderForm on Chrome/Safari mobile
+- [ ] T088 Verify mobile responsiveness of ConfirmCancelDialog on Chrome/Safari mobile (44px+ touch targets)
+- [ ] T089 Verify urgent badge visibility on mobile devices
+- [ ] T090 Test complete user journey: create work order → mark urgent → edit details → cancel with confirmation
+- [ ] T091 Test role-based permissions: client (authorized_email match), client_admin (all for client), staff (no cancel), admin (all)
+- [ ] T092 Verify audit trail notes appear in timeline for all operations (create, edit, urgent toggle, cancel)
+- [ ] T093 Verify dashboard statistics update correctly with cancelled count
+- [ ] T094 Verify performance: status update < 500ms, confirmation dialog render < 100ms, audit trail visible < 2s
+- [ ] T095 Run manual tests from quickstart.md cancellation checklist
+- [ ] T096 Test error scenarios: duplicate job number, missing required fields, reactivation attempt, staff cancellation attempt
+- [ ] T097 Verify n8n webhook integration still works (no disruption to automated work orders)
+- [ ] T098 Code review and cleanup across all modified files
+- [ ] T099 Update .github/copilot-instructions.md if cancellation patterns need documentation
+- [ ] T100 Final validation: All 5 user stories work independently and together
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies - can start immediately
+- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
+- **User Stories (Phases 3-7)**: All depend on Foundational phase completion
+  - User stories can then proceed in parallel (if staffed)
+  - Or sequentially in priority order: US1 (P1) → US3 (P2) → US5 (P2) → US2 (P2) → US4 (P3)
+- **Polish (Phase 8)**: Depends on all desired user stories being complete
+
+### User Story Dependencies
+
+- **User Story 1 (P1) - Create Work Order**: ✅ COMPLETE - No dependencies on other stories (MVP delivered)
+- **User Story 2 (P2) - Edit Work Order**: Depends on US1 for work order creation, but edit functionality is independent
+- **User Story 3 (P2) - Mark as Urgent**: Depends on US1 for work order creation (urgent flag on creation form), extends detail page
+- **User Story 4 (P3) - Autocomplete**: Depends on US1 for property data, but autocomplete is independent enhancement
+- **User Story 5 (P2) - Cancel Work Order**: Can start after Foundational - Uses existing status update infrastructure ✅ **CURRENT PRIORITY**
+
+### Suggested Implementation Order
+
+**Current State**:
+- ✅ Phase 1: Setup → Phase 2: Foundational → COMPLETE
+- ✅ Phase 3: User Story 1 (Create Work Order) → COMPLETE (2025-10-17)
+- ⚠️ Phase 5: User Story 3 (Urgent) → PARTIALLY COMPLETE (filter integration done)
+- **→ Phase 7: User Story 5 (Cancel Work Order)** ← **IMPLEMENT NEXT (19 tasks)**
+
+**Recommended Next Steps**:
+1. Complete Phase 7: User Story 5 (Cancellation) → Test independently → Deploy v2.8.0
+2. Complete Phase 5: User Story 3 (Urgent toggle) → Test independently → Deploy v2.9.0
+3. Complete Phase 4: User Story 2 (Edit) → Test independently → Deploy v2.10.0
+4. Complete Phase 6: User Story 4 (Autocomplete) → Test independently → Deploy v2.11.0
+5. Phase 8: Polish and final validation
+
+**Parallel Team Strategy**:
+1. Team completes Setup + Foundational together ✅ DONE
+2. Once Foundational is done:
+   - Developer A: User Story 1 (Create) ✅ DONE + User Story 2 (Edit) ⏳ TODO
+   - Developer B: User Story 5 (Cancel) ⏳ **START HERE** + User Story 3 (Urgent) ⏳ FINISH
+   - Developer C: User Story 4 (Autocomplete) ⏳ TODO
+3. Converge on Phase 8: Polish together
+
+### Within Each User Story
+
+- Backend API endpoints before frontend components
+- Form components before page integration
+- Core functionality before error handling
+- Validation before notifications
+- Story complete and tested before moving to next priority
+
+### Parallel Opportunities
+
+- **Phase 1**: T003 and T004 (database verification) can run in parallel with T002 (dependency check)
+- **Phase 2**: All verification tasks (T007-T011) can run in parallel
+- **User Story 2**: T030 (edit form) and T034 (API endpoint) can start in parallel
+- **User Story 3**: T040 (urgent checkbox) and T043 (urgent badge) can run in parallel
+- **User Story 4**: T055, T056 (API suggestions) and T058 (autocomplete input) can start in parallel
+- **User Story 5**: T064-T068 (backend changes) and T069-T071 (dialog component) can run in parallel
+- **Phase 8**: T083 and T084 (version bumps) can run in parallel
+
+---
+
+## Parallel Example: User Story 5 (Cancellation)
+
+```bash
+# Launch backend and frontend tasks in parallel:
+
+# Backend Team:
+Task: "T064 [P] [US5] Update handleWorkOrderStatusUpdate middleware in backend/middleware/auth.middleware.js"
+Task: "T066 [US5] Update updateWorkOrderStatus controller in backend/controllers/workOrder.controller.js"
+
+# Frontend Team (can start at same time):
+Task: "T069 [P] [US5] Create ConfirmCancelDialog component in frontend/src/components/workOrders/ConfirmCancelDialog.jsx"
+Task: "T072 [P] [US5] Add cancel button to WorkOrderSummary.jsx"
+
+# After both complete:
+Task: "T075 [US5] Add handleConfirmCancel function connecting dialog to API"
 ```
 
-### Parallel Execution Opportunities
+---
 
-**After Phase 0 Setup**:
-- Backend tasks (T010-T025) and Frontend service setup (T026-T027) can run in parallel
-- Email service (T011-T014) can be developed independently from controller logic (T015-T018)
+## Implementation Strategy
 
-**After Phase 1 Backend Complete**:
-- Frontend form component (T028-T034) and frontend page (T035-T040) can be developed in parallel
-- Frontend routing (T041-T045) can be done while testing backend (T021-T025)
+### MVP First (User Story 1 Only)
 
-**After P1 MVP Complete**:
-- Phase 3 (Edit) and Phase 4 (Autocomplete) are independent and can be developed in parallel if resources allow
+1. ✅ Complete Phase 1: Setup
+2. ✅ Complete Phase 2: Foundational (CRITICAL - blocks all stories)
+3. ✅ Complete Phase 3: User Story 1 (Create Work Order)
+4. ✅ **VALIDATED**: Tested User Story 1 independently
+5. ✅ Deployed manual work order creation (MVP delivered 2025-10-17!)
 
-**Testing Tasks**:
-- Backend testing (T021-T025) can run while frontend is being developed
-- Frontend testing (T046-T052) can run while Phase 3 backend is being developed
+### Current Priority (Cancellation Feature - v2.8.0)
 
-### Recommended Implementation Order
+Since User Story 1 is already implemented, the immediate focus is:
 
-1. **Sprint 1 (P1 MVP)**: T001-T052 (Backend + Frontend for Create Work Order)
-2. **Sprint 2 (P2)**: T053-T070 (Edit Work Order)
-3. **Sprint 3 (P3)**: T071-T087 (Autocomplete)
-4. **Sprint 4 (Polish)**: T088-T099 (Integration Testing & Mobile Validation)
+1. ✅ Setup + Foundational already complete
+2. ✅ User Story 1 (Create Work Order) already implemented
+3. **→ Phase 7: User Story 5 (Cancel Work Order)** ← **START HERE (T064-T082)**
+4. Test cancellation independently (detail page → confirm dialog → status updated → audit trail)
+5. Deploy v2.8.0 with cancellation feature
 
-## Success Validation
+### Incremental Delivery
 
-After completing all tasks, verify:
+1. Setup + Foundational → Foundation ready ✅
+2. Add User Story 1 → Test independently → Deploy/Demo ✅ (MVP complete - v2.7.0)
+3. **Add User Story 5 → Test independently → Deploy/Demo** ← **NEXT (v2.8.0 - Cancellation)**
+4. Add User Story 3 → Test independently → Deploy/Demo (v2.9.0 - Urgent flag)
+5. Add User Story 2 → Test independently → Deploy/Demo (v2.10.0 - Editing)
+6. Add User Story 4 → Test independently → Deploy/Demo (v2.11.0 - Autocomplete)
+7. Each story adds value without breaking previous stories
 
-- [ ] ✅ Tenancy managers can create work orders in under 3 minutes (SC-001)
-- [ ] ✅ 95% validation pass rate on first submission (SC-002)
-- [ ] ✅ Work orders appear in dashboard within 5 seconds (SC-003)
-- [ ] ✅ Notifications delivered within 10 seconds (SC-004)
-- [ ] ✅ n8n webhook workflow continues to function (SC-005)
-- [ ] ✅ Edit changes visible immediately (SC-006)
-- [ ] ✅ Email notification sent to mark@williamspropertyservices.co.nz for every new manual work order
+---
+
+## Manual Testing Checklist (From quickstart.md)
+
+### User Story 5 (Cancellation) - Required Tests
+
+- [ ] Client user can cancel their own work order (authorized_email match)
+- [ ] Client_admin can cancel any work order for their client
+- [ ] Admin can cancel any work order
+- [ ] **Staff user receives 403 error when attempting cancellation**
+- [ ] Confirmation dialog appears on cancel button click
+- [ ] Cancellation creates audit trail note with user's name
+- [ ] Cancelled work orders show "Cancelled (Permanent)" badge
+- [ ] **Cancelled work orders cannot be reactivated (400 error)**
+- [ ] Mobile: Touch targets are 44px minimum
+- [ ] Mobile: Dialog is responsive and readable
+- [ ] Cancelled filter works in work order list
+
+---
 
 ## Notes
 
-- **Email Notifications**: Every manual work order creation (P1) triggers an email to mark@williamspropertyservices.co.nz. This is non-blocking and failures are logged but don't prevent work order creation.
-- **Mobile Testing**: Constitution Principle I requires testing on actual physical devices, not just browser devtools.
-- **Breaking Changes**: No changes to existing webhook endpoints per Constitution Principle III.
-- **Role Mapping**: Tenancy manager role maps to existing `client_admin` role per FR-014.
+- [P] tasks = different files, no dependencies
+- [US#] label maps task to specific user story for traceability
+- Each user story should be independently completable and testable
+- Commit after each task or logical group
+- Stop at any checkpoint to validate story independently
+- Manual testing required (no automated tests requested in spec)
+- Focus on mobile-first design (44px+ touch targets, responsive dialogs)
+- Maintain backward compatibility with n8n webhook integration
+- All role-based permissions enforced in middleware
+- Performance targets: API < 500ms, UI < 100ms, audit trail < 2s
+
+---
+
+## Task Count Summary
+
+- **Total Tasks**: 100
+- **Phase 1 (Setup)**: 6 tasks ✅ (assumed complete)
+- **Phase 2 (Foundational)**: 5 tasks ✅ (assumed complete)
+- **Phase 3 (US1 - Create)**: 18 tasks ✅ (complete 2025-10-17)
+- **Phase 4 (US2 - Edit)**: 10 tasks ⏳ (pending)
+- **Phase 5 (US3 - Urgent)**: 15 tasks ⚠️ (2/15 complete - filter integration done)
+- **Phase 6 (US4 - Autocomplete)**: 9 tasks ⏳ (pending)
+- **Phase 7 (US5 - Cancel)**: 19 tasks ⏳ ← **CURRENT FOCUS (T064-T082)**
+- **Phase 8 (Polish)**: 18 tasks ⏳ (pending)
+
+**Parallel Opportunities Identified**: 25 tasks marked [P] can run in parallel within their phase
+
+**Independent Test Criteria**: Each user story has clear test criteria in the checkpoint sections
+
+**MVP Delivered**: ✅ User Story 1 complete (v2.7.0)
+
+**Current Priority**: User Story 5 (Cancellation) - 19 tasks starting from T064
+
+**Estimated Time for US5**: 4-6 hours (backend 2h, frontend 2-3h, testing 1h)
