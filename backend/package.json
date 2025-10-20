@@ -11,7 +11,7 @@
         "migrate:undo": "npx sequelize-cli db:migrate:undo",
         "migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
         "setup": "node scripts/create-visionwest-users.js",
-        "setup:wpsg": "node scripts/create-wpsg-client.js",
+        "setup:wpsg": "npm run migrate && node scripts/create-wpsg-client.js",
         "dev": "nodemon server.js",
         "test": "echo \"Error: no test specified\" && exit 1",
         "seed": "node utils/seeder.js"

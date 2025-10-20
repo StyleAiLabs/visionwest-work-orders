@@ -46,12 +46,14 @@ const createWPSGClient = async () => {
 
         // Step 2: Find Williams Property admin/staff users
         console.log('\nFinding Williams Property users...');
+        // Only select essential columns to avoid issues with missing columns (like password_changed)
         const wpsgUsers = await db.user.findAll({
             where: {
                 email: {
                     [db.Sequelize.Op.like]: '%williamspropertyservices%'
                 }
-            }
+            },
+            attributes: ['id', 'email', 'role', 'full_name', 'client_id']
         });
 
         console.log(`Found ${wpsgUsers.length} Williams Property users`);
