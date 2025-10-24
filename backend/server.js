@@ -189,6 +189,29 @@ const initializeDatabase = async () => {
             console.log('Database synced in production mode');
         }
 
+        // Add connection pool monitoring in production
+        if (process.env.NODE_ENV === 'production') {
+            const monitorConnectionPool = () => {
+                try {
+                    const pool = db.sequelize.connectionManager.pool;
+                    if (pool) {
+                        console.log('📊 Connection Pool Status:');
+                        console.log(`   - Size: ${pool.size}`);
+                        console.log(`   - Available: ${pool.available}`);
+                        console.log(`   - Using: ${pool.using}`);
+                        console.log(`   - Waiting: ${pool.waiting}`);
+                    }
+                } catch (error) {
+                    console.error('Error monitoring pool:', error.message);
+                }
+            };
+
+            // Log pool status every 5 minutes
+            setInterval(monitorConnectionPool, 5 * 60 * 1000);
+
+            // Log initial pool status
+            setTimeout(monitorConnectionPool, 5000);
+        }
 
     } catch (error) {
         console.error('Database initialization failed:', error);
@@ -211,6 +234,37 @@ process.on('unhandledRejection', (err) => {
     console.log('UNHANDLED REJECTION! 💥 Shutting down...');
     console.log(err.name, err.message);
     process.exit(1);
+});
+
+// Graceful shutdown handlers
+process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, closing database connections gracefully...');
+    try {
+        await db.sequelize.close();
+        console.log('Database connections closed');
+        server.close(() => {
+            console.log('Server closed');
+            process.exit(0);
+        });
+    } catch (error) {
+        console.error('Error during shutdown:', error);
+        process.exit(1);
+    }
+});
+
+process.on('SIGINT', async () => {
+    console.log('SIGINT received, closing database connections gracefully...');
+    try {
+        await db.sequelize.close();
+        console.log('Database connections closed');
+        server.close(() => {
+            console.log('Server closed');
+            process.exit(0);
+        });
+    } catch (error) {
+        console.error('Error during shutdown:', error);
+        process.exit(1);
+    }
 });
 
 // Add this to your backend/server.js for testing

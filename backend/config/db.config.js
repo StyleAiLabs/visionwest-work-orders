@@ -16,11 +16,21 @@ const legacyConfig = {
     DB: process.env.DB_NAME || 'dbahuwojk8viis',
     dialect: 'postgres',
     pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-    }
+        max: 20,              // Increased from 5 - allows more concurrent connections
+        min: 2,               // Increased from 0 - maintains minimum pool
+        acquire: 60000,       // Increased from 30000 - 60 second timeout for acquiring connection
+        idle: 10000,          // Keep existing - connection idle timeout
+        evict: 10000,         // Add eviction timeout for stale connections
+        handleDisconnects: true // Auto-reconnect on disconnect
+    },
+    dialectOptions: {
+        ssl: process.env.NODE_ENV === 'production' ? {
+            require: true,
+            rejectUnauthorized: false
+        } : false,
+        connectTimeout: 60000  // 60 second connection timeout
+    },
+    logging: process.env.NODE_ENV === 'production' ? false : console.log
 };
 
 // Sequelize CLI format (for migrations)
@@ -48,8 +58,20 @@ const sequelizeCliConfig = {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT || 5432,
         dialect: 'postgres',
+        pool: {
+            max: 20,
+            min: 2,
+            acquire: 60000,
+            idle: 10000,
+            evict: 10000,
+            handleDisconnects: true
+        },
         dialectOptions: {
-            ssl: false
+            ssl: {
+                require: true,
+                rejectUnauthorized: false
+            },
+            connectTimeout: 60000
         }
     }
 };
