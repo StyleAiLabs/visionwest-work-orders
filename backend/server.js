@@ -213,6 +213,171 @@ app.get('/api/health/db', async (req, res) => {
     }
 });
 
+// Network Diagnostic Endpoint
+app.get('/api/health/network', async (req, res) => {
+    const net = require('net');
+    const dns = require('dns').promises;
+
+    const diagnostics = {
+        timestamp: new Date().toISOString(),
+        renderInfo: {
+            outboundIP: null,
+            region: process.env.RENDER_REGION || 'unknown',
+            service: process.env.RENDER_SERVICE_NAME || 'unknown'
+        },
+        databaseTarget: {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT || 5432
+        },
+        tests: {}
+    };
+
+    try {
+        // Get Render's outbound IP
+        const https = require('https');
+        const ipPromise = new Promise((resolve, reject) => {
+            https.get('https://api.ipify.org?format=json', (response) => {
+                let data = '';
+                response.on('data', chunk => data += chunk);
+                response.on('end', () => {
+                    try {
+                        diagnostics.renderInfo.outboundIP = JSON.parse(data).ip;
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            }).on('error', reject);
+        });
+
+        await ipPromise;
+
+        // Test DNS resolution
+        try {
+            const addresses = await dns.resolve4(process.env.DB_HOST);
+            diagnostics.tests.dns = {
+                success: true,
+                resolvedIPs: addresses,
+                message: `Resolved ${process.env.DB_HOST} to ${addresses.join(', ')}`
+            };
+        } catch (dnsError) {
+            diagnostics.tests.dns = {
+                success: false,
+                error: dnsError.message,
+                code: dnsError.code
+            };
+        }
+
+        // Test TCP connection to database port
+        const testTcpConnection = () => {
+            return new Promise((resolve) => {
+                const socket = new net.Socket();
+                const timeout = 10000;
+
+                socket.setTimeout(timeout);
+
+                socket.on('connect', () => {
+                    socket.destroy();
+                    resolve({
+                        success: true,
+                        message: `Port ${process.env.DB_PORT || 5432} is reachable`,
+                        latency: Date.now() - startTime
+                    });
+                });
+
+                socket.on('timeout', () => {
+                    socket.destroy();
+                    resolve({
+                        success: false,
+                        error: 'Connection timeout',
+                        message: `Port ${process.env.DB_PORT || 5432} is blocked or unreachable`,
+                        possibleCauses: [
+                            'Render firewall blocking outbound connection',
+                            'SiteGround firewall blocking Render IP',
+                            'Database server not running',
+                            'Incorrect host/port configuration'
+                        ]
+                    });
+                });
+
+                socket.on('error', (error) => {
+                    socket.destroy();
+                    resolve({
+                        success: false,
+                        error: error.message,
+                        code: error.code,
+                        syscall: error.syscall
+                    });
+                });
+
+                const startTime = Date.now();
+                socket.connect(
+                    process.env.DB_PORT || 5432,
+                    process.env.DB_HOST
+                );
+            });
+        };
+
+        diagnostics.tests.tcpConnection = await testTcpConnection();
+
+        // Test common PostgreSQL ports
+        const testAlternatePorts = async () => {
+            const ports = [5432, 5433, 5431];
+            const results = {};
+
+            for (const port of ports) {
+                const testPort = () => {
+                    return new Promise((resolve) => {
+                        const socket = new net.Socket();
+                        socket.setTimeout(3000);
+
+                        socket.on('connect', () => {
+                            socket.destroy();
+                            resolve({ open: true });
+                        });
+
+                        socket.on('timeout', () => {
+                            socket.destroy();
+                            resolve({ open: false, reason: 'timeout' });
+                        });
+
+                        socket.on('error', () => {
+                            socket.destroy();
+                            resolve({ open: false, reason: 'refused' });
+                        });
+
+                        socket.connect(port, process.env.DB_HOST);
+                    });
+                };
+
+                results[`port_${port}`] = await testPort();
+            }
+
+            return results;
+        };
+
+        diagnostics.tests.alternatePorts = await testAlternatePorts();
+
+        // Overall health
+        diagnostics.overall = {
+            canReachDatabase: diagnostics.tests.tcpConnection?.success || false,
+            dnsWorking: diagnostics.tests.dns?.success || false,
+            recommendation: diagnostics.tests.tcpConnection?.success
+                ? 'Database port is reachable. Connection issue may be SSL/authentication related.'
+                : 'Cannot reach database port. Check firewall rules and IP whitelisting.'
+        };
+
+        res.json(diagnostics);
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            diagnostics
+        });
+    }
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/work-orders', require('./routes/workOrder.routes'));
