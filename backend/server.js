@@ -148,6 +148,71 @@ app.get('/api/public/sms-info', (req, res) => {
     });
 });
 
+// Database Health Check Endpoint (public - no auth required)
+app.get('/api/health/db', async (req, res) => {
+    try {
+        console.log('🏥 Database health check requested');
+        console.log('Attempting to connect to:', process.env.DB_HOST);
+
+        // Test basic connectivity
+        await db.sequelize.authenticate();
+        console.log('✅ Authentication successful');
+
+        // Test query execution
+        const result = await db.sequelize.query('SELECT NOW() as current_time, version() as pg_version');
+        console.log('✅ Query execution successful');
+
+        // Get pool status
+        const pool = db.sequelize.connectionManager.pool;
+        const poolStatus = pool ? {
+            size: pool.size,
+            available: pool.available,
+            using: pool.using,
+            waiting: pool.waiting
+        } : 'Pool not available';
+
+        res.json({
+            success: true,
+            message: 'Database connection is healthy',
+            timestamp: result[0][0].current_time,
+            postgresVersion: result[0][0].pg_version,
+            connection: {
+                host: process.env.DB_HOST,
+                database: process.env.DB_NAME,
+                user: process.env.DB_USER
+            },
+            pool: poolStatus
+        });
+    } catch (error) {
+        console.error('❌ Database health check failed:', error);
+        console.error('Error details:', {
+            code: error.code || error.original?.code,
+            errno: error.errno || error.original?.errno,
+            syscall: error.syscall || error.original?.syscall,
+            address: error.address || error.original?.address,
+            port: error.port || error.original?.port
+        });
+
+        res.status(503).json({
+            success: false,
+            message: 'Database connection failed',
+            error: {
+                message: error.message,
+                code: error.code || error.original?.code,
+                errno: error.errno || error.original?.errno,
+                syscall: error.syscall || error.original?.syscall,
+                address: error.address || error.original?.address,
+                port: error.port || error.original?.port
+            },
+            connection: {
+                host: process.env.DB_HOST,
+                database: process.env.DB_NAME,
+                user: process.env.DB_USER
+            }
+        });
+    }
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/work-orders', require('./routes/workOrder.routes'));
