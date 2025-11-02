@@ -6,7 +6,7 @@ import SummaryCard from '../components/dashboard/SummaryCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import ClientFilter from '../components/workOrders/ClientFilter';
-import QuoteSummaryWidget from '../components/Dashboard/QuoteSummaryWidget';
+import QuoteSummaryWidget from '../components/dashboard/QuoteSummaryWidget';
 import { useAuth } from '../hooks/useAuth';
 import { alertsService } from '../services/alertsService';
 import { dashboardService } from '../services/dashboardService';

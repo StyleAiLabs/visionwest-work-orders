@@ -118,7 +118,7 @@ The Quote Request System enables property managers (client admins) and tenants (
 **So that** I can get formal cost estimates before approving work
 
 **Acceptance Criteria**:
-- [ ] Form includes: property, description, scope, contact info, urgency, required-by date
+- [ ] Form includes: type of work (dropdown selection), property, description, scope, contact info, urgency, required-by date
 - [ ] Can upload photos/documents to support quote request
 - [ ] Can save as draft before submitting
 - [ ] Submitted quotes trigger notification to WPSG staff
