@@ -42,6 +42,9 @@ db.workOrderNote = require('./workOrderNote.model.js')(sequelize, Sequelize);
 db.notification = require('./notification.model.js')(sequelize, Sequelize);
 db.photo = require('./photo.model.js')(sequelize, Sequelize);
 db.smsNotification = require('./smsNotification.model')(sequelize, Sequelize);
+db.quote = require('./quote.model.js')(sequelize, Sequelize);
+db.quoteMessage = require('./quoteMessage.model.js')(sequelize, Sequelize);
+db.quoteAttachment = require('./quoteAttachment.model.js')(sequelize, Sequelize);
 
 // Define relationships
 // Client relationships
@@ -86,6 +89,35 @@ db.photo.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
 // WorkOrder to Notification relationship
 db.workOrder.hasMany(db.notification, { foreignKey: 'work_order_id' });
 db.notification.belongsTo(db.workOrder, { foreignKey: 'work_order_id' });
+
+// Quote relationships
+// Client to Quote relationship
+db.client.hasMany(db.quote, { foreignKey: 'client_id', as: 'quotes' });
+db.quote.belongsTo(db.client, { foreignKey: 'client_id', as: 'client' });
+
+// User to Quote relationship
+db.user.hasMany(db.quote, { foreignKey: 'created_by', as: 'createdQuotes' });
+db.quote.belongsTo(db.user, { foreignKey: 'created_by', as: 'creator' });
+
+// Quote to QuoteMessage relationship
+db.quote.hasMany(db.quoteMessage, { foreignKey: 'quote_id', as: 'messages' });
+db.quoteMessage.belongsTo(db.quote, { foreignKey: 'quote_id', as: 'quote' });
+
+// Quote to QuoteAttachment relationship
+db.quote.hasMany(db.quoteAttachment, { foreignKey: 'quote_id', as: 'attachments' });
+db.quoteAttachment.belongsTo(db.quote, { foreignKey: 'quote_id', as: 'quote' });
+
+// User to QuoteMessage relationship
+db.user.hasMany(db.quoteMessage, { foreignKey: 'user_id', as: 'quoteMessages' });
+db.quoteMessage.belongsTo(db.user, { foreignKey: 'user_id', as: 'user' });
+
+// User to QuoteAttachment relationship
+db.user.hasMany(db.quoteAttachment, { foreignKey: 'user_id', as: 'quoteAttachments' });
+db.quoteAttachment.belongsTo(db.user, { foreignKey: 'user_id', as: 'uploader' });
+
+// Quote to WorkOrder relationship (bidirectional)
+db.quote.belongsTo(db.workOrder, { foreignKey: 'converted_to_work_order_id', as: 'workOrder' });
+db.workOrder.hasOne(db.quote, { foreignKey: 'converted_to_work_order_id', as: 'sourceQuote' });
 
 // Add associations section (if not already present)
 Object.keys(db).forEach(modelName => {

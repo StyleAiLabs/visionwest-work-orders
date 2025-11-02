@@ -18,6 +18,9 @@ import SettingsPage from './pages/SettingsPage';
 import ReleaseNotesPage from './pages/ReleaseNotesPage';
 import AdminPanel from './pages/AdminPanel';
 import UserManagementPage from './pages/UserManagementPage';
+import QuoteListPage from './pages/Quotes/QuoteListPage';
+import QuoteRequestForm from './pages/Quotes/QuoteRequestForm';
+import QuoteDetailPage from './pages/Quotes/QuoteDetailPage';
 import { useAuth } from './hooks/useAuth';
 import InstallPrompt from './components/common/InstallPrompt';
 
@@ -219,6 +222,42 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <UserManagementPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/quotes/new"
+                  element={
+                    <ProtectedRoute>
+                      <QuoteRequestForm />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/quotes/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <QuoteRequestForm />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/quotes/:id"
+                  element={
+                    <ProtectedRoute>
+                      <QuoteDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/quotes"
+                  element={
+                    <ProtectedRoute>
+                      <QuoteListPage />
                     </ProtectedRoute>
                   }
                 />
