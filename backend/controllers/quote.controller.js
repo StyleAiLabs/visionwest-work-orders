@@ -1360,15 +1360,18 @@ exports.requestInfo = async (req, res) => {
         console.log('✓ Status changed to Information Requested');
         console.log('✓ Message created:', quoteMessage.id);
 
-        // T109: Send notification to client (if notification service exists)
+        // T109: Send notification to client
         try {
-            const quoteNotificationService = require('../services/quoteNotificationService');
-            if (quoteNotificationService && quoteNotificationService.notifyInfoRequested) {
-                await quoteNotificationService.notifyInfoRequested(quote, message);
+            const requestedBy = await User.findByPk(userId, {
+                attributes: ['id', 'full_name', 'email', 'role']
+            });
+
+            if (requestedBy) {
+                await quoteNotificationService.notifyInfoRequested(quote, requestedBy, message);
                 console.log('✓ Notification sent to client');
             }
         } catch (notifError) {
-            console.log('Note: Notification service not available or failed:', notifError.message);
+            console.log('Note: Notification service failed:', notifError.message);
             // Continue even if notification fails
         }
 

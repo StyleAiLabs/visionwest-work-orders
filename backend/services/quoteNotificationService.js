@@ -1,4 +1,5 @@
 const db = require('../models');
+const emailService = require('../utils/emailService');
 const Notification = db.notification;
 
 /**
@@ -113,7 +114,31 @@ exports.notifyQuoteSubmitted = async (quote, submittedBy) => {
             );
         }
 
-        // TODO Phase 3+: Send email notifications via n8n
+        // Send email notification via Brevo Template #17
+        if (staffUsers.length > 0) {
+            const recipients = staffUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 17,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    submitted_by: submittedBy.full_name,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    description: quote.description,
+                    is_urgent: quote.is_urgent ? 'Yes' : 'No',
+                    contact_person: quote.contact_person,
+                    contact_email: quote.contact_email,
+                    contact_phone: quote.contact_phone || 'N/A',
+                    required_by_date: quote.required_by_date ? new Date(quote.required_by_date).toLocaleDateString() : 'N/A'
+                }
+            });
+        }
+
         console.log(`✓ Quote submitted notifications sent to ${staffUsers.length} staff members`);
     } catch (error) {
         console.error('Error sending quote submitted notifications:', error);
@@ -145,7 +170,29 @@ exports.notifyQuoteProvided = async (quote, providedBy) => {
             );
         }
 
-        // TODO Phase 3+: Send email notifications via n8n
+        // Send email notification via Brevo Template #18
+        if (clientUsers.length > 0) {
+            const recipients = clientUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 18,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    estimated_hours: parseFloat(quote.estimated_hours).toFixed(1),
+                    quote_notes: quote.quote_notes || 'No additional notes',
+                    quote_valid_until: quote.quote_valid_until ? new Date(quote.quote_valid_until).toLocaleDateString() : 'N/A',
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Quote provided notifications sent to ${clientUsers.length} client users`);
     } catch (error) {
         console.error('Error sending quote provided notifications:', error);
@@ -176,7 +223,28 @@ exports.notifyQuoteApproved = async (quote, approvedBy) => {
             );
         }
 
-        // TODO Phase 3+: Send email notifications via n8n
+        // Send email notification via Brevo Template #19
+        if (staffUsers.length > 0) {
+            const recipients = staffUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 19,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    approved_by: approvedBy.full_name,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    estimated_hours: parseFloat(quote.estimated_hours).toFixed(1),
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Quote approved notifications sent to ${staffUsers.length} staff members`);
     } catch (error) {
         console.error('Error sending quote approved notifications:', error);
@@ -238,7 +306,28 @@ exports.notifyQuoteDeclinedByClient = async (quote, declinedBy, reason) => {
             );
         }
 
-        // TODO Phase 3+: Send email notifications via n8n
+        // Send email notification via Brevo Template #20
+        if (staffUsers.length > 0) {
+            const recipients = staffUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 20,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    declined_by: declinedBy.full_name,
+                    decline_reason: reason,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Quote declined by client notifications sent to ${staffUsers.length} staff members`);
     } catch (error) {
         console.error('Error sending quote declined by client notifications:', error);
@@ -270,7 +359,28 @@ exports.notifyQuoteConverted = async (quote, workOrder, convertedBy) => {
             );
         }
 
-        // TODO Phase 3+: Send email/SMS notifications via n8n
+        // Send email notification via Brevo Template #22
+        if (clientUsers.length > 0) {
+            const recipients = clientUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 22,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    work_order_number: workOrder.job_no,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    description: quote.description,
+                    converted_by: convertedBy.full_name
+                }
+            });
+        }
+
         console.log(`✓ Quote converted notifications sent to ${clientUsers.length} client users`);
     } catch (error) {
         console.error('Error sending quote converted notifications:', error);
@@ -301,7 +411,27 @@ exports.notifyInfoRequested = async (quote, requestedBy, message) => {
             );
         }
 
-        // TODO Phase 3+: Send email notifications via n8n
+        // Send email notification via Brevo Template #21
+        if (clientUsers.length > 0) {
+            const recipients = clientUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 21,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    requested_by: requestedBy.full_name,
+                    request_message: message,
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Info requested notifications sent to ${clientUsers.length} client users`);
     } catch (error) {
         console.error('Error sending info requested notifications:', error);
@@ -332,7 +462,28 @@ exports.notifyQuoteExpiringSoon = async (quote) => {
             );
         }
 
-        // TODO Phase 13: Send email reminders via n8n
+        // Send email notification via Brevo Template #23
+        if (clientUsers.length > 0) {
+            const recipients = clientUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 23,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    quote_valid_until: new Date(quote.quote_valid_until).toLocaleDateString(),
+                    days_until_expiry: '3',
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Quote expiring notifications sent to ${clientUsers.length} client users`);
     } catch (error) {
         console.error('Error sending quote expiring notifications:', error);
@@ -362,7 +513,27 @@ exports.notifyQuoteExpired = async (quote) => {
             );
         }
 
-        // TODO Phase 13: Send email notifications via n8n
+        // Send email notification via Brevo Template #24
+        if (clientUsers.length > 0) {
+            const recipients = clientUsers.map(user => ({
+                email: user.email,
+                name: user.full_name
+            }));
+
+            await emailService.sendBrevoTemplateEmail({
+                templateId: 24,
+                to: recipients,
+                params: {
+                    quote_number: quote.quote_number,
+                    property_name: quote.property_name,
+                    property_address: quote.property_address,
+                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    expired_date: new Date(quote.quote_valid_until).toLocaleDateString(),
+                    description: quote.description
+                }
+            });
+        }
+
         console.log(`✓ Quote expired notifications sent to ${clientUsers.length} client users`);
     } catch (error) {
         console.error('Error sending quote expired notifications:', error);
