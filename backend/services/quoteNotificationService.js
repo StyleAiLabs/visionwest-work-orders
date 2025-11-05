@@ -204,6 +204,7 @@ exports.notifyQuoteProvided = async (quote, providedBy) => {
                 to: recipients,
                 params: {
                     quote_number: quote.quote_number,
+                    provided_by_name: providedBy.full_name,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
                     estimated_cost: formatCurrency(quote.estimated_cost),
@@ -257,7 +258,8 @@ exports.notifyQuoteApproved = async (quote, approvedBy) => {
                 to: recipients,
                 params: {
                     quote_number: quote.quote_number,
-                    approved_by: approvedBy.full_name,
+                    approved_by_name: approvedBy.full_name,
+                    client_name: quote.client?.name || 'Client',
                     property_name: quote.property_name,
                     property_address: quote.property_address,
                     estimated_cost: formatCurrency(quote.estimated_cost),
@@ -340,7 +342,8 @@ exports.notifyQuoteDeclinedByClient = async (quote, declinedBy, reason) => {
                 to: recipients,
                 params: {
                     quote_number: quote.quote_number,
-                    declined_by: declinedBy.full_name,
+                    declined_by_name: declinedBy.full_name,
+                    client_name: quote.client?.name || 'Client',
                     decline_reason: reason,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
@@ -447,7 +450,7 @@ exports.notifyInfoRequested = async (quote, requestedBy, message) => {
                     quote_number: quote.quote_number,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    requested_by: requestedBy.full_name,
+                    requested_by_name: requestedBy.full_name,
                     request_message: message,
                     description: quote.description
                 }
@@ -472,7 +475,7 @@ exports.notifyQuoteExpiringSoon = async (quote) => {
         const today = new Date();
         const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
         const expiryDateString = expiryDate.toLocaleDateString();
-        
+
         const message = `Quote #${quote.quote_number} expires in ${daysUntilExpiry} days (${expiryDateString}). Please review and approve if you wish to proceed.`;
 
         for (const user of clientUsers) {
