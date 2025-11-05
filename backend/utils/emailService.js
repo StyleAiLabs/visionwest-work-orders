@@ -245,12 +245,12 @@ exports.sendBrevoTemplateEmail = async ({ templateId, to, params = {}, subject =
   try {
     if (!brevoApiInstance) {
       console.warn('⚠️  Brevo API not initialized - skipping email send');
-      return null;
+      return;
     }
 
     if (!to || to.length === 0) {
       console.warn('⚠️  No recipients provided - skipping email send');
-      return null;
+      return;
     }
 
     const fromEmail = process.env.EMAIL_USER || 'noreply@nextgenwom.com';

@@ -18,6 +18,28 @@ const Notification = db.notification;
  */
 
 /**
+ * Safely format currency value
+ * @param {number|string|null} value - Value to format
+ * @returns {string} Formatted currency string
+ */
+const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '0.00';
+    const num = parseFloat(value);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+};
+
+/**
+ * Safely format hours value
+ * @param {number|string|null} value - Value to format
+ * @returns {string} Formatted hours string
+ */
+const formatHours = (value) => {
+    if (value === null || value === undefined) return '0.0';
+    const num = parseFloat(value);
+    return isNaN(num) ? '0.0' : num.toFixed(1);
+};
+
+/**
  * Create in-app notification
  * @param {number} userId - User ID to notify
  * @param {string} type - Notification type
@@ -184,8 +206,8 @@ exports.notifyQuoteProvided = async (quote, providedBy) => {
                     quote_number: quote.quote_number,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
-                    estimated_hours: parseFloat(quote.estimated_hours).toFixed(1),
+                    estimated_cost: formatCurrency(quote.estimated_cost),
+                    estimated_hours: formatHours(quote.estimated_hours),
                     quote_notes: quote.quote_notes || 'No additional notes',
                     quote_valid_until: quote.quote_valid_until ? new Date(quote.quote_valid_until).toLocaleDateString() : 'N/A',
                     description: quote.description
@@ -238,8 +260,8 @@ exports.notifyQuoteApproved = async (quote, approvedBy) => {
                     approved_by: approvedBy.full_name,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
-                    estimated_hours: parseFloat(quote.estimated_hours).toFixed(1),
+                    estimated_cost: formatCurrency(quote.estimated_cost),
+                    estimated_hours: formatHours(quote.estimated_hours),
                     description: quote.description
                 }
             });
@@ -322,7 +344,7 @@ exports.notifyQuoteDeclinedByClient = async (quote, declinedBy, reason) => {
                     decline_reason: reason,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    estimated_cost: formatCurrency(quote.estimated_cost),
                     description: quote.description
                 }
             });
@@ -374,7 +396,7 @@ exports.notifyQuoteConverted = async (quote, workOrder, convertedBy) => {
                     work_order_number: workOrder.job_no,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    estimated_cost: formatCurrency(quote.estimated_cost),
                     description: quote.description,
                     converted_by: convertedBy.full_name
                 }
@@ -446,8 +468,12 @@ exports.notifyQuoteExpiringSoon = async (quote) => {
     try {
         const clientUsers = await getClientUsers(quote.client_id);
 
-        const expiryDate = new Date(quote.quote_valid_until).toLocaleDateString();
-        const message = `Quote #${quote.quote_number} expires in 3 days (${expiryDate}). Please review and approve if you wish to proceed.`;
+        const expiryDate = new Date(quote.quote_valid_until);
+        const today = new Date();
+        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+        const expiryDateString = expiryDate.toLocaleDateString();
+        
+        const message = `Quote #${quote.quote_number} expires in ${daysUntilExpiry} days (${expiryDateString}). Please review and approve if you wish to proceed.`;
 
         for (const user of clientUsers) {
             await createNotification(
@@ -476,9 +502,9 @@ exports.notifyQuoteExpiringSoon = async (quote) => {
                     quote_number: quote.quote_number,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
-                    quote_valid_until: new Date(quote.quote_valid_until).toLocaleDateString(),
-                    days_until_expiry: '3',
+                    estimated_cost: formatCurrency(quote.estimated_cost),
+                    quote_valid_until: expiryDateString,
+                    days_until_expiry: daysUntilExpiry.toString(),
                     description: quote.description
                 }
             });
@@ -527,7 +553,7 @@ exports.notifyQuoteExpired = async (quote) => {
                     quote_number: quote.quote_number,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
-                    estimated_cost: parseFloat(quote.estimated_cost).toFixed(2),
+                    estimated_cost: formatCurrency(quote.estimated_cost),
                     expired_date: new Date(quote.quote_valid_until).toLocaleDateString(),
                     description: quote.description
                 }
