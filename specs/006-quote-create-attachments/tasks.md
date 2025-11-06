@@ -82,35 +82,35 @@
 
 ### Frontend Tasks - Delete Functionality
 
-- [ ] **T044**: Add delete button/icon to each file in the attachment list/gallery
-- [ ] **T045**: Implement delete handler that calls `DELETE /api/quotes/attachments/:id` endpoint
-- [ ] **T046**: Show confirmation dialog before deleting attachment ("Are you sure?")
-- [ ] **T047**: Remove deleted attachment from component state after successful deletion
-- [ ] **T048**: Update attachment counter after deletion
-- [ ] **T049**: Handle delete errors with toast notifications
+- [X] **T044**: Add delete button/icon to each file in the attachment list/gallery
+- [X] **T045**: Implement delete handler that calls `DELETE /api/quotes/attachments/:id` endpoint
+- [X] **T046**: Show confirmation dialog before deleting attachment ("Are you sure?")
+- [X] **T047**: Remove deleted attachment from component state after successful deletion
+- [X] **T048**: Update attachment counter after deletion
+- [X] **T049**: Handle delete errors with toast notifications
 
 ### Frontend Tasks - Upload Limits
 
-- [ ] **T050**: Track number of uploaded attachments in component state
-- [ ] **T051**: Disable file input when 5 attachments are already uploaded
-- [ ] **T052**: Show warning message when attempting to exceed 5-file limit
-- [ ] **T053**: Update UI to show available upload slots (e.g., "3 of 5 files uploaded")
+- [X] **T050**: Track number of uploaded attachments in component state
+- [X] **T051**: Disable file input when 5 attachments are already uploaded
+- [X] **T052**: Show warning message when attempting to exceed 5-file limit
+- [X] **T053**: Update UI to show available upload slots (e.g., "3 of 5 files uploaded")
 
 ### Frontend Tasks - Navigation Warnings
 
-- [ ] **T054**: Add unsaved changes warning when user has uploaded files but hasn't saved draft
-- [ ] **T055**: Implement browser "beforeunload" event handler to warn about losing uploads
-- [ ] **T056**: Show confirmation dialog when user clicks "Cancel" with uploaded attachments
-- [ ] **T057**: Remove beforeunload handler after successful save or submit
+- [X] **T054**: Add unsaved changes warning when user has uploaded files but hasn't saved draft
+- [X] **T055**: Implement browser "beforeunload" event handler to warn about losing uploads
+- [X] **T056**: Show confirmation dialog when user clicks "Cancel" with uploaded attachments
+- [X] **T057**: Remove beforeunload handler after successful save or submit
 
 ### Testing Tasks
 
-- [ ] **T058**: Test deleting single attachment from gallery
-- [ ] **T059**: Test deleting all attachments and re-uploading
-- [ ] **T060**: Test hitting 5-file limit and attempting to upload more
-- [ ] **T061**: Test navigation warning when closing browser tab with uploaded files
-- [ ] **T062**: Test cancel button warning dialog functionality
-- [ ] **T063**: Verify warning is removed after successful save/submit
+- [X] **T058**: Test deleting single attachment from gallery
+- [X] **T059**: Test deleting all attachments and re-uploading
+- [X] **T060**: Test hitting 5-file limit and attempting to upload more
+- [X] **T061**: Test navigation warning when closing browser tab with uploaded files
+- [X] **T062**: Test cancel button warning dialog functionality
+- [X] **T063**: Verify warning is removed after successful save/submit
 
 ---
 

@@ -48,6 +48,27 @@ const QuoteRequestForm = () => {
         }
     }, [id]);
 
+    // T054-T055: Warn user before navigating away with unsaved attachments
+    useEffect(() => {
+        const hasUnsavedFiles = attachments.length > 0 || selectedFiles.length > 0;
+
+        const handleBeforeUnload = (e) => {
+            if (hasUnsavedFiles && !isEditMode) {
+                e.preventDefault();
+                e.returnValue = 'You have uploaded files. If you leave without saving, they will be lost.';
+                return e.returnValue;
+            }
+        };
+
+        if (hasUnsavedFiles && !isEditMode) {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [attachments, selectedFiles, isEditMode]);
+
     const loadQuote = async () => {
         try {
             setLoading(true);
@@ -275,6 +296,20 @@ const QuoteRequestForm = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    // T056: Handle cancel with confirmation if attachments exist
+    const handleCancel = () => {
+        const hasFiles = attachments.length > 0 || selectedFiles.length > 0;
+
+        if (hasFiles && !isEditMode) {
+            const confirmed = window.confirm(
+                'You have uploaded files. If you cancel without saving, they will be lost. Are you sure you want to cancel?'
+            );
+            if (!confirmed) return;
+        }
+
+        navigate('/quotes');
     };
 
     // T016: Submit quote with attachments
@@ -679,7 +714,7 @@ const QuoteRequestForm = () => {
                         <div className="flex gap-3 pt-4">
                             <button
                                 type="button"
-                                onClick={() => navigate('/quotes')}
+                                onClick={handleCancel}
                                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
                                 disabled={saving || uploading}
                             >
