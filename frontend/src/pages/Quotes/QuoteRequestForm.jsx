@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import AppHeader from '../../components/layout/AppHeader';
 import MobileNavigation from '../../components/layout/MobileNavigation';
+import ThumbnailGallery from '../../components/ThumbnailGallery';
 import { quoteService } from '../../services/quoteService';
 import { toast } from 'react-toastify';
 
@@ -655,52 +656,14 @@ const QuoteRequestForm = () => {
                                 </div>
                             )}
 
-                            {/* T012: Uploaded Attachments List */}
+                            {/* T035-T037: Uploaded Attachments with ThumbnailGallery */}
                             {attachments.length > 0 && (
                                 <div>
-                                    <p className="text-sm font-medium text-gray-700 mb-2">
-                                        Uploaded Files ({attachments.length})
-                                    </p>
-                                    <div className="space-y-2">
-                                        {attachments.map((attachment) => (
-                                            <div
-                                                key={attachment.id}
-                                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                                            >
-                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                                    <span className="text-2xl">
-                                                        {attachment.fileType === 'photo' ? '🖼️' : '📄'}
-                                                    </span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                                            {attachment.filename}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {formatFileSize(attachment.fileSize)} •
-                                                            Uploaded {new Date(attachment.uploadedAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <a
-                                                        href={attachment.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                                                    >
-                                                        View
-                                                    </a>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleDeleteAttachment(attachment.id)}
-                                                        className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <ThumbnailGallery
+                                        attachments={attachments}
+                                        onDelete={handleDeleteAttachment}
+                                        showDelete={true}
+                                    />
                                 </div>
                             )}
 
