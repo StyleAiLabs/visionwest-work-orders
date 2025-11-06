@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import quoteService from '../services/quoteService';
+import ThumbnailGallery from './ThumbnailGallery';
 
 const QuoteAttachments = ({ quoteId, canUpload = false }) => {
     const [attachments, setAttachments] = useState([]);
@@ -68,25 +69,6 @@ const QuoteAttachments = ({ quoteId, canUpload = false }) => {
         }
     };
 
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    };
-
-    const getFileIcon = (fileType) => {
-        switch (fileType) {
-            case 'photo':
-                return '🖼️';
-            case 'document':
-                return '📄';
-            default:
-                return '📎';
-        }
-    };
-
     if (loading) {
         return (
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -136,51 +118,15 @@ const QuoteAttachments = ({ quoteId, canUpload = false }) => {
                 </div>
             )}
 
-            {/* Attachments List */}
+            {/* Attachments Display - Using ThumbnailGallery */}
             {attachments.length === 0 ? (
                 <p className="text-gray-500 text-sm">No attachments yet</p>
             ) : (
-                <div className="space-y-2">
-                    {attachments.map((attachment) => (
-                        <div
-                            key={attachment.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <span className="text-2xl">
-                                    {getFileIcon(attachment.fileType)}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                        {attachment.filename}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {formatFileSize(attachment.fileSize)} •
-                                        Uploaded {new Date(attachment.uploadedAt).toLocaleDateString()} by {attachment.uploadedBy?.name || 'Unknown'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <a
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                                >
-                                    Download
-                                </a>
-                                {canUpload && (
-                                    <button
-                                        onClick={() => handleDelete(attachment.id)}
-                                        className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                                    >
-                                        Delete
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <ThumbnailGallery
+                    attachments={attachments}
+                    onDelete={canUpload ? handleDelete : null}
+                    showDelete={canUpload}
+                />
             )}
         </div>
     );

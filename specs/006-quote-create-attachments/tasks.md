@@ -46,35 +46,35 @@
 
 ### Frontend Tasks - Thumbnail Gallery Component
 
-- [ ] **T024**: Create ThumbnailGallery component for displaying uploaded images as thumbnails
-- [ ] **T025**: Implement thumbnail rendering for image files (JPG, PNG, GIF, WebP)
-- [ ] **T026**: Implement icon + filename display for non-image files (PDF, Word, Excel, Text)
-- [ ] **T027**: Add CSS grid layout for responsive thumbnail gallery (2-4 columns depending on screen size)
-- [ ] **T028**: Implement thumbnail sizing (consistent dimensions, e.g., 150x150px with object-fit cover)
-- [ ] **T029**: Add loading state for thumbnail images
-- [ ] **T030**: Handle broken image URLs gracefully (fallback to file icon)
+- [X] **T024**: Create ThumbnailGallery component for displaying uploaded images as thumbnails
+- [X] **T025**: Implement thumbnail rendering for image files (JPG, PNG, GIF, WebP)
+- [X] **T026**: Implement icon + filename display for non-image files (PDF, Word, Excel, Text)
+- [X] **T027**: Add CSS grid layout for responsive thumbnail gallery (2-4 columns depending on screen size)
+- [X] **T028**: Implement thumbnail sizing (consistent dimensions, e.g., 150x150px with object-fit cover)
+- [X] **T029**: Add loading state for thumbnail images
+- [X] **T030**: Handle broken image URLs gracefully (fallback to file icon)
 
 ### Frontend Tasks - Thumbnail Interaction
 
-- [ ] **T031**: Make thumbnails clickable to open full-size image in new tab
-- [ ] **T032**: Add hover effect on thumbnails (scale, shadow, or border highlight)
-- [ ] **T033**: Display filename overlay or tooltip on hover
-- [ ] **T034**: Add file size and upload timestamp below each thumbnail
+- [X] **T031**: Make thumbnails clickable to open full-size image in new tab
+- [X] **T032**: Add hover effect on thumbnails (scale, shadow, or border highlight)
+- [X] **T033**: Display filename overlay or tooltip on hover
+- [X] **T034**: Add file size and upload timestamp below each thumbnail
 
 ### Frontend Tasks - Integration
 
-- [ ] **T035**: Replace simple file list in QuoteRequestForm with ThumbnailGallery component
-- [ ] **T036**: Pass uploaded attachments data to ThumbnailGallery component
-- [ ] **T037**: Ensure gallery updates in real-time as new files are uploaded
-- [ ] **T038**: Test gallery layout with various combinations (all images, mixed images/documents, all documents)
+- [X] **T035**: Replace simple file list in QuoteRequestForm with ThumbnailGallery component
+- [X] **T036**: Pass uploaded attachments data to ThumbnailGallery component
+- [X] **T037**: Ensure gallery updates in real-time as new files are uploaded
+- [X] **T038**: Test gallery layout with various combinations (all images, mixed images/documents, all documents)
 
 ### Testing Tasks
 
-- [ ] **T039**: Test gallery with 5 images of different sizes and aspect ratios
-- [ ] **T040**: Test gallery with 2 images and 3 PDFs (mixed content)
-- [ ] **T041**: Test thumbnail click to open full-size image
-- [ ] **T042**: Test responsive layout on mobile, tablet, and desktop screen sizes
-- [ ] **T043**: Test gallery with very large image files (4000x3000px)
+- [X] **T039**: Test gallery with 5 images of different sizes and aspect ratios
+- [X] **T040**: Test gallery with 2 images and 3 PDFs (mixed content)
+- [X] **T041**: Test thumbnail click to open full-size image
+- [X] **T042**: Test responsive layout on mobile, tablet, and desktop screen sizes
+- [X] **T043**: Test gallery with very large image files (4000x3000px)
 
 ---
 

@@ -5,6 +5,12 @@
 **Status**: Draft
 **Input**: User description: "existing quote attachment upload function available only on the edit screen. we need to have it on quote create screen as well. also images uploaded should display gallery thumbnails."
 
+## Clarifications
+
+### Session 2025-11-06
+
+- Q: Should the new thumbnail gallery (image previews in grid layout) be available on BOTH the quote creation screen AND the quote edit screen? → A: Both screens - Consistent thumbnail gallery experience everywhere
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Client Admin Uploads Attachments During Quote Creation (Priority: P1)
@@ -26,7 +32,7 @@ A client admin creating a new quote request wants to attach supporting documents
 
 ### User Story 2 - Client Admin Views Uploaded Images as Thumbnails (Priority: P2)
 
-A client admin creating a quote with multiple photos wants to see visual thumbnails of uploaded images to verify they've attached the correct files, rather than just seeing text filenames.
+A client admin creating or editing a quote with multiple photos wants to see visual thumbnails of uploaded images to verify they've attached the correct files, rather than just seeing text filenames.
 
 **Why this priority**: Visual confirmation is important for quality assurance, especially for property maintenance quotes where photos are critical evidence. However, the basic upload functionality (P1) must work first before enhancing the display format.
 
@@ -34,10 +40,10 @@ A client admin creating a quote with multiple photos wants to see visual thumbna
 
 **Acceptance Scenarios**:
 
-1. **Given** a client admin uploads 3 JPG images during quote creation, **When** the upload completes, **Then** they see 3 image thumbnails (not filenames) in a gallery view
-2. **Given** a client admin uploads 2 images and 1 PDF document, **When** viewing the attachments section, **Then** the 2 images display as thumbnails and the PDF shows as a document icon with filename
-3. **Given** a client admin has uploaded an image thumbnail, **When** they click on the thumbnail, **Then** the full-size image opens in a new tab or lightbox viewer
-4. **Given** a client admin uploads a very large image (4000x3000px), **When** viewing the thumbnail, **Then** the image is properly scaled down to thumbnail size without layout breakage
+1. **Given** a client admin uploads 3 JPG images during quote creation or editing, **When** the upload completes, **Then** they see 3 image thumbnails (not filenames) in a gallery view on both screens
+2. **Given** a client admin uploads 2 images and 1 PDF document, **When** viewing the attachments section on either creation or edit screen, **Then** the 2 images display as thumbnails and the PDF shows as a document icon with filename
+3. **Given** a client admin has uploaded an image thumbnail, **When** they click on the thumbnail on either screen, **Then** the full-size image opens in a new tab or lightbox viewer
+4. **Given** a client admin uploads a very large image (4000x3000px), **When** viewing the thumbnail on either screen, **Then** the image is properly scaled down to thumbnail size without layout breakage
 
 ---
 
@@ -73,8 +79,8 @@ A client admin creating a quote wants to remove accidentally uploaded files or a
 ### Functional Requirements
 
 - **FR-001**: System MUST allow users to upload attachments during quote creation (not only after saving a draft)
-- **FR-002**: System MUST display uploaded image files as thumbnail previews in a gallery layout
-- **FR-003**: System MUST display non-image files (PDF, documents) with appropriate file type icons and filenames
+- **FR-002**: System MUST display uploaded image files as thumbnail previews in a gallery layout on both creation and edit screens
+- **FR-003**: System MUST display non-image files (PDF, documents) with appropriate file type icons and filenames on both creation and edit screens
 - **FR-004**: System MUST associate uploaded attachments with the quote draft immediately upon upload, even before form submission
 - **FR-005**: System MUST persist attachments when user saves quote as draft during creation
 - **FR-006**: System MUST include all uploaded attachments when user submits the quote directly without saving as draft first
@@ -84,9 +90,10 @@ A client admin creating a quote wants to remove accidentally uploaded files or a
 - **FR-010**: System MUST enforce the existing file upload limits (10MB per file, 5 files maximum)
 - **FR-011**: System MUST validate file types on the client side before upload (same types as edit mode: images, PDF, Word, Excel, Text)
 - **FR-012**: System MUST display error messages for failed uploads (file too large, invalid type, network error)
-- **FR-013**: Thumbnail images MUST be clickable to view full-size versions
+- **FR-013**: Thumbnail images MUST be clickable to view full-size versions on both creation and edit screens
 - **FR-014**: System MUST handle the creation workflow where a quote is created first (if needed) to obtain a quote ID for attachment upload
 - **FR-015**: System MUST maintain attachment associations even if user navigates away and returns to the draft quote
+- **FR-016**: System MUST use the same thumbnail gallery component on both quote creation and edit screens to ensure identical user experience
 
 ### Key Entities
 
@@ -99,9 +106,9 @@ A client admin creating a quote wants to remove accidentally uploaded files or a
 ### Measurable Outcomes
 
 - **SC-001**: Users can upload attachments during quote creation without first saving a draft (100% of quote creation flows support immediate attachment upload)
-- **SC-002**: Image attachments display as visual thumbnails within 500ms of upload completion
+- **SC-002**: Image attachments display as visual thumbnails within 500ms of upload completion on both creation and edit screens
 - **SC-003**: Users can complete quote creation with attachments in a single workflow (no navigation to edit mode required)
 - **SC-004**: Upload progress and status is visible to users throughout the attachment upload process
 - **SC-005**: 95% of attachments uploaded during quote creation are successfully associated with the submitted quote
 - **SC-006**: Zero data loss of attachments when user saves draft or submits quote after uploading files during creation
-- **SC-007**: Attachment management (upload, view thumbnails, delete) works identically in creation mode and edit mode from a user experience perspective
+- **SC-007**: Attachment management (upload, view thumbnails, delete) works identically in creation mode and edit mode from a user experience perspective, using the same thumbnail gallery component on both screens
