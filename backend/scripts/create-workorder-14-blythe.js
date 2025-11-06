@@ -27,18 +27,18 @@ async function createWorkOrder() {
             throw new Error('Emerge client not found');
         }
 
-        // Find a WPSG staff user to be the creator
+        // Find WPSG staff user (ID: 3) to be the creator
         // In production, this would be the user who enters the email-based work order
         const staffUser = await User.findOne({
             where: {
+                id: 3,
                 client_id: 8, // WPSG
-                role: ['staff', 'admin'],
                 is_active: true
             }
         });
 
         if (!staffUser) {
-            throw new Error('No WPSG staff user found. Please create a staff user first.');
+            throw new Error('WPSG staff user (ID: 3) not found. Please check user exists.');
         }
 
         console.log(`✓ Found client: ${client.name}`);
