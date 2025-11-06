@@ -115,9 +115,11 @@ db.quoteMessage.belongsTo(db.user, { foreignKey: 'user_id', as: 'user' });
 db.user.hasMany(db.quoteAttachment, { foreignKey: 'user_id', as: 'quoteAttachments' });
 db.quoteAttachment.belongsTo(db.user, { foreignKey: 'user_id', as: 'uploader' });
 
+// TEMPORARILY COMMENTED OUT - Production DB missing created_from_quote_id column
+// Uncomment after running migration: 20251102000004-add-quote-fields-to-work-orders.js
 // Quote to WorkOrder relationship (bidirectional)
-db.quote.belongsTo(db.workOrder, { foreignKey: 'converted_to_work_order_id', as: 'workOrder' });
-db.workOrder.hasOne(db.quote, { foreignKey: 'converted_to_work_order_id', as: 'sourceQuote' });
+// db.quote.belongsTo(db.workOrder, { foreignKey: 'converted_to_work_order_id', as: 'workOrder' });
+// db.workOrder.hasOne(db.quote, { foreignKey: 'converted_to_work_order_id', as: 'sourceQuote' });
 
 // Add associations section (if not already present)
 Object.keys(db).forEach(modelName => {
