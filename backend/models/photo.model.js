@@ -33,6 +33,8 @@ module.exports = (sequelize, Sequelize) => {
                 key: 'id'
             }
         }
+    }, {
+        timestamps: false  // Temporarily disabled until migration adds timestamp columns
     });
 
     return Photo;

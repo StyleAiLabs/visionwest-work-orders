@@ -308,24 +308,48 @@ exports.getAllWorkOrders = async (req, res) => {
 
         console.log('Where clause:', JSON.stringify(whereClause));
 
-        const workOrders = await WorkOrder.findAndCountAll({
-            where: whereClause,
-            include: [
-                ...includeClause,
-                {
-                    model: Photo,
-                    as: 'photos',
-                    attributes: ['id'], // Only get the id to count photos, not full data
-                    required: false
-                }
-            ],
-            order: orderClause,
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        });
+        let workOrders;
+        try {
+            workOrders = await WorkOrder.findAndCountAll({
+                where: whereClause,
+                include: [
+                    ...includeClause,
+                    {
+                        model: Photo,
+                        as: 'photos',
+                        attributes: ['id'], // Only get the id to count photos, not full data
+                        required: false
+                    }
+                ],
+                order: orderClause,
+                limit: parseInt(limit),
+                offset: parseInt(offset)
+            });
+        } catch (queryError) {
+            console.error('❌ Database query error in getAllWorkOrders:', queryError);
+            console.error('Query parameters:', { whereClause, includeClause, orderClause, limit, offset });
+
+            // Try a fallback query without the photo association
+            try {
+                console.log('⚠️ Attempting fallback query without photo association...');
+                workOrders = await WorkOrder.findAndCountAll({
+                    where: whereClause,
+                    include: includeClause,
+                    order: orderClause,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                });
+                console.log('✅ Fallback query succeeded');
+            } catch (fallbackError) {
+                console.error('❌ Fallback query also failed:', fallbackError);
+                throw queryError; // Throw original error
+            }
+        }
 
         console.log(`Found ${workOrders.count} work orders`);
-        console.log('Sample work order with photos:', JSON.stringify(workOrders.rows[0], null, 2));
+        if (workOrders.rows.length > 0) {
+            console.log('Sample work order with photos:', JSON.stringify(workOrders.rows[0], null, 2));
+        }
 
         // Format the response
         const formattedWorkOrders = workOrders.rows.map(workOrder => {
@@ -368,12 +392,25 @@ exports.getAllWorkOrders = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching work orders:', error);
+        console.error('❌ CRITICAL ERROR in getAllWorkOrders:', error);
         console.error('Error stack:', error.stack);
+        console.error('Error name:', error.name);
+        console.error('Error details:', {
+            message: error.message,
+            sql: error.sql,
+            parameters: error.parameters
+        });
+
         return res.status(500).json({
             success: false,
             message: 'An error occurred while fetching work orders.',
-            error: error.message
+            error: error.message,
+            errorType: error.name,
+            // Include more details in non-production environments
+            ...(process.env.NODE_ENV !== 'production' && {
+                stack: error.stack,
+                sql: error.sql
+            })
         });
     }
 };
