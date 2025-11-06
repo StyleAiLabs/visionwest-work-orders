@@ -118,19 +118,19 @@
 
 ### Refactoring Tasks
 
-- [ ] **T064**: Extract common attachment logic from QuoteAttachments component into reusable hook (useAttachments)
-- [ ] **T065**: Create shared AttachmentGallery component usable in both creation and edit modes
-- [ ] **T066**: Refactor file upload logic into reusable service function
-- [ ] **T067**: Consolidate attachment state management (consider using React Context if complexity grows)
-- [ ] **T068**: Extract file validation logic into utility functions (validateFileType, validateFileSize)
-- [ ] **T069**: Update QuoteAttachments component to use refactored shared components
-- [ ] **T070**: Ensure QuoteDetailPage still works correctly with refactored components
+- [X] **T064**: Extract common attachment logic from QuoteAttachments component into reusable hook (useAttachments)
+- [X] **T065**: Create shared AttachmentGallery component usable in both creation and edit modes
+- [X] **T066**: Refactor file upload logic into reusable service function
+- [X] **T067**: Consolidate attachment state management (consider using React Context if complexity grows)
+- [X] **T068**: Extract file validation logic into utility functions (validateFileType, validateFileSize)
+- [X] **T069**: Update QuoteAttachments component to use refactored shared components
+- [X] **T070**: Ensure QuoteDetailPage still works correctly with refactored components
 
 ### Testing Tasks
 
-- [ ] **T071**: Regression test QuoteDetailPage attachment upload after refactoring
-- [ ] **T072**: Test attachment functionality in both creation and edit modes after refactoring
-- [ ] **T073**: Verify no duplicate code between creation and edit attachment flows
+- [X] **T071**: Regression test QuoteDetailPage attachment upload after refactoring
+- [X] **T072**: Test attachment functionality in both creation and edit modes after refactoring
+- [X] **T073**: Verify no duplicate code between creation and edit attachment flows
 
 ---
 

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useAttachments } from '../../hooks/useAttachments';
 import AppHeader from '../../components/layout/AppHeader';
 import MobileNavigation from '../../components/layout/MobileNavigation';
 import ThumbnailGallery from '../../components/ThumbnailGallery';
 import { quoteService } from '../../services/quoteService';
 import { toast } from 'react-toastify';
+import { formatFileSize, MAX_FILES_PER_QUOTE } from '../../utils/fileValidation';
 
 // T020: QuoteRequestForm component with all required fields
 const QuoteRequestForm = () => {
@@ -34,11 +36,19 @@ const QuoteRequestForm = () => {
 
     const [errors, setErrors] = useState({});
 
-    // T005: Attachment state management
-    const [attachments, setAttachments] = useState([]);
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [uploading, setUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState({});
+    // T064: Use attachment hook for state management
+    const {
+        attachments,
+        selectedFiles,
+        uploading,
+        loadAttachments,
+        handleFileSelect,
+        uploadFiles,
+        removeSelectedFile,
+        deleteAttachment,
+        clearSelectedFiles,
+        getTotalFileCount
+    } = useAttachments(id);
 
     // Load existing quote if editing
     useEffect(() => {
@@ -46,7 +56,7 @@ const QuoteRequestForm = () => {
             loadQuote();
             loadAttachments();
         }
-    }, [id]);
+    }, [id, loadAttachments]);
 
     // T054-T055: Warn user before navigating away with unsaved attachments
     useEffect(() => {
@@ -98,19 +108,6 @@ const QuoteRequestForm = () => {
         }
     };
 
-    // Load attachments for existing quote
-    const loadAttachments = async () => {
-        if (!id) return;
-        try {
-            const response = await quoteService.getAttachments(id);
-            if (response.success) {
-                setAttachments(response.data || []);
-            }
-        } catch (error) {
-            console.error('Error loading attachments:', error);
-        }
-    };
-
     // Handle input changes
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -156,111 +153,18 @@ const QuoteRequestForm = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // T008: File validation
-    const validateFile = (file) => {
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        const allowedTypes = [
-            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain',
-            'text/csv'
-        ];
-
-        if (file.size > maxSize) {
-            return `File "${file.name}" is too large. Maximum size is 10MB.`;
-        }
-
-        if (!allowedTypes.includes(file.type)) {
-            return `File "${file.name}" has an invalid type. Only images and documents (PDF, Word, Excel, Text) are allowed.`;
-        }
-
-        return null;
+    // T068: File handling now uses hook functions and utilities
+    // Wrapper for file input change event
+    const handleFileInputChange = (e) => {
+        handleFileSelect(e.target.files);
     };
 
-    // T008: Handle file selection
-    const handleFileSelect = (e) => {
-        const files = Array.from(e.target.files);
-
-        // Check total file limit (5 files max)
-        if (attachments.length + selectedFiles.length + files.length > 5) {
-            toast.error('Maximum 5 files allowed per quote');
-            return;
-        }
-
-        // Validate each file
-        const validFiles = [];
-        for (const file of files) {
-            const error = validateFile(file);
-            if (error) {
-                toast.error(error);
-            } else {
-                validFiles.push(file);
-            }
-        }
-
-        if (validFiles.length > 0) {
-            setSelectedFiles([...selectedFiles, ...validFiles]);
-        }
-    };
-
-    // T009-T011: Upload files
-    const handleUploadFiles = async (quoteId) => {
-        if (selectedFiles.length === 0) return;
-
-        try {
-            setUploading(true);
-            const response = await quoteService.uploadAttachments(quoteId, selectedFiles);
-
-            if (response.success) {
-                // Reload attachments to get the uploaded files
-                await loadAttachments();
-                // Clear selected files
-                setSelectedFiles([]);
-                // Reset file input
-                const fileInput = document.getElementById('attachment-file-input');
-                if (fileInput) fileInput.value = '';
-            }
-        } catch (error) {
-            console.error('Error uploading attachments:', error);
-            toast.error('Failed to upload some files. Please try again.');
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    // Remove file from selected files list (before upload)
-    const handleRemoveSelectedFile = (index) => {
-        const newSelectedFiles = [...selectedFiles];
-        newSelectedFiles.splice(index, 1);
-        setSelectedFiles(newSelectedFiles);
-    };
-
-    // Delete uploaded attachment
-    const handleDeleteAttachment = async (attachmentId) => {
+    // Wrapper for delete confirmation
+    const handleDeleteWithConfirm = async (attachmentId) => {
         if (!confirm('Are you sure you want to delete this attachment?')) {
             return;
         }
-
-        try {
-            await quoteService.deleteAttachment(attachmentId);
-            await loadAttachments();
-            toast.success('Attachment deleted successfully');
-        } catch (error) {
-            console.error('Error deleting attachment:', error);
-        }
-    };
-
-    // Format file size for display
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        await deleteAttachment(attachmentId);
     };
 
     // T015: Save as draft with attachments
@@ -280,9 +184,9 @@ const QuoteRequestForm = () => {
             }
 
             if (response.success) {
-                // Upload any selected files
+                // Upload any selected files using hook function
                 if (selectedFiles.length > 0 && quoteId) {
-                    await handleUploadFiles(quoteId);
+                    await uploadFiles(quoteId);
                 }
 
                 toast.success('Draft saved successfully');
@@ -343,9 +247,9 @@ const QuoteRequestForm = () => {
                 await quoteService.updateQuote(id, formData);
             }
 
-            // Upload any selected files before submitting
+            // Upload any selected files before submitting using hook function
             if (selectedFiles.length > 0 && quoteId) {
-                await handleUploadFiles(quoteId);
+                await uploadFiles(quoteId);
             }
 
             // Submit the quote
@@ -620,7 +524,7 @@ const QuoteRequestForm = () => {
                         {/* T006-T007: Attachments Section */}
                         <div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Attachments ({attachments.length + selectedFiles.length}/5)
+                                Attachments ({getTotalFileCount()}/{MAX_FILES_PER_QUOTE})
                             </h3>
 
                             {/* File Upload Input */}
@@ -633,7 +537,7 @@ const QuoteRequestForm = () => {
                                     type="file"
                                     multiple
                                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
-                                    onChange={handleFileSelect}
+                                    onChange={handleFileInputChange}
                                     disabled={attachments.length + selectedFiles.length >= 5}
                                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-nextgen-green file:text-white hover:file:bg-nextgen-green-dark cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
@@ -667,7 +571,7 @@ const QuoteRequestForm = () => {
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRemoveSelectedFile(index)}
+                                                    onClick={() => removeSelectedFile(index)}
                                                     className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
                                                 >
                                                     Remove
@@ -696,7 +600,7 @@ const QuoteRequestForm = () => {
                                 <div>
                                     <ThumbnailGallery
                                         attachments={attachments}
-                                        onDelete={handleDeleteAttachment}
+                                        onDelete={handleDeleteWithConfirm}
                                         showDelete={true}
                                     />
                                 </div>

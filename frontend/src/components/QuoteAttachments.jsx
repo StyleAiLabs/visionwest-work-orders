@@ -1,37 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'react-toastify';
-import quoteService from '../services/quoteService';
 import ThumbnailGallery from './ThumbnailGallery';
+import { useAttachments } from '../hooks/useAttachments';
 
 const QuoteAttachments = ({ quoteId, canUpload = false }) => {
-    const [attachments, setAttachments] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [selectedFiles, setSelectedFiles] = useState([]);
+    const {
+        attachments,
+        selectedFiles,
+        uploading,
+        loading,
+        loadAttachments,
+        handleFileSelect,
+        uploadFiles,
+        deleteAttachment
+    } = useAttachments(quoteId);
 
     useEffect(() => {
         if (quoteId) {
             loadAttachments();
         }
-    }, [quoteId]);
+    }, [quoteId, loadAttachments]);
 
-    const loadAttachments = async () => {
-        try {
-            setLoading(true);
-            const response = await quoteService.getAttachments(quoteId);
-            if (response.success) {
-                setAttachments(response.data || []);
-            }
-        } catch (error) {
-            console.error('Error loading attachments:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFileSelect = (e) => {
-        const files = Array.from(e.target.files);
-        setSelectedFiles(files);
+    const handleFileInputChange = (e) => {
+        handleFileSelect(e.target.files);
     };
 
     const handleUpload = async () => {
@@ -40,18 +31,10 @@ const QuoteAttachments = ({ quoteId, canUpload = false }) => {
             return;
         }
 
-        try {
-            setUploading(true);
-            await quoteService.uploadAttachments(quoteId, selectedFiles);
-            setSelectedFiles([]);
+        const success = await uploadFiles(quoteId);
+        if (success) {
             // Reset file input
             document.getElementById('file-input').value = '';
-            // Reload attachments
-            await loadAttachments();
-        } catch (error) {
-            console.error('Error uploading files:', error);
-        } finally {
-            setUploading(false);
         }
     };
 
@@ -60,13 +43,7 @@ const QuoteAttachments = ({ quoteId, canUpload = false }) => {
             return;
         }
 
-        try {
-            await quoteService.deleteAttachment(attachmentId);
-            // Reload attachments
-            await loadAttachments();
-        } catch (error) {
-            console.error('Error deleting attachment:', error);
-        }
+        await deleteAttachment(attachmentId);
     };
 
     if (loading) {
@@ -95,7 +72,7 @@ const QuoteAttachments = ({ quoteId, canUpload = false }) => {
                         type="file"
                         multiple
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
-                        onChange={handleFileSelect}
+                        onChange={handleFileInputChange}
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-nextgen-green file:text-white hover:file:bg-nextgen-green-dark cursor-pointer"
                     />
                     {selectedFiles.length > 0 && (
