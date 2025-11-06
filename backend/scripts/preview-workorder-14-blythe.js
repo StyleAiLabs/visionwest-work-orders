@@ -93,7 +93,7 @@ async function previewWorkOrder() {
         console.log(`Created by:        ${staffUser.full_name}`);
         console.log(`Is Urgent:         No`);
         console.log('═'.repeat(60));
-        
+
         console.log('\n📝 Status Update Preview:');
         console.log('   Previous Status: pending');
         console.log('   New Status:      completed');
