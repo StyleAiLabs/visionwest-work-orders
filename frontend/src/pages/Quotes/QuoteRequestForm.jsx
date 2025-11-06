@@ -33,10 +33,17 @@ const QuoteRequestForm = () => {
 
     const [errors, setErrors] = useState({});
 
+    // T005: Attachment state management
+    const [attachments, setAttachments] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState({});
+
     // Load existing quote if editing
     useEffect(() => {
         if (isEditMode) {
             loadQuote();
+            loadAttachments();
         }
     }, [id]);
 
@@ -66,6 +73,19 @@ const QuoteRequestForm = () => {
             toast.error('Failed to load quote');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Load attachments for existing quote
+    const loadAttachments = async () => {
+        if (!id) return;
+        try {
+            const response = await quoteService.getAttachments(id);
+            if (response.success) {
+                setAttachments(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error loading attachments:', error);
         }
     };
 
@@ -114,22 +134,138 @@ const QuoteRequestForm = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // T023: Save as draft
+    // T008: File validation
+    const validateFile = (file) => {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain',
+            'text/csv'
+        ];
+
+        if (file.size > maxSize) {
+            return `File "${file.name}" is too large. Maximum size is 10MB.`;
+        }
+
+        if (!allowedTypes.includes(file.type)) {
+            return `File "${file.name}" has an invalid type. Only images and documents (PDF, Word, Excel, Text) are allowed.`;
+        }
+
+        return null;
+    };
+
+    // T008: Handle file selection
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+
+        // Check total file limit (5 files max)
+        if (attachments.length + selectedFiles.length + files.length > 5) {
+            toast.error('Maximum 5 files allowed per quote');
+            return;
+        }
+
+        // Validate each file
+        const validFiles = [];
+        for (const file of files) {
+            const error = validateFile(file);
+            if (error) {
+                toast.error(error);
+            } else {
+                validFiles.push(file);
+            }
+        }
+
+        if (validFiles.length > 0) {
+            setSelectedFiles([...selectedFiles, ...validFiles]);
+        }
+    };
+
+    // T009-T011: Upload files
+    const handleUploadFiles = async (quoteId) => {
+        if (selectedFiles.length === 0) return;
+
+        try {
+            setUploading(true);
+            const response = await quoteService.uploadAttachments(quoteId, selectedFiles);
+
+            if (response.success) {
+                // Reload attachments to get the uploaded files
+                await loadAttachments();
+                // Clear selected files
+                setSelectedFiles([]);
+                // Reset file input
+                const fileInput = document.getElementById('attachment-file-input');
+                if (fileInput) fileInput.value = '';
+            }
+        } catch (error) {
+            console.error('Error uploading attachments:', error);
+            toast.error('Failed to upload some files. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Remove file from selected files list (before upload)
+    const handleRemoveSelectedFile = (index) => {
+        const newSelectedFiles = [...selectedFiles];
+        newSelectedFiles.splice(index, 1);
+        setSelectedFiles(newSelectedFiles);
+    };
+
+    // Delete uploaded attachment
+    const handleDeleteAttachment = async (attachmentId) => {
+        if (!confirm('Are you sure you want to delete this attachment?')) {
+            return;
+        }
+
+        try {
+            await quoteService.deleteAttachment(attachmentId);
+            await loadAttachments();
+            toast.success('Attachment deleted successfully');
+        } catch (error) {
+            console.error('Error deleting attachment:', error);
+        }
+    };
+
+    // Format file size for display
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    // T015: Save as draft with attachments
     const handleSaveDraft = async () => {
         try {
             setSaving(true);
             let response;
+            let quoteId = id;
 
             if (isEditMode) {
                 response = await quoteService.updateQuote(id, formData);
             } else {
                 response = await quoteService.createQuote(formData);
+                if (response.success && response.data?.id) {
+                    quoteId = response.data.id;
+                }
             }
 
             if (response.success) {
+                // Upload any selected files
+                if (selectedFiles.length > 0 && quoteId) {
+                    await handleUploadFiles(quoteId);
+                }
+
                 toast.success('Draft saved successfully');
-                if (!isEditMode && response.data?.id) {
-                    navigate(`/quotes/${response.data.id}/edit`);
+                if (!isEditMode && quoteId) {
+                    navigate(`/quotes/${quoteId}/edit`);
                 }
             }
         } catch (error) {
@@ -140,12 +276,18 @@ const QuoteRequestForm = () => {
         }
     };
 
-    // T023: Submit quote
+    // T016: Submit quote with attachments
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!validate()) {
             toast.error('Please fix the errors before submitting');
+            return;
+        }
+
+        // T013: Prevent submission while uploading
+        if (uploading) {
+            toast.warning('Please wait for file uploads to complete');
             return;
         }
 
@@ -163,6 +305,11 @@ const QuoteRequestForm = () => {
             } else {
                 // Update existing draft
                 await quoteService.updateQuote(id, formData);
+            }
+
+            // Upload any selected files before submitting
+            if (selectedFiles.length > 0 && quoteId) {
+                await handleUploadFiles(quoteId);
             }
 
             // Submit the quote
@@ -434,13 +581,144 @@ const QuoteRequestForm = () => {
                             </div>
                         </div>
 
-                        {/* T023: Action Buttons */}
+                        {/* T006-T007: Attachments Section */}
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                Attachments ({attachments.length + selectedFiles.length}/5)
+                            </h3>
+
+                            {/* File Upload Input */}
+                            <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Upload Files (Optional)
+                                </label>
+                                <input
+                                    id="attachment-file-input"
+                                    type="file"
+                                    multiple
+                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                                    onChange={handleFileSelect}
+                                    disabled={attachments.length + selectedFiles.length >= 5}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-nextgen-green file:text-white hover:file:bg-nextgen-green-dark cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Supported formats: Images, PDF, Word, Excel, Text (Max 10MB per file, 5 files maximum)
+                                </p>
+                            </div>
+
+                            {/* T012: Selected Files (Not Yet Uploaded) */}
+                            {selectedFiles.length > 0 && (
+                                <div className="mb-4">
+                                    <p className="text-sm font-medium text-gray-700 mb-2">
+                                        Files Ready to Upload ({selectedFiles.length})
+                                    </p>
+                                    <div className="space-y-2">
+                                        {selectedFiles.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                                            >
+                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                                    <span className="text-2xl">📎</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                                            {file.name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {formatFileSize(file.size)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveSelectedFile(index)}
+                                                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-2">
+                                        These files will be uploaded when you save the draft or submit the quote.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* T010: Upload Progress Indicator */}
+                            {uploading && (
+                                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-nextgen-green"></div>
+                                        <p className="text-sm text-gray-700">Uploading files...</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* T012: Uploaded Attachments List */}
+                            {attachments.length > 0 && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700 mb-2">
+                                        Uploaded Files ({attachments.length})
+                                    </p>
+                                    <div className="space-y-2">
+                                        {attachments.map((attachment) => (
+                                            <div
+                                                key={attachment.id}
+                                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                                            >
+                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                                    <span className="text-2xl">
+                                                        {attachment.fileType === 'photo' ? '🖼️' : '📄'}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                                            {attachment.filename}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {formatFileSize(attachment.fileSize)} •
+                                                            Uploaded {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <a
+                                                        href={attachment.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                    >
+                                                        View
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteAttachment(attachment.id)}
+                                                        className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Empty State */}
+                            {attachments.length === 0 && selectedFiles.length === 0 && (
+                                <p className="text-sm text-gray-500 text-center py-4">
+                                    No files attached yet. You can add photos and documents to support your quote request.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* T013-T014: Action Buttons with upload state handling */}
                         <div className="flex gap-3 pt-4">
                             <button
                                 type="button"
                                 onClick={() => navigate('/quotes')}
-                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                                disabled={saving}
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+                                disabled={saving || uploading}
                             >
                                 Cancel
                             </button>
@@ -448,16 +726,16 @@ const QuoteRequestForm = () => {
                                 type="button"
                                 onClick={handleSaveDraft}
                                 className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium disabled:opacity-50"
-                                disabled={saving}
+                                disabled={saving || uploading}
                             >
-                                {saving ? 'Saving...' : 'Save Draft'}
+                                {saving ? 'Saving...' : uploading ? 'Uploading...' : 'Save Draft'}
                             </button>
                             <button
                                 type="submit"
                                 className="flex-1 px-4 py-2 bg-nextgen-green text-white rounded-lg hover:bg-nextgen-green-dark font-medium disabled:opacity-50"
-                                disabled={saving}
+                                disabled={saving || uploading}
                             >
-                                {saving ? 'Submitting...' : 'Submit'}
+                                {saving ? 'Submitting...' : uploading ? 'Uploading...' : 'Submit'}
                             </button>
                         </div>
                     </form>
