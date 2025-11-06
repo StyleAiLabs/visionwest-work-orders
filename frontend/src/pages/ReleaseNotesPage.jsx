@@ -9,6 +9,83 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '3.0.0',
+            date: 'November 2, 2025',
+            title: 'Quote Request System - Complete MVP Launch',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Quote Request Creation - Client admins can create detailed quote requests with property info, scope, and photos',
+                        'Auto-save Functionality - Prevents data loss with automatic draft saving every 30 seconds',
+                        'Unique Quote Numbering - Auto-generated quote numbers (QTE-2025-001, QTE-2025-002, etc.)',
+                        'Staff Quote Management Dashboard - Centralized view of all pending quotes across all clients',
+                        'Quote Provision by WPSG Staff - Provide formal quotes with cost, hours, validity period, and documents',
+                        'Client Review & Approval - One-click approval process with full cost breakdown visibility',
+                        'Quote-to-Work-Order Conversion - Seamless conversion with automatic data and file transfer',
+                        'Built-in Messaging System - Communication thread on each quote with activity tracking',
+                        'Request More Information - Staff can request clarification from clients with status tracking',
+                        'File Management - Upload and manage photos and documents with AWS S3 storage'
+                    ]
+                },
+                {
+                    category: 'Dashboard & Reporting',
+                    items: [
+                        'Quote Summary Widget - At-a-glance status breakdown (Draft, Submitted, Quoted, Approved, Converted)',
+                        'Status-based Filtering - Filter quotes by status, urgency, client, or date range',
+                        'Search Functionality - Search by quote number, property name, or description',
+                        'Urgency Indicators - Red badges for time-sensitive quote requests',
+                        'Role-based Data Visibility - Clients see only their quotes, staff see all',
+                        'Converted Status Tracking - Track quotes that have been converted to work orders'
+                    ]
+                },
+                {
+                    category: 'Workflow Management',
+                    items: [
+                        'Multi-stage Quote Workflow - Draft → Submitted → Quoted → Approved → Converted',
+                        'Information Requested Status - Track when additional details are needed from clients',
+                        'Quote Validity Periods - Automatic tracking of quote expiry (30/60/90 days)',
+                        'Automated Email Notifications - Notifications at each workflow stage',
+                        'Complete Audit Trail - Full history of all quote activities and status changes',
+                        'Bidirectional Linking - Quotes and work orders linked in both directions'
+                    ]
+                },
+                {
+                    category: 'Security & Access Control',
+                    items: [
+                        'Role-based Permissions - Admin, Staff, Client Admin, and Client roles with specific capabilities',
+                        'Multi-tenant Data Isolation - Each client sees only their organization\'s quotes',
+                        'Secure File Uploads - Validation for file types and sizes (10MB limit)',
+                        'Permission-based Actions - Approve, convert, and request info restricted by role',
+                        'Client Context Switching - Admins can view quotes across all clients'
+                    ]
+                },
+                {
+                    category: 'User Experience',
+                    items: [
+                        'Mobile-Responsive Interface - Full functionality on phones and tablets',
+                        'NextGen WOM Branding - Deep navy and nextgen-green color scheme throughout',
+                        'Toast Notifications - Real-time feedback for all user actions',
+                        'Attachment Gallery - View and download all quote files in one place',
+                        'Quick Navigation - Navigate between quotes, work orders, and dashboard seamlessly',
+                        'Loading States - Clear feedback during data operations'
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'Backend: 3 new database tables (quotes, quote_messages, quote_attachments)',
+                        'Frontend: 5 new components and pages with React 19',
+                        'AWS S3 Integration - Secure cloud storage for quote attachments',
+                        'Transaction-based Operations - Database transactions for data integrity during conversion',
+                        'RESTful API - 15+ new endpoints for quote operations',
+                        'Sequelize ORM - Model associations and migrations for quote system',
+                        '7 Database Migrations - Schema changes ready for production deployment'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.8.0',
             date: 'October 20, 2025',
             title: 'Work Order Cancellation with Audit Trail',

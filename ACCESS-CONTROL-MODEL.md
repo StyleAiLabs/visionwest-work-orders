@@ -6,66 +6,87 @@ After implementing multi-client support and creating the WPSG client for William
 ## User Roles & Access
 
 ### 1. **Client** (`client`)
-**Example:** Tenants from VisionWest (`tenant@visionwest.org.nz`)
+**Definition:** Organization users who create and track work orders for their client organization.
+
+**Example:** Housing coordinators from VisionWest (`coordinator@visionwest.org.nz`)
 
 **Access:**
-- ✅ View only work orders where `authorized_email` matches their email
+- ✅ View only work orders where `authorized_email` matches their email address
 - ✅ Request cancellation of their own work orders (status → `cancelled`)
 - ✅ Add notes to their own work orders
+- ✅ Create new work orders for properties they manage
 - ❌ Cannot change status to anything other than `cancelled`
-- ❌ Cannot see other tenants' work orders
-- ❌ Cannot access work orders from other clients
+- ❌ Cannot see other users' work orders within the organization
+- ❌ Cannot access work orders from other client organizations
 
 **Client Filter:** Scoped to their assigned `client_id` only
+
+**Use Case:** Individual staff members within a housing organization who raise maintenance requests for specific properties they're responsible for.
 
 ---
 
 ### 2. **Client Admin** (`client_admin`)
-**Example:** VisionWest housing managers (`housing@visionwest.org.nz`)
+**Definition:** Organization administrators with full management access to all work orders within their client organization.
+
+**Example:** VisionWest property management managers (`manager@visionwest.org.nz`)
 
 **Access:**
-- ✅ View ALL work orders for their client organization
-- ✅ Create manual work orders for their client
+- ✅ View ALL work orders for their client organization (not limited by email)
+- ✅ Create manual work orders for any property in their organization
 - ✅ Update any status (pending, in-progress, completed, cancelled)
 - ✅ Add notes to any work order in their organization
-- ✅ Update work order details (property info, description, etc.)
-- ❌ Cannot access work orders from other clients
-- ❌ Cannot delete work orders
+- ✅ Update work order details (property info, description, urgency, etc.)
+- ✅ Manage organization-wide work order operations
+- ❌ Cannot access work orders from other client organizations
+- ❌ Cannot delete work orders (admin-only capability)
 
 **Client Filter:** Scoped to their assigned `client_id` only
+
+**Use Case:** Senior managers or property management leads who need visibility and control over all maintenance activities within their organization.
 
 ---
 
 ### 3. **Staff** (`staff`)
-**Example:** Williams Property staff (`staff@williamspropertyservices.co.nz`)
+**Definition:** Service provider staff who coordinate maintenance work across all client organizations.
+
+**Example:** Williams Property maintenance coordinators (`coordinator@williamspropertyservices.co.nz`)
 
 **Access:**
 - ✅ View ALL work orders across ALL clients (VisionWest, WPSG, Emerge, etc.)
 - ✅ Update work order status (except cannot cancel - only admin can)
-- ✅ Add notes to any work order from any client
+- ✅ Add notes to any work order from any client organization
 - ✅ Update work order details across all clients
 - ✅ Dashboard shows totals for all clients combined
-- ❌ Cannot cancel work orders (security measure)
+- ✅ Assign contractors and schedule work
+- ❌ Cannot cancel work orders (security measure - admin-only)
 - ❌ Cannot delete work orders
 - ❌ Cannot create manual work orders (client_admin only)
 
 **Client Filter:** **NO CLIENT FILTER** - Full cross-client access
 
+**Use Case:** Maintenance coordinators and field staff who need to view and update work orders across all client organizations they service.
+
 ---
 
 ### 4. **Admin** (`admin`)
-**Example:** Williams Property admins (`admin@williamspropertyservices.co.nz`)
+**Definition:** System administrators with unrestricted access to all platform features and data across all client organizations.
+
+**Example:** Williams Property system administrators (`admin@williamspropertyservices.co.nz`)
 
 **Access:**
 - ✅ View ALL work orders across ALL clients
-- ✅ Update any work order from any client
+- ✅ Create, update, and delete any work order from any client
 - ✅ Update status to any value (including cancellation)
 - ✅ Add/delete notes on any work order
-- ✅ Delete work orders
-- ✅ Full CRUD operations across all clients
+- ✅ Delete work orders (permanent removal)
+- ✅ Full CRUD operations across all clients and users
 - ✅ Dashboard shows totals for all clients combined
+- ✅ User management across all organizations
+- ✅ System configuration and settings
 
 **Client Filter:** **NO CLIENT FILTER** - Full cross-client access
+
+**Use Case:** IT administrators and senior management who need complete platform control for system maintenance, troubleshooting, and oversight.
 
 ---
 
@@ -201,18 +222,25 @@ This is useful for:
 ## Security Considerations
 
 ### ✅ Secure
-- Client users can only see their own work orders (email matching)
-- Client admins cannot access other clients' data
-- Staff cannot cancel work orders (admin-only protection)
-- Cancelled work orders cannot be reactivated
-- All status changes require authentication
+- **Client users** can only see work orders where their email matches `authorized_email` (email-based filtering)
+- **Client admins** see all work orders for their organization but cannot access other clients' data
+- **Staff** cannot cancel work orders (admin-only protection against accidental cancellations)
+- **Cancelled work orders** cannot be reactivated (audit trail integrity)
+- All status changes require authentication and create audit trail entries
+- Multi-tenant isolation prevents cross-client data leakage
 
 ### ⚠️ Important Notes
-- WPSG admin/staff client_id = 8 (WPSG)
-- But they manage work orders with client_id = 1, 7, 8, etc.
-- Work orders belong to the CLIENT organization (VisionWest, Emerge)
-- Users belong to their EMPLOYER organization (WPSG, VisionWest)
-- This is by design - WPSG is the SERVICE PROVIDER for multiple clients
+- **Role Clarification:**
+  - `client` = Organization users who raise work orders (email-scoped access)
+  - `client_admin` = Organization administrators (full org access)
+  - `staff` = Service provider coordinators (cross-client access)
+  - `admin` = System administrators (unrestricted access)
+- **User vs Work Order Assignment:**
+  - WPSG admin/staff have `client_id = 8` (WPSG - their employer)
+  - But they manage work orders with `client_id = 1, 7, etc.` (client organizations)
+  - Work orders belong to the CLIENT organization (VisionWest, Emerge)
+  - Users belong to their EMPLOYER organization (WPSG, VisionWest)
+  - This is by design - WPSG is the SERVICE PROVIDER for multiple clients
 
 ---
 
@@ -253,27 +281,29 @@ Expected output:
 
 ### Users Table (Relevant Records)
 ```sql
-| id | email                                   | role         | client_id |
-|----|-----------------------------------------|--------------|-----------|
-| 1  | cameron@visionwest.org.nz              | admin        | 1         |
-| 2  | admin@williamspropertyservices.co.nz   | admin        | 8         |
-| 3  | staff@williamspropertyservices.co.nz   | staff        | 8         |
-| 4  | housing@visionwest.org.nz              | client_admin | 1         |
+| id | email                                   | role         | client_id | Description                           |
+|----|-----------------------------------------|--------------|-----------|---------------------------------------|
+| 1  | cameron@visionwest.org.nz              | admin        | 1         | VisionWest system admin               |
+| 2  | admin@williamspropertyservices.co.nz   | admin        | 8         | Williams Property system admin        |
+| 3  | staff@williamspropertyservices.co.nz   | staff        | 8         | Williams Property coordinator         |
+| 4  | housing@visionwest.org.nz              | client_admin | 1         | VisionWest property manager (full)    |
+| 5  | coordinator@visionwest.org.nz          | client       | 1         | VisionWest housing coordinator        |
 ```
 
 ### Work Orders Table (Example)
 ```sql
-| id | job_no | client_id | status      | authorized_email              |
-|----|--------|-----------|-------------|-------------------------------|
-| 1  | W1001  | 1         | pending     | tenant1@visionwest.org.nz    |
-| 2  | W1002  | 1         | in-progress | tenant2@visionwest.org.nz    |
-| 3  | W1003  | 7         | completed   | user@emerge.co.nz            |
+| id | job_no | client_id | status      | authorized_email              | Description                        |
+|----|--------|-----------|-------------|-------------------------------|------------------------------------|
+| 1  | W1001  | 1         | pending     | coordinator@visionwest.org.nz| Created by VisionWest coordinator  |
+| 2  | W1002  | 1         | in-progress | coordinator@visionwest.org.nz| Visible to coordinator & admins    |
+| 3  | W1003  | 7         | completed   | manager@emerge.co.nz         | Emerge organization work order     |
 ```
 
-**Key Point:** 
-- User `admin@williamspropertyservices.co.nz` has `client_id=8` (WPSG)
-- But can update work order with `client_id=1` (VisionWest)
-- This is correct - they're the service provider managing client work orders
+**Key Points:** 
+- User `coordinator@visionwest.org.nz` (role: `client`) can only see work orders where `authorized_email` matches their email
+- User `housing@visionwest.org.nz` (role: `client_admin`) can see ALL work orders with `client_id=1`
+- User `staff@williamspropertyservices.co.nz` (role: `staff`) has `client_id=8` (WPSG) but can view/update work orders with `client_id=1, 7, 8` (all clients)
+- This is correct - WPSG is the service provider managing work orders for multiple client organizations
 
 ---
 

@@ -97,6 +97,20 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: false,
             comment: 'Indicates if the work order requires urgent attention'
         },
+        created_from_quote_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'quotes',
+                key: 'id'
+            },
+            comment: 'Reference to the quote that was converted to this work order'
+        },
+        quote_number: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            comment: 'Quote reference number (format: QTE-YYYY-###) for easy identification'
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,

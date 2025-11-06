@@ -6,6 +6,7 @@ import SummaryCard from '../components/dashboard/SummaryCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
 import ClientFilter from '../components/workOrders/ClientFilter';
+import QuoteSummaryWidget from '../components/dashboard/QuoteSummaryWidget';
 import { useAuth } from '../hooks/useAuth';
 import { alertsService } from '../services/alertsService';
 import { dashboardService } from '../services/dashboardService';
@@ -229,6 +230,11 @@ const DashboardPage = () => {
                     <SummaryCard title="In Progress" value={summary.inProgress} color="blue" />
                     <SummaryCard title="Completed" value={summary.completed} color="green" />
                     <SummaryCard title="Cancelled" value={summary.cancelled} color="red" />
+                </div>
+
+                {/* T051: Quote Summary Widget */}
+                <div className="mb-6">
+                    <QuoteSummaryWidget />
                 </div>
 
                 {/* Recent Activity */}

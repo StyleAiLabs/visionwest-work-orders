@@ -389,6 +389,7 @@ app.use('/api/export', require('./routes/export.routes'));
 app.use('/api/app', require('./routes/app.routes'));
 app.use('/api/clients', require('./routes/client.routes'));
 app.use('/api/users', require('./routes/user.routes'));
+app.use('/api/quotes', require('./routes/quote.routes'));
 
 // Import routes
 const notesRoutes = require('./routes/notes.routes');
@@ -415,8 +416,9 @@ const initializeDatabase = async () => {
             //console.log('Database seeded successfully');
 
         } else {
-            await db.sequelize.sync();
-            console.log('Database synced in production mode');
+            // Temporarily disabled sync to avoid schema alteration errors
+            // await db.sequelize.sync();
+            console.log('Database sync skipped in production mode');
         }
 
         // Add connection pool monitoring in production

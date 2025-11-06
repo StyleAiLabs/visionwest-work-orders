@@ -233,6 +233,49 @@ exports.sendNewUserCredentialsEmail = async (user, temporaryPassword) => {
 };
 
 /**
+ * Send email using Brevo template
+ * @param {Object} options - Email options
+ * @param {number} options.templateId - Brevo template ID
+ * @param {Array<{email: string, name?: string}>} options.to - Recipients
+ * @param {Object} options.params - Template parameters
+ * @param {string} options.subject - Email subject (fallback if template doesn't have one)
+ * @returns {Promise<void>}
+ */
+exports.sendBrevoTemplateEmail = async ({ templateId, to, params = {}, subject = '' }) => {
+  try {
+    if (!brevoApiInstance) {
+      console.warn('⚠️  Brevo API not initialized - skipping email send');
+      return;
+    }
+
+    if (!to || to.length === 0) {
+      console.warn('⚠️  No recipients provided - skipping email send');
+      return;
+    }
+
+    const fromEmail = process.env.EMAIL_USER || 'noreply@nextgenwom.com';
+    const fromName = 'NextGen WOM';
+
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = { name: fromName, email: fromEmail };
+    sendSmtpEmail.to = to;
+    sendSmtpEmail.templateId = templateId;
+    sendSmtpEmail.params = params;
+    
+    // Subject is optional if the template already has one
+    if (subject) {
+      sendSmtpEmail.subject = subject;
+    }
+
+    await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log(`✅ Brevo template email sent (template #${templateId}) to ${to.map(r => r.email).join(', ')}`);
+  } catch (error) {
+    // Log error but don't throw - email failure should not block business operations
+    console.error(`❌ Failed to send Brevo template email (template #${templateId}):`, error.message);
+  }
+};
+
+/**
  * Verify email configuration is correct
  * @returns {Promise<boolean>}
  */

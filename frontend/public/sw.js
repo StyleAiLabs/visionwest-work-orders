@@ -1,5 +1,5 @@
 // Base path for cache
-const CACHE_NAME = 'visionwest-work-orders-v1';
+const CACHE_NAME = 'visionwest-work-orders-v2';
 
 // Assets to cache
 const urlsToCache = [
@@ -22,6 +22,12 @@ self.addEventListener('install', event => {
 
 // Fetch event - serve from cache if available, then network
 self.addEventListener('fetch', event => {
+    // Skip caching for non-http(s) requests (chrome-extension, etc.)
+    const url = new URL(event.request.url);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
