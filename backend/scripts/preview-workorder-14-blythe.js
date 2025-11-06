@@ -15,9 +15,9 @@ async function previewWorkOrder() {
         console.log('\n🔍 PREVIEW MODE - No changes will be made\n');
         console.log('═'.repeat(60));
 
-        // Find Emerge client (client_id = 7)
+        // Find Emerge client (client_id = 3 on production)
         const client = await Client.findOne({
-            where: { id: 7 } // Emerge Aotearoa
+            where: { id: 3 } // Emerge Aotearoa (production)
         });
 
         if (!client) {
@@ -52,13 +52,13 @@ async function previewWorkOrder() {
 
         let nextNumber = 1;
         if (lastWorkOrder && lastWorkOrder.job_no) {
-            const match = lastWorkOrder.job_no.match(/RBWO(\d+)/);
+            const match = lastWorkOrder.job_no.match(/EMG(\d+)/);
             if (match) {
                 nextNumber = parseInt(match[1]) + 1;
             }
         }
 
-        const jobNo = `RBWO${String(nextNumber).padStart(6, '0')}`;
+        const jobNo = `EMG${String(nextNumber).padStart(6, '0')}`;
 
         console.log(`✓ Next job number would be: ${jobNo}`);
         if (lastWorkOrder) {
