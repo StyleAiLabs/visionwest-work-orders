@@ -18,9 +18,9 @@ async function createWorkOrder() {
     try {
         console.log('\n🚀 Creating Work Order for 14 Blythe Place...\n');
 
-        // Find Emerge client (client_id = 7)
+        // Find Emerge client (client_id = 3 on production)
         const client = await Client.findOne({
-            where: { id: 7 } // Emerge Aotearoa
+            where: { id: 3 } // Emerge Aotearoa (production)
         });
 
         if (!client) {
@@ -44,7 +44,7 @@ async function createWorkOrder() {
         console.log(`✓ Found client: ${client.name}`);
         console.log(`✓ Creating work order as: ${staffUser.full_name} (${staffUser.email})\n`);
 
-        // Generate job number (format: RBWO + 6 digits)
+        // Generate job number (format: EMG + 6 digits for Emerge client)
         // Get the last work order for this client to determine next number
         const lastWorkOrder = await WorkOrder.findOne({
             where: { client_id: client.id },
@@ -54,13 +54,13 @@ async function createWorkOrder() {
 
         let nextNumber = 1;
         if (lastWorkOrder && lastWorkOrder.job_no) {
-            const match = lastWorkOrder.job_no.match(/RBWO(\d+)/);
+            const match = lastWorkOrder.job_no.match(/EMG(\d+)/);
             if (match) {
                 nextNumber = parseInt(match[1]) + 1;
             }
         }
 
-        const jobNo = `RBWO${String(nextNumber).padStart(6, '0')}`;
+        const jobNo = `EMG${String(nextNumber).padStart(6, '0')}`;
 
         // Work order data from the email
         const workOrderData = {
