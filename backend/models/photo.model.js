@@ -34,7 +34,9 @@ module.exports = (sequelize, Sequelize) => {
             }
         }
     }, {
-        timestamps: false  // Temporarily disabled until migration adds timestamp columns
+        timestamps: true,  // Re-enabled - production DB already has these columns with NOT NULL
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
     });
 
     return Photo;
