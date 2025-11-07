@@ -27,17 +27,17 @@ async function previewWorkOrder() {
 
         console.log(`✓ Found client: ${client.name} (ID: ${client.id})`);
 
-        // Find a WPSG staff user
+        // Find WPSG staff user (ID: 3)
         const staffUser = await User.findOne({
             where: {
+                id: 3,
                 client_id: 8, // WPSG
-                role: ['staff', 'admin'],
                 is_active: true
             }
         });
 
         if (!staffUser) {
-            console.log('❌ No WPSG staff user found');
+            console.log('❌ WPSG staff user (ID: 3) not found');
             process.exit(1);
         }
 
