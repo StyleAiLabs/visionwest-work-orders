@@ -37,7 +37,7 @@ exports.getWorkOrderPhotos = async (req, res) => {
         // Get photos without user information first to check if query works
         const photos = await Photo.findAll({
             where: { work_order_id: workOrderId },
-            order: [['createdAt', 'DESC']]
+            order: [['id', 'DESC']]  // Changed from createdAt (doesn't exist yet) to id
         });
 
         console.log('Found photos:', photos.length);
@@ -57,7 +57,7 @@ exports.getWorkOrderPhotos = async (req, res) => {
             url: photo.file_path,
             filename: photo.file_name,
             description: photo.description,
-            uploadedAt: photo.createdAt,
+            uploadedAt: photo.createdAt || new Date().toISOString(),  // Fallback if createdAt doesn't exist
             uploadedBy: null // We'll add user info in a separate query
         }));
 
@@ -69,7 +69,7 @@ exports.getWorkOrderPhotos = async (req, res) => {
                 if (user) {
                     photo.uploadedBy = {
                         id: user.id,
-                        name: user.name,
+                        name: user.full_name || user.name,  // Use full_name field
                         email: user.email
                     };
                 }
@@ -156,12 +156,12 @@ exports.uploadPhotos = async (req, res) => {
                 url: photo.file_path,
                 filename: photo.file_name,
                 description: photo.description,
-                uploadedAt: photo.createdAt,
-                uploadedBy: {
+                uploadedAt: photo.createdAt || new Date().toISOString(),  // Fallback if createdAt doesn't exist
+                uploadedBy: user ? {
                     id: user.id,
-                    name: user.name,
+                    name: user.full_name || user.name,  // Use full_name field
                     email: user.email
-                }
+                } : null
             });
         }
 
@@ -188,11 +188,25 @@ exports.uploadPhotos = async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Error uploading photos to S3:', error);
+        console.error('❌ Error uploading photos to S3:', error);
+        console.error('Error name:', error.name);
+        console.error('Error stack:', error.stack);
+        console.error('Error details:', {
+            message: error.message,
+            sql: error.sql,
+            parameters: error.parameters
+        });
+
         return res.status(500).json({
             success: false,
             message: 'An error occurred while uploading photos to S3.',
-            error: error.message
+            error: error.message,
+            errorType: error.name,
+            // Include more details in non-production environments
+            ...(process.env.NODE_ENV !== 'production' && {
+                stack: error.stack,
+                sql: error.sql
+            })
         });
     }
 };
