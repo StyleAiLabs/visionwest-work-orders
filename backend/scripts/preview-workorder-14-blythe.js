@@ -27,21 +27,30 @@ async function previewWorkOrder() {
 
         console.log(`✓ Found client: ${client.name} (ID: ${client.id})`);
 
-        // Find any WPSG staff/admin user
-        const staffUser = await User.findOne({
+        // Find WPSG staff user (ID: 3) - WPSG client_id is 2 in production
+        let staffUser = await User.findOne({
             where: {
-                client_id: 8, // WPSG
-                role: ['staff', 'admin'],
-                is_active: true
+                id: 3,
+                client_id: 2 // WPSG (production)
             }
         });
 
         if (!staffUser) {
-            console.log('❌ No WPSG staff user found');
+            console.log('❌ User ID 3 not found or not a WPSG user');
+            console.log('Checking all WPSG users...');
+            const allWpsgUsers = await User.findAll({
+                where: { client_id: 2 }
+            });
+            console.log(`Found ${allWpsgUsers.length} WPSG users:`, allWpsgUsers.map(u => ({
+                id: u.id,
+                email: u.email,
+                role: u.role,
+                is_active: u.is_active
+            })));
             process.exit(1);
         }
 
-        console.log(`✓ Found staff user: ${staffUser.full_name} (ID: ${staffUser.id}, Email: ${staffUser.email})`);
+        console.log(`✓ Found staff user: ${staffUser.full_name} (ID: ${staffUser.id}, Email: ${staffUser.email}, Role: ${staffUser.role}, Active: ${staffUser.is_active})`);
 
         // Get the last work order for this client
         const lastWorkOrder = await WorkOrder.findOne({

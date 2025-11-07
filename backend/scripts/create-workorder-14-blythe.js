@@ -27,22 +27,31 @@ async function createWorkOrder() {
             throw new Error('Emerge client not found');
         }
 
-        // Find any WPSG staff/admin user to be the creator
-        // In production, this would be the user who enters the email-based work order
+        // Find WPSG staff user (ID: 3) - WPSG client_id is 2 in production
         const staffUser = await User.findOne({
             where: {
-                client_id: 8, // WPSG
-                role: ['staff', 'admin'],
-                is_active: true
+                id: 3,
+                client_id: 2 // WPSG (production)
             }
         });
 
         if (!staffUser) {
-            throw new Error('No WPSG staff user found. Please create a staff user first.');
+            console.log('❌ User ID 3 not found or not a WPSG user');
+            console.log('Checking all WPSG users...');
+            const allWpsgUsers = await User.findAll({
+                where: { client_id: 2 }
+            });
+            console.log(`Found ${allWpsgUsers.length} WPSG users:`, allWpsgUsers.map(u => ({
+                id: u.id,
+                email: u.email,
+                role: u.role,
+                is_active: u.is_active
+            })));
+            throw new Error('User ID 3 not found or not a WPSG user');
         }
 
         console.log(`✓ Found client: ${client.name}`);
-        console.log(`✓ Creating work order as: ${staffUser.full_name} (ID: ${staffUser.id}, Email: ${staffUser.email})\n`);
+        console.log(`✓ Creating work order as: ${staffUser.full_name} (ID: ${staffUser.id}, Email: ${staffUser.email}, Role: ${staffUser.role})\n`);
 
         // Generate job number (format: EMG + 6 digits for Emerge client)
         // Get the last work order for this client to determine next number
