@@ -9,7 +9,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
     storage,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 5 * 1024 * 1024, // 5MB limit
     },
     fileFilter: (req, file, cb) => {
         // Accept only image files
@@ -28,7 +28,7 @@ router.use(verifyToken, isAnyValidRole);
 router.get('/work-order/:workOrderId', photoController.getWorkOrderPhotos);
 
 // Upload photos for a work order
-router.post('/work-order/:workOrderId', upload.array('photos', 10), photoController.uploadPhotos);
+router.post('/work-order/:workOrderId', upload.array('photos', 20), photoController.uploadPhotos);
 
 // Delete a photo
 router.delete('/:id', photoController.deletePhoto);

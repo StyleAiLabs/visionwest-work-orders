@@ -15,7 +15,10 @@ const PhotoUploadPage = () => {
     const [selectedPhotos, setSelectedPhotos] = useState([]);
     const [description, setDescription] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+    const MAX_PHOTOS = 20;
 
     // Show toast message
     const showToast = (message, type = 'error') => {
@@ -48,6 +51,12 @@ const PhotoUploadPage = () => {
     // Handle file selection
     const handlePhotoSelect = (e) => {
         const files = Array.from(e.target.files);
+
+        // Check if adding these files would exceed the max limit
+        if (selectedPhotos.length + files.length > MAX_PHOTOS) {
+            showToast(`Maximum ${MAX_PHOTOS} photos allowed. You can select ${MAX_PHOTOS - selectedPhotos.length} more.`, 'error');
+            return;
+        }
 
         // Validate file types and sizes
         const validFiles = files.filter(file => {
@@ -92,13 +101,16 @@ const PhotoUploadPage = () => {
         }
 
         setIsUploading(true);
+        setUploadProgress(0);
 
         try {
             // Extract just the File objects for upload
             const files = selectedPhotos.map(photo => photo.file);
 
-            // Upload the photos using the service
-            await photoService.uploadPhotos(id, files, description);
+            // Upload the photos using the service with progress tracking
+            await photoService.uploadPhotos(id, files, description, (progress) => {
+                setUploadProgress(progress);
+            });
 
             showToast('Photos uploaded successfully', 'success');
 
@@ -110,6 +122,7 @@ const PhotoUploadPage = () => {
             console.error('Error uploading photos:', error);
             showToast('Failed to upload photos. Please try again.', 'error');
             setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -187,6 +200,7 @@ const PhotoUploadPage = () => {
                             />
                         </svg>
                         <p className="mt-2 text-sm text-gray-600">Take a photo or upload from gallery</p>
+                        <p className="mt-1 text-xs text-gray-500">Max 20 photos, 5MB each</p>
                         <div className="mt-4 flex space-x-3">
                             <label className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-md text-sm font-medium cursor-pointer">
                                 Camera
@@ -217,7 +231,24 @@ const PhotoUploadPage = () => {
                 {/* Preview Images */}
                 {selectedPhotos.length > 0 && (
                     <div className="bg-white rounded-lg shadow p-4 mb-4">
-                        <h2 className="text-md font-semibold mb-3">Selected Photos ({selectedPhotos.length})</h2>
+                        <h2 className="text-md font-semibold mb-3">Selected Photos ({selectedPhotos.length}/{MAX_PHOTOS})</h2>
+
+                        {/* Upload Progress Bar */}
+                        {isUploading && (
+                            <div className="mb-4">
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm font-medium text-gray-700">Uploading...</span>
+                                    <span className="text-sm font-medium text-gray-700">{uploadProgress}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div
+                                        className="bg-nextgen-green h-2.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${uploadProgress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-3">
                             {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative">

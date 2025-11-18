@@ -118,7 +118,7 @@ All API responses follow a standardized format:
 ## File Upload
 
 For photo uploads, the API accepts multipart/form-data requests with:
-- 'photos' field containing the image files (max 5 files, 10MB each)
+- 'photos' field containing the image files (max 20 files, 5MB each)
 - 'description' field (optional) with a description of the photos
 
 Example:
