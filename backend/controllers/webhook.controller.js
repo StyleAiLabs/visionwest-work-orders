@@ -8,6 +8,48 @@ const Alert = db.alert;
 const notificationController = require('./notification.controller');
 const WorkOrderNote = db.workOrderNote;
 
+/**
+ * Helper function to execute database operations with retry logic
+ * Handles ECONNRESET and other connection errors common with Render cold starts
+ */
+const executeWithRetry = async (operation, maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await operation();
+        } catch (error) {
+            const isConnectionError = 
+                error.name === 'SequelizeConnectionError' ||
+                error.name === 'SequelizeConnectionRefusedError' ||
+                error.name === 'SequelizeConnectionTimedOutError' ||
+                error.message?.includes('ECONNRESET') ||
+                error.message?.includes('Connection terminated') ||
+                error.message?.includes('Connection lost');
+            
+            if (isConnectionError && attempt < maxRetries) {
+                console.log(`⚠️ Database connection error on attempt ${attempt}/${maxRetries}: ${error.message}`);
+                console.log('Attempting to reconnect...');
+                
+                // Exponential backoff: wait 1s, 2s, 4s...
+                const waitTime = Math.pow(2, attempt - 1) * 1000;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                
+                // Force Sequelize to reconnect
+                try {
+                    await db.sequelize.authenticate();
+                    console.log('✓ Database reconnected successfully');
+                } catch (reconnectError) {
+                    console.error(`✗ Reconnection attempt ${attempt} failed:`, reconnectError.message);
+                }
+                
+                continue; // Retry the operation
+            }
+            
+            // If not a connection error or max retries reached, throw
+            throw error;
+        }
+    }
+};
+
 // Create work order from n8n email processing
 exports.createWorkOrderFromEmail = async (req, res) => {
     try {
@@ -46,7 +88,11 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         console.log(`Processing work order with job number: ${job_no}`);
 
         // Find admin user to set as creator (needed for both create and update paths)
-        const adminUser = await User.findOne({ where: { role: 'admin' } });
+        // Use retry logic for database operations
+        const adminUser = await executeWithRetry(async () => {
+            return await User.findOne({ where: { role: 'admin' } });
+        });
+        
         if (!adminUser) {
             console.log('No admin user found');
             return res.status(500).json({
@@ -56,47 +102,55 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         }
 
         // Check if work order with the same job number already exists
-        const existingWorkOrder = await WorkOrder.findOne({ where: { job_no } });
+        const existingWorkOrder = await executeWithRetry(async () => {
+            return await WorkOrder.findOne({ where: { job_no } });
+        });
 
         if (existingWorkOrder) {
             console.log(`Found existing work order with job number: ${job_no}. Updating instead of creating new one.`);
 
             // Update the existing work order with new data
-            const updatedWorkOrder = await existingWorkOrder.update({
-                date: date || existingWorkOrder.date,
-                supplier_name: supplier_name || existingWorkOrder.supplier_name,
-                supplier_phone: supplier_phone || existingWorkOrder.supplier_phone,
-                supplier_email: supplier_email || existingWorkOrder.supplier_email,
-                property_name: property_name || existingWorkOrder.property_name,
-                property_address: property_address || existingWorkOrder.property_address,
-                property_phone: property_phone || existingWorkOrder.property_phone,
-                description: description || existingWorkOrder.description,
-                po_number: po_number || existingWorkOrder.po_number,
-                authorized_by: authorized_by || existingWorkOrder.authorized_by,
-                authorized_contact: authorized_contact || existingWorkOrder.authorized_contact,
-                authorized_email: authorized_email || existingWorkOrder.authorized_email,
-                // Update work order type if it wasn't set before
-                work_order_type: existingWorkOrder.work_order_type || 'email',
-                // Merge metadata while preserving existing data
-                metadata: {
-                    ...existingWorkOrder.metadata,
-                    email_subject,
-                    email_sender,
-                    email_received_date,
-                    last_updated_via: 'n8n_workflow',
-                    last_updated_at: new Date().toISOString()
-                }
+            const updatedWorkOrder = await executeWithRetry(async () => {
+                return await existingWorkOrder.update({
+                    date: date || existingWorkOrder.date,
+                    supplier_name: supplier_name || existingWorkOrder.supplier_name,
+                    supplier_phone: supplier_phone || existingWorkOrder.supplier_phone,
+                    supplier_email: supplier_email || existingWorkOrder.supplier_email,
+                    property_name: property_name || existingWorkOrder.property_name,
+                    property_address: property_address || existingWorkOrder.property_address,
+                    property_phone: property_phone || existingWorkOrder.property_phone,
+                    description: description || existingWorkOrder.description,
+                    po_number: po_number || existingWorkOrder.po_number,
+                    authorized_by: authorized_by || existingWorkOrder.authorized_by,
+                    authorized_contact: authorized_contact || existingWorkOrder.authorized_contact,
+                    authorized_email: authorized_email || existingWorkOrder.authorized_email,
+                    // Update work order type if it wasn't set before
+                    work_order_type: existingWorkOrder.work_order_type || 'email',
+                    // Merge metadata while preserving existing data
+                    metadata: {
+                        ...existingWorkOrder.metadata,
+                        email_subject,
+                        email_sender,
+                        email_received_date,
+                        last_updated_via: 'n8n_workflow',
+                        last_updated_at: new Date().toISOString()
+                    }
+                });
             });
 
             // Add a note about the update
-            await WorkOrderNote.create({
-                note: `Work order updated via email webhook. ${description ? 'New description: ' + description : 'No description changes.'}`,
-                work_order_id: existingWorkOrder.id,
-                created_by: adminUser.id
+            await executeWithRetry(async () => {
+                return await WorkOrderNote.create({
+                    note: `Work order updated via email webhook. ${description ? 'New description: ' + description : 'No description changes.'}`,
+                    work_order_id: existingWorkOrder.id,
+                    created_by: adminUser.id
+                });
             });
 
             // Notify relevant staff about the work order update
-            await notifyUsersAboutWorkOrderUpdate(existingWorkOrder.id, adminUser.id);
+            await executeWithRetry(async () => {
+                return await notifyUsersAboutWorkOrderUpdate(existingWorkOrder.id, adminUser.id);
+            });
 
             return res.status(200).json({
                 success: true,
@@ -115,8 +169,8 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         // Multi-tenant: Find Visionwest client for webhook-created work orders
         // Webhook work orders are always assigned to Visionwest client
         const Client = db.client;
-        const visionwestClient = await Client.findOne({
-            where: { code: 'VISIONWEST' }
+        const visionwestClient = await executeWithRetry(async () => {
+            return await Client.findOne({ where: { code: 'VISIONWEST' } });
         });
 
         if (!visionwestClient) {
@@ -127,8 +181,9 @@ exports.createWorkOrderFromEmail = async (req, res) => {
             });
         }
 
-        // Create new work order
-        const workOrder = await WorkOrder.create({
+        // Create new work order with retry logic
+        const workOrder = await executeWithRetry(async () => {
+            return await WorkOrder.create({
             job_no,
             date: date || new Date(),
             status: 'pending',
@@ -153,12 +208,15 @@ exports.createWorkOrderFromEmail = async (req, res) => {
                 email_received_date,
                 created_via: 'n8n_workflow'
             }
+            });
         });
 
         console.log(`Work order created successfully with ID: ${workOrder.id}`);
 
         // Notify relevant staff about the new work order
-        await notifyUsersAboutWorkOrder(workOrder.id, adminUser.id);
+        await executeWithRetry(async () => {
+            return await notifyUsersAboutWorkOrder(workOrder.id, adminUser.id);
+        });
 
         return res.status(201).json({
             success: true,
@@ -282,9 +340,9 @@ exports.addNoteToWorkOrder = async (req, res) => {
     try {
         const { job_no, note_content } = req.body;
 
-        // Find work order
-        const workOrder = await WorkOrder.findOne({
-            where: { job_no: job_no }
+        // Find work order with retry logic
+        const workOrder = await executeWithRetry(async () => {
+            return await WorkOrder.findOne({ where: { job_no: job_no } });
         });
 
         if (!workOrder) {
@@ -295,13 +353,15 @@ exports.addNoteToWorkOrder = async (req, res) => {
         }
 
         // Create work order note with correct column names
-        const note = await WorkOrderNote.create({
-            note: note_content,
-            work_order_id: workOrder.id,
-            created_by: 1  // System user ID
-        }, {
-            // This ensures Sequelize uses the correct column names
-            fields: ['note', 'work_order_id', 'created_by']
+        const note = await executeWithRetry(async () => {
+            return await WorkOrderNote.create({
+                note: note_content,
+                work_order_id: workOrder.id,
+                created_by: 1  // System user ID
+            }, {
+                // This ensures Sequelize uses the correct column names
+                fields: ['note', 'work_order_id', 'created_by']
+            });
         });
 
         return res.status(201).json({
@@ -403,8 +463,10 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
             });
         }
 
-        // Find the existing work order
-        const existingWorkOrder = await WorkOrder.findOne({ where: { job_no } });
+        // Find the existing work order with retry logic
+        const existingWorkOrder = await executeWithRetry(async () => {
+            return await WorkOrder.findOne({ where: { job_no } });
+        });
 
         if (!existingWorkOrder) {
             return res.status(404).json({
@@ -415,8 +477,10 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
 
         console.log(`Updating existing work order: ${job_no}`);
 
-        // Find admin user for audit trail
-        const adminUser = await User.findOne({ where: { role: 'admin' } });
+        // Find admin user for audit trail with retry logic
+        const adminUser = await executeWithRetry(async () => {
+            return await User.findOne({ where: { role: 'admin' } });
+        });
 
         // Prepare update data (only update fields that are provided)
         const updateData = {};
@@ -444,22 +508,28 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
             last_updated_at: new Date().toISOString()
         };
 
-        // Perform the update
-        const updatedWorkOrder = await existingWorkOrder.update(updateData);
+        // Perform the update with retry logic
+        const updatedWorkOrder = await executeWithRetry(async () => {
+            return await existingWorkOrder.update(updateData);
+        });
 
         // Add a note about the update if there were meaningful changes
         const changedFields = Object.keys(updateData).filter(key => key !== 'metadata');
         if (changedFields.length > 0 && adminUser) {
-            await WorkOrderNote.create({
-                note: `Work order updated via email webhook. Updated fields: ${changedFields.join(', ')}`,
-                work_order_id: existingWorkOrder.id,
-                created_by: adminUser.id
+            await executeWithRetry(async () => {
+                return await WorkOrderNote.create({
+                    note: `Work order updated via email webhook. Updated fields: ${changedFields.join(', ')}`,
+                    work_order_id: existingWorkOrder.id,
+                    created_by: adminUser.id
+                });
             });
         }
 
         // Notify users about the update
         if (adminUser) {
-            await notifyUsersAboutWorkOrderUpdate(existingWorkOrder.id, adminUser.id);
+            await executeWithRetry(async () => {
+                return await notifyUsersAboutWorkOrderUpdate(existingWorkOrder.id, adminUser.id);
+            });
         }
 
         console.log(`Work order ${job_no} updated successfully`);
