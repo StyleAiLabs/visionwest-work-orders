@@ -17,22 +17,22 @@ const executeWithRetry = async (operation, maxRetries = 3) => {
         try {
             return await operation();
         } catch (error) {
-            const isConnectionError = 
+            const isConnectionError =
                 error.name === 'SequelizeConnectionError' ||
                 error.name === 'SequelizeConnectionRefusedError' ||
                 error.name === 'SequelizeConnectionTimedOutError' ||
                 error.message?.includes('ECONNRESET') ||
                 error.message?.includes('Connection terminated') ||
                 error.message?.includes('Connection lost');
-            
+
             if (isConnectionError && attempt < maxRetries) {
                 console.log(`⚠️ Database connection error on attempt ${attempt}/${maxRetries}: ${error.message}`);
                 console.log('Attempting to reconnect...');
-                
+
                 // Exponential backoff: wait 1s, 2s, 4s...
                 const waitTime = Math.pow(2, attempt - 1) * 1000;
                 await new Promise(resolve => setTimeout(resolve, waitTime));
-                
+
                 // Force Sequelize to reconnect
                 try {
                     await db.sequelize.authenticate();
@@ -40,10 +40,10 @@ const executeWithRetry = async (operation, maxRetries = 3) => {
                 } catch (reconnectError) {
                     console.error(`✗ Reconnection attempt ${attempt} failed:`, reconnectError.message);
                 }
-                
+
                 continue; // Retry the operation
             }
-            
+
             // If not a connection error or max retries reached, throw
             throw error;
         }
@@ -92,7 +92,7 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         const adminUser = await executeWithRetry(async () => {
             return await User.findOne({ where: { role: 'admin' } });
         });
-        
+
         if (!adminUser) {
             console.log('No admin user found');
             return res.status(500).json({
@@ -184,30 +184,30 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         // Create new work order with retry logic
         const workOrder = await executeWithRetry(async () => {
             return await WorkOrder.create({
-            job_no,
-            date: date || new Date(),
-            status: 'pending',
-            supplier_name,
-            supplier_phone,
-            supplier_email,
-            property_name,
-            property_address,
-            property_phone,
-            description,
-            po_number,
-            authorized_by,
-            authorized_contact,
-            authorized_email,
-            created_by: adminUser.id,
-            client_id: visionwestClient.id, // Multi-tenant: Assign to Visionwest client
-            // Optional metadata from email
-            work_order_type: 'email', // Mark as coming from email
-            metadata: {
-                email_subject,
-                email_sender,
-                email_received_date,
-                created_via: 'n8n_workflow'
-            }
+                job_no,
+                date: date || new Date(),
+                status: 'pending',
+                supplier_name,
+                supplier_phone,
+                supplier_email,
+                property_name,
+                property_address,
+                property_phone,
+                description,
+                po_number,
+                authorized_by,
+                authorized_contact,
+                authorized_email,
+                created_by: adminUser.id,
+                client_id: visionwestClient.id, // Multi-tenant: Assign to Visionwest client
+                // Optional metadata from email
+                work_order_type: 'email', // Mark as coming from email
+                metadata: {
+                    email_subject,
+                    email_sender,
+                    email_received_date,
+                    created_via: 'n8n_workflow'
+                }
             });
         });
 
