@@ -1,9 +1,9 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 1.1.0 (MINOR - expanded Role-Based Access Control principle)
-Last Updated: 2025-10-20
-Amendment: Clarified staff vs admin role distinctions
+Version Change: 1.1.0 → 1.2.0 (MINOR - corrected RBAC permission matrix, added cancellation
+  integrity rules, updated quotes workflow, photo limits, and app version)
+Last Updated: 2026-03-06
 
 Principles Defined:
 - Mobile-First Design (mandatory)
@@ -14,26 +14,29 @@ Principles Defined:
 - Release Documentation (changelog required)
 - Integration Resilience (n8n/SMS async patterns)
 
-Changes in v1.1.0:
-- Added detailed permission matrix for all 4 roles
-- Clarified staff role: can view/update all work orders but CANNOT delete or access admin section
-- Clarified admin role: full system access including deletion and user/client management
-- Added requirement for client ownership validation bypass for staff/admin
-- Added DELETE endpoint protection (admin only)
-- Added admin section route protection (admin only)
+Changes in v1.2.0:
+- FIXED: Permission matrix - Staff CANNOT cancel work orders (was erroneously shown as ✅,
+  corrected to ❌ to match auth.middleware.js handleWorkOrderStatusUpdate implementation)
+- ADDED: Cancellation Integrity rules under RBAC (mandatory reason, permanent status,
+  no reactivation, audit trail - introduced in v2.8.0)
+- ADDED: Quotes workflow access pattern under RBAC (client_admin/admin create requests;
+  staff provides quotes; client_admin/admin approve/decline)
+- UPDATED: File Upload Pattern - 20 photos max, 5MB per file (was 10 photos, 10MB total)
+- UPDATED: App Version 2.7.0 → 2.8.0
+- UPDATED: Last Amended date to 2026-03-06
 
 Templates Status:
-✅ plan-template.md - aligned with multi-environment setup
-✅ spec-template.md - aligned with user story priorities
-✅ tasks-template.md - aligned with independent testing
+✅ plan-template.md - aligned with multi-environment setup (no changes needed)
+✅ spec-template.md - aligned with user story priorities (no changes needed)
+✅ tasks-template.md - aligned with independent testing (no changes needed)
 ⚠️  README.md - needs constitution reference
 ⚠️  DEPLOYMENT_GUIDE.md - needs version policy reference
 
 Follow-up TODOs:
 - Add CHANGELOG.md template for release documentation principle
 - Create pre-commit hooks for brand color validation
-- Add automated tests for role-based access patterns
-- Update route middleware to use isAdmin for DELETE endpoints (currently isStaffOrAdmin)
+- Add automated tests for role-based access patterns (cancellation, quote permissions)
+- Consider adding a dedicated principle for the Quotes system as it matures
 -->
 
 # NextGen WOM Constitution
@@ -69,33 +72,61 @@ Every database query MUST enforce client-level data isolation through `client_id
 Access control MUST be enforced at the API route level using role-specific middleware. Four roles with distinct access patterns:
 
 **Roles**:
-- `client`: Sees only work orders where `authorized_email` matches their email; Can request cancellation only
-- `client_admin`: Sees all work orders for their client organization; Can create and update work orders for their client
-- `staff`: Sees all work orders across all clients; Can view and update any work order; CANNOT delete work orders; NO access to admin section (user management)
-- `admin`: Full system access; Can view, update, and delete any work order; Full access to admin section including user management and client management
+- `client`: Sees only work orders where `authorized_email` matches their email; Can cancel own work
+  orders only (with mandatory reason)
+- `client_admin`: Sees all work orders for their client; Can create, update, and cancel work orders
+  for their client (with mandatory reason); Can create/approve/decline quote requests
+- `staff`: Sees all work orders across all clients; Can view and update any work order; CANNOT
+  cancel, delete, or access the admin section; Can provide quotes to client_admin/admin requests
+- `admin`: Full system access; Can view, update, cancel, and delete any work order; Full access to
+  admin section including user management and client management; Can create and approve quotes
 
-**Permission Matrix**:
+**Work Order Permission Matrix**:
 | Action | client | client_admin | staff | admin |
 |--------|--------|--------------|-------|-------|
-| View own client work orders | ✅ (filtered by email) | ✅ | ✅ | ✅ |
+| View own client work orders | ✅ (email-filtered) | ✅ | ✅ | ✅ |
 | View all client work orders | ❌ | ✅ (own client) | ✅ (all clients) | ✅ (all clients) |
 | Create work order | ❌ | ✅ | ❌ | ✅ |
 | Update work order | ❌ | ✅ (own client) | ✅ (all clients) | ✅ (all clients) |
 | Delete work order | ❌ | ❌ | ❌ | ✅ |
-| Cancel work order | ✅ | ✅ | ✅ | ✅ |
+| Cancel work order | ✅ (own, with notes) | ✅ (client's, with notes) | ❌ (403) | ✅ (any, with notes) |
+| Export work order PDF | ❌ | ✅ | ✅ | ✅ |
 | Access admin section | ❌ | ❌ | ❌ | ✅ |
 | User management | ❌ | ❌ | ❌ | ✅ |
 | Client management | ❌ | ❌ | ❌ | ✅ |
 
+**Quotes Permission Matrix**:
+| Action | client | client_admin | staff | admin |
+|--------|--------|--------------|-------|-------|
+| Create quote request | ❌ | ✅ | ❌ | ✅ |
+| View quotes | ❌ | ✅ (own client) | ✅ (all) | ✅ (all) |
+| Provide quote (price) | ❌ | ❌ | ✅ | ✅ |
+| Approve/decline quote | ❌ | ✅ | ❌ | ✅ |
+| Convert quote to work order | ❌ | ❌ | ✅ | ✅ |
+
 **Requirements**:
-- All routes use `authMiddleware.verifyToken` + role middleware (e.g., `authMiddleware.isAnyValidRole`, `authMiddleware.isStaffOrAdmin`, `authMiddleware.isAdmin`)
-- Status updates have special logic: clients can only set status to `'cancelled'`
+- All routes use `authMiddleware.verifyToken` + role middleware (e.g., `authMiddleware.isAnyValidRole`,
+  `authMiddleware.isStaffOrAdmin`, `authMiddleware.isAdmin`)
+- `clientScoping.js` middleware MUST be applied after `verifyToken` for all client-scoped routes;
+  admins and staff can override scope via `X-Client-Context` header
+- Status update middleware (`handleWorkOrderStatusUpdate`) enforces: clients → only `cancelled`;
+  staff → all statuses except `cancelled`; client_admin and admin → all statuses
 - Client ownership validation MUST skip for `staff` and `admin` roles (they bypass client scoping)
 - DELETE endpoints protected by `authMiddleware.isAdmin` only
 - Admin section routes protected by `authMiddleware.isAdmin` only
 - Maintain consistency between dashboard summaries and work order listings
 
-**Rationale**: Clear role separation prevents unauthorized access while enabling appropriate visibility. Staff can manage all work orders operationally without administrative privileges like deletion or user management.
+**Cancellation Integrity Rules** (enforced since v2.8.0):
+- ALL cancellations MUST include a non-empty written reason (`notes` field required)
+- Cancelled work orders CANNOT be reactivated (status change attempt returns 400)
+- Every cancellation MUST create both a `WorkOrderNote` (audit message with user full name) and a
+  `StatusUpdate` record (with `previous_status`, `new_status`, `notes`, and `updated_by`)
+- Staff users are blocked from cancelling any work order (403 Forbidden by design)
+- Completed work orders CANNOT be cancelled
+
+**Rationale**: Clear role separation prevents unauthorized access while enabling appropriate visibility.
+Staff can manage all work orders operationally without administrative privileges. Cancellation audit
+trails ensure accountability and data integrity for permanently closed work orders.
 
 ### IV. Brand Consistency (NextGen WOM Identity)
 
@@ -137,7 +168,7 @@ Code MUST behave identically across development, staging, and production environ
 Every feature update MUST include updated release notes documenting user-facing changes.
 
 **Requirements**:
-- Version follows semantic versioning: MAJOR.MINOR.PATCH (currently 2.7.0)
+- Version follows semantic versioning: MAJOR.MINOR.PATCH (currently 2.8.0)
 - MAJOR: Breaking API changes, database schema removals, role permission changes
 - MINOR: New features, new API endpoints, new UI components
 - PATCH: Bug fixes, typo corrections, performance improvements
@@ -163,13 +194,17 @@ Every feature update MUST include updated release notes documenting user-facing 
 
 ### VII. Integration Resilience
 
-External service integrations (n8n webhooks, SMS notifications) MUST be asynchronous and failure-tolerant.
+External service integrations (n8n webhooks, SMS notifications, PDF export) MUST be asynchronous
+and failure-tolerant.
 
 **Requirements**:
-- Use `setImmediate()` for async operations after responding to user (see `workOrder.controller.js:updateWorkOrderStatus`)
-- SMS notifications via `smsService.sendWorkOrderStatusSMS()` - failure logs but doesn't block
+- Use `setImmediate()` for async operations after responding to user
+  (see `workOrder.controller.js:updateWorkOrderStatus`)
+- SMS notifications via `smsService.sendWorkOrderStatusSMS()` - failure logs but does not block
 - n8n webhook creates work orders with VisionWest `client_id` by default
 - Webhook endpoint bypasses JWT authentication using `WEBHOOK_API_KEY` header
+- PDF export via `pdfService.generateWorkOrderPDF(id)` - returns buffer, does not alter work order state
+- Photo uploads: maximum 20 photos per work order, 5MB per file (via multer + S3 storage)
 - Test webhooks with `/scripts/test-webhook.js` script
 
 **Rationale**: External service failures should never block user operations or corrupt application state.
@@ -293,6 +328,6 @@ Principle violations MUST be documented in implementation plan's "Complexity Tra
 - Why violation is necessary
 - What simpler alternative was rejected and why
 
-**Version**: 1.1.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20 | **App Version**: 2.7.0
+**Version**: 1.2.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2026-03-06 | **App Version**: 2.8.0
 
 ````
