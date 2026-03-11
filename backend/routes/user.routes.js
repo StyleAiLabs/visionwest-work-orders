@@ -7,7 +7,8 @@ const {
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  resetUserPassword
 } = require('../controllers/user.controller');
 
 // All routes require authentication and client_admin or admin role
@@ -20,6 +21,7 @@ router.get('/', listUsers);            // GET /api/users
 router.post('/', createUser);          // POST /api/users
 router.get('/:userId', getUserById);   // GET /api/users/:userId
 router.patch('/:userId', updateUser);  // PATCH /api/users/:userId
+router.post('/:userId/reset-password', resetUserPassword); // POST /api/users/:userId/reset-password
 router.delete('/:userId', deleteUser); // DELETE /api/users/:userId
 
 module.exports = router;

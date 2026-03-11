@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { listUsers, deleteUser } from '../services/userService';
+import { listUsers, deleteUser, resetUserPassword } from '../services/userService';
 import { getAllClients } from '../services/clientService';
 import UserList from '../components/UserList';
 import CreateUserForm from '../components/CreateUserForm';
@@ -16,6 +16,7 @@ const UserManagementPage = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [temporaryPasswordNotice, setTemporaryPasswordNotice] = useState(null);
   const [clients, setClients] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [loadingClients, setLoadingClients] = useState(false);
@@ -125,6 +126,39 @@ const UserManagementPage = () => {
     }
   };
 
+  const handleResetPassword = async (targetUser) => {
+    const confirmed = window.confirm(
+      `Reset password for ${targetUser.full_name}? They will receive a new temporary password by email.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const headers = isAdmin && selectedClientId && selectedClientId !== 'all'
+        ? { 'X-Client-Context': selectedClientId }
+        : {};
+
+      const response = await resetUserPassword(targetUser.id, headers);
+
+      setSuccessMessage(`Password reset for ${targetUser.full_name}. Notification email sent.`);
+      setTimeout(() => setSuccessMessage(''), 5000);
+
+      if (response?.temporaryPassword) {
+        setTemporaryPasswordNotice({
+          fullName: targetUser.full_name,
+          temporaryPassword: response.temporaryPassword
+        });
+
+        // Auto-hide sensitive password hint after a short interval.
+        setTimeout(() => setTemporaryPasswordNotice(null), 30000);
+      }
+    } catch (err) {
+      console.error('Error resetting password:', err);
+      setError(err.response?.data?.error || 'Failed to reset password');
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -180,6 +214,33 @@ const UserManagementPage = () => {
           </div>
         )}
 
+        {/* Temporary password notice */}
+        {temporaryPasswordNotice && (
+          <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-lg">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">Temporary password for {temporaryPasswordNotice.fullName}</p>
+                <p className="font-mono text-sm">{temporaryPasswordNotice.temporaryPassword}</p>
+                <p className="text-xs mt-1">Visible for 30 seconds. Share securely with the user.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => navigator.clipboard?.writeText(temporaryPasswordNotice.temporaryPassword)}
+                  className="bg-amber-600 text-white py-1 px-3 rounded-md hover:bg-amber-700 text-sm"
+                >
+                  Copy
+                </button>
+                <button
+                  onClick={() => setTemporaryPasswordNotice(null)}
+                  className="bg-white border border-amber-400 text-amber-900 py-1 px-3 rounded-md hover:bg-amber-100 text-sm"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -217,6 +278,8 @@ const UserManagementPage = () => {
             users={users}
             onEditUser={handleEditUser}
             onDeleteUser={handleDeleteUser}
+            onResetPassword={handleResetPassword}
+            currentUserId={user?.id}
             isLoading={isLoading}
           />
         </div>

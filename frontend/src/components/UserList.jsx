@@ -1,6 +1,6 @@
 import React from 'react';
 
-const UserList = ({ users, onEditUser, onDeleteUser, isLoading }) => {
+const UserList = ({ users, onEditUser, onDeleteUser, onResetPassword, currentUserId, isLoading }) => {
   if (isLoading) {
     return (
       <div className="text-center py-8">
@@ -32,11 +32,10 @@ const UserList = ({ users, onEditUser, onDeleteUser, isLoading }) => {
                   <p className="text-gray-500 text-xs mt-1">{user.client.name}</p>
                 )}
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                user.role === 'client_admin'
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'client_admin'
                   ? 'bg-blue-100 text-blue-800'
                   : 'bg-gray-100 text-gray-800'
-              }`}>
+                }`}>
                 {user.role === 'client_admin' ? 'Admin' : 'User'}
               </span>
             </div>
@@ -50,6 +49,14 @@ const UserList = ({ users, onEditUser, onDeleteUser, isLoading }) => {
               >
                 Edit
               </button>
+              {onResetPassword && user.id !== currentUserId && (
+                <button
+                  onClick={() => onResetPassword(user)}
+                  className="flex-1 bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition"
+                >
+                  Reset Password
+                </button>
+              )}
               <button
                 onClick={() => onDeleteUser(user)}
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition"
@@ -102,22 +109,29 @@ const UserList = ({ users, onEditUser, onDeleteUser, isLoading }) => {
                   <div className="text-gray-600">{user.phone_number || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'client_admin'
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'client_admin'
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-gray-100 text-gray-800'
-                  }`}>
+                    }`}>
                     {user.role === 'client_admin' ? 'Client Admin' : 'Client User'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex gap-3">
+                <td className="px-6 py-4 align-top">
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => onEditUser(user)}
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Edit
                     </button>
+                    {onResetPassword && user.id !== currentUserId && (
+                      <button
+                        onClick={() => onResetPassword(user)}
+                        className="text-amber-600 hover:text-amber-800 font-medium"
+                      >
+                        Reset Password
+                      </button>
+                    )}
                     <button
                       onClick={() => onDeleteUser(user)}
                       className="text-red-600 hover:text-red-800 font-medium"

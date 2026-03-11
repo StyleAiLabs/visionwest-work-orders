@@ -54,10 +54,23 @@ export const deleteUser = async (userId, customHeaders = {}) => {
   return response.data;
 };
 
+/**
+ * Reset a managed user's password
+ * @param {number} userId - User ID to reset
+ * @param {Object} customHeaders - Optional custom headers (e.g., X-Client-Context for admin)
+ */
+export const resetUserPassword = async (userId, customHeaders = {}) => {
+  const response = await api.post(`/users/${userId}/reset-password`, {}, {
+    headers: customHeaders
+  });
+  return response.data;
+};
+
 export default {
   listUsers,
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  resetUserPassword
 };

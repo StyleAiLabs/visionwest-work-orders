@@ -1,7 +1,7 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const { generateSecurePassword } = require('../utils/passwordGenerator');
-const { sendNewUserCredentialsEmail } = require('../utils/emailService');
+const { sendNewUserCredentialsEmail, sendUserPasswordResetEmail } = require('../utils/emailService');
 const { Op } = require('sequelize');
 
 /**
@@ -316,10 +316,93 @@ async function deleteUser(req, res) {
   }
 }
 
+/**
+ * Reset a managed user's password (admin and client_admin only)
+ * POST /api/users/:userId/reset-password
+ */
+async function resetUserPassword(req, res) {
+  try {
+    const { userId } = req.params;
+    const targetUserId = parseInt(userId, 10);
+
+    if (Number.isNaN(targetUserId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    // Enforce self-service flow for own password changes.
+    if (targetUserId === req.user.userId) {
+      return res.status(400).json({ error: 'Use Change Password to update your own password' });
+    }
+
+    const whereClause = {
+      id: targetUserId,
+      is_active: true
+    };
+
+    // client_admin can only reset users in their own tenant.
+    if (req.userRole === 'client_admin') {
+      whereClause.client_id = req.clientId;
+    }
+
+    // Admin can scope resets to a selected client via existing context switch.
+    if (req.userRole === 'admin' && req.isContextSwitched) {
+      whereClause.client_id = req.clientId;
+    }
+
+    const targetUser = await db.user.findOne({ where: whereClause });
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const temporaryPassword = generateSecurePassword();
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+    await targetUser.update({
+      password: hashedPassword,
+      password_changed: false
+    });
+
+    let adminBcc = [];
+    if (req.userRole === 'client_admin') {
+      const admins = await db.user.findAll({
+        where: {
+          role: 'admin',
+          is_active: true,
+          email: { [Op.ne]: null }
+        },
+        attributes: ['email']
+      });
+
+      adminBcc = [...new Set(admins.map(admin => admin.email).filter(Boolean))];
+    }
+
+    // Keep reset operation successful even if notification email fails.
+    setImmediate(() => {
+      sendUserPasswordResetEmail(targetUser, temporaryPassword, {
+        actorRole: req.userRole,
+        bccRecipients: adminBcc
+      });
+    });
+
+    return res.json({
+      message: 'Password reset successfully. User has been notified by email.',
+      userId: targetUser.id,
+      emailSent: true,
+      temporaryPassword
+    });
+
+  } catch (error) {
+    console.error('Error resetting user password:', error);
+    return res.status(500).json({ error: 'Failed to reset password' });
+  }
+}
+
 module.exports = {
   listUsers,
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  resetUserPassword
 };

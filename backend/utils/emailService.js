@@ -233,6 +233,129 @@ exports.sendNewUserCredentialsEmail = async (user, temporaryPassword) => {
 };
 
 /**
+ * Send password reset notification with temporary credentials.
+ * @param {Object} user - Target user object
+ * @param {string} temporaryPassword - New temporary password
+ * @param {Object} options - Optional metadata
+ * @param {string} options.actorRole - Role that initiated reset
+ * @param {string[]} options.bccRecipients - Optional BCC recipients
+ * @returns {Promise<void>}
+ */
+exports.sendUserPasswordResetEmail = async (user, temporaryPassword, options = {}) => {
+  try {
+    const loginUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const fromEmail = process.env.EMAIL_USER || 'noreply@nextgenwom.com';
+    const fromName = 'NextGen WOM';
+    const bccRecipients = Array.isArray(options.bccRecipients)
+      ? [...new Set(options.bccRecipients.filter(Boolean))]
+      : [];
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset - NextGen WOM</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background-color: #0e2640; padding: 32px 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: 600;">NextGen WOM</h1>
+            <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; opacity: 0.9;">Work Order Management</p>
+          </div>
+
+          <div style="padding: 40px 24px; background-color: #ffffff;">
+            <h2 style="color: #010308; font-size: 24px; margin: 0 0 16px 0; font-weight: 600;">Your Password Was Reset</h2>
+
+            <p style="color: #010308; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+              Hi ${user.full_name},
+            </p>
+
+            <p style="color: #010308; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+              An administrator reset your account password. Please use the temporary password below to log in.
+            </p>
+
+            <div style="background-color: #f9fafb; border-left: 4px solid #8bc63b; padding: 20px; border-radius: 4px; margin: 0 0 24px 0;">
+              <p style="color: #010308; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">TEMPORARY LOGIN CREDENTIALS</p>
+              <p style="color: #010308; font-size: 14px; line-height: 1.8; margin: 0;">
+                <strong>Email:</strong> ${user.email}<br>
+                <strong>Temporary Password:</strong> <code style="background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; color: #010308;">${temporaryPassword}</code>
+              </p>
+            </div>
+
+            <p style="color: #010308; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0; padding: 12px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+              <strong style="color: #92400e;">Important:</strong> You must change your password after logging in.
+            </p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${loginUrl}/login"
+                 style="display: inline-block; background-color: #8bc63b; color: #ffffff; padding: 14px 32px;
+                        text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Login to NextGen WOM
+              </a>
+            </div>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} NextGen WOM. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    if (brevoApiInstance) {
+      try {
+        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        sendSmtpEmail.sender = { name: fromName, email: fromEmail };
+        sendSmtpEmail.to = [{ email: user.email, name: user.full_name }];
+        if (bccRecipients.length > 0) {
+          sendSmtpEmail.bcc = bccRecipients.map(email => ({ email }));
+        }
+        sendSmtpEmail.subject = 'NextGen WOM - Your Password Was Reset';
+        sendSmtpEmail.htmlContent = htmlContent;
+
+        await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log(`✅ Password reset email sent via Brevo to ${user.email}`);
+      } catch (brevoError) {
+        console.warn('⚠️  Brevo failed for password reset email, falling back to nodemailer:', brevoError.message);
+
+        const mailOptions = {
+          from: `${fromName} <${fromEmail}>`,
+          to: user.email,
+          bcc: bccRecipients.length > 0 ? bccRecipients.join(', ') : undefined,
+          subject: 'NextGen WOM - Your Password Was Reset',
+          html: htmlContent
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Password reset email sent via nodemailer to ${user.email}`);
+      }
+    } else {
+      const mailOptions = {
+        from: `${fromName} <${fromEmail}>`,
+        to: user.email,
+        bcc: bccRecipients.length > 0 ? bccRecipients.join(', ') : undefined,
+        subject: 'NextGen WOM - Your Password Was Reset',
+        html: htmlContent
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Password reset email sent via nodemailer to ${user.email}`);
+    }
+
+    if (options.actorRole === 'client_admin' && bccRecipients.length > 0) {
+      console.log(`ℹ️  Password reset oversight BCC sent to ${bccRecipients.length} admin recipients`);
+    }
+  } catch (error) {
+    console.error(`❌ Failed to send password reset email to ${user.email}:`, error.message);
+  }
+};
+
+/**
  * Send email using Brevo template
  * @param {Object} options - Email options
  * @param {number} options.templateId - Brevo template ID
@@ -261,7 +384,7 @@ exports.sendBrevoTemplateEmail = async ({ templateId, to, params = {}, subject =
     sendSmtpEmail.to = to;
     sendSmtpEmail.templateId = templateId;
     sendSmtpEmail.params = params;
-    
+
     // Subject is optional if the template already has one
     if (subject) {
       sendSmtpEmail.subject = subject;
