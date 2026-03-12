@@ -24,10 +24,10 @@ const legacyConfig = {
         handleDisconnects: true // Auto-reconnect on disconnect
     },
     dialectOptions: {
-        ssl: process.env.NODE_ENV === 'production' ? {
+        ssl: process.env.DB_SSL === 'false' ? false : {
             require: true,
             rejectUnauthorized: false
-        } : false,
+        },
         connectTimeout: 60000  // 60 second connection timeout
     },
     logging: process.env.NODE_ENV === 'production' ? false : console.log
