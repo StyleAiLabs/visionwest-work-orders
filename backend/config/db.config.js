@@ -67,7 +67,7 @@ const sequelizeCliConfig = {
             handleDisconnects: true
         },
         dialectOptions: {
-            ssl: {
+            ssl: process.env.DB_SSL === 'false' ? false : {
                 require: true,
                 rejectUnauthorized: false
             },
