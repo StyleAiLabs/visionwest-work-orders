@@ -257,13 +257,18 @@ exports.submitQuote = async (req, res) => {
         console.log('Quote ID:', quoteId);
         console.log('User ID:', userId);
 
-        // Find the quote with user details
+        // Find the quote with user and client details
         const quote = await Quote.findByPk(quoteId, {
             include: [
                 {
                     model: User,
                     as: 'creator',
                     attributes: ['id', 'full_name', 'email', 'role']
+                },
+                {
+                    model: Client,
+                    as: 'client',
+                    attributes: ['id', 'name', 'code']
                 }
             ]
         });

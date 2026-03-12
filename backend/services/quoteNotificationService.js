@@ -68,14 +68,27 @@ const createNotification = async (userId, type, message, quoteId = null, metadat
 
 /**
  * Get all WPSG staff users for notifications
- * WPSG client_id is 8 based on the codebase
+ * Looks up WPSG client dynamically by code to avoid hardcoded client_id
  */
 const getWPSGStaffUsers = async () => {
     try {
+        const Client = db.client;
         const User = db.user;
+
+        // Find WPSG client by code (client_id varies between environments)
+        const wpsgClient = await Client.findOne({
+            where: { code: 'WPSG' },
+            attributes: ['id']
+        });
+
+        if (!wpsgClient) {
+            console.warn('⚠ WPSG client not found in database - cannot send staff notifications');
+            return [];
+        }
+
         const staffUsers = await User.findAll({
             where: {
-                client_id: 8, // WPSG client ID
+                client_id: wpsgClient.id,
                 role: ['staff', 'admin'],
                 is_active: true
             },
@@ -147,8 +160,10 @@ exports.notifyQuoteSubmitted = async (quote, submittedBy) => {
                 templateId: 17,
                 to: recipients,
                 params: {
+                    recipient_name: recipients.map(r => r.name).join(', '),
+                    submitted_by_name: submittedBy.full_name,
+                    client_name: quote.client ? quote.client.name : '',
                     quote_number: quote.quote_number,
-                    submitted_by: submittedBy.full_name,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
                     description: quote.description,

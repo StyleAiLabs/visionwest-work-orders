@@ -2,7 +2,7 @@
 
 **Feature Branch**: `008-quote-thank-you-email`  
 **Created**: 2026-03-12  
-**Status**: Draft  
+**Status**: Draft (Amended)  
 **Input**: User description: "Add an email trigger. When a quote is created, send a simple 'Thank you' email to the requester's email address."
 
 ## User Scenarios & Testing *(mandatory)*
@@ -38,11 +38,29 @@ As a quote requester, the thank-you email I receive includes key details of my s
 
 ---
 
+### User Story 3 - WPSG Staff/Admin Receive Notification on Quote Submission (Priority: P1)
+
+As a WPSG (Williams Property Services Group) staff or admin user, I receive an email notification when any quote request is submitted across the system, so I am promptly informed of new incoming work and can begin reviewing and actioning the request.
+
+**Why this priority**: WPSG staff and admins are responsible for reviewing and responding to all quote requests. Without timely notification, requests may sit unactioned, delaying service delivery to clients.
+
+**Independent Test**: Can be tested by submitting a quote request and verifying that all active WPSG staff and admin users receive a notification email containing the quote details.
+
+**Acceptance Scenarios**:
+
+1. **Given** a quote request is submitted, **When** the submission is processed, **Then** all active WPSG users with role 'staff' or 'admin' receive a notification email.
+2. **Given** a notification email is delivered to a WPSG user, **When** the recipient reads it, **Then** it contains the quote number, submitter name, property details, and contact information.
+3. **Given** a quote request is submitted, **When** the notification email service fails, **Then** the quote submission still succeeds and the email failure is logged without affecting the user experience.
+4. **Given** a quote request is submitted, **When** WPSG users are looked up for notification, **Then** the system identifies WPSG users dynamically by the client code 'WPSG' (not by a hardcoded client ID).
+
+---
+
 ### Edge Cases
 
 - Contact email on the quote is invalid or unreachable: email send fails silently; quote submission is not affected.
 - Quote is saved as "Draft" only (not submitted): no thank-you email is sent. The email triggers only on submission.
 - Multiple quotes submitted in quick succession by the same requester: each submission triggers its own independent thank-you email.
+- No WPSG staff/admin users exist in the database: notification is skipped silently.
 
 ## Requirements *(mandatory)*
 
@@ -54,6 +72,9 @@ As a quote requester, the thank-you email I receive includes key details of my s
 - **FR-004**: The email MUST only be triggered on quote submission (not on draft creation or subsequent status changes).
 - **FR-005**: If email delivery fails, the quote submission MUST still succeed. The failure MUST be logged for operational visibility.
 - **FR-006**: The thank-you email MUST be branded consistently with existing system emails (NextGen WOM branding).
+- **FR-007**: System MUST send a notification email to all active WPSG staff and admin users when a quote request is submitted.
+- **FR-008**: The admin notification email MUST include the quote number, submitter name, property details, and contact information.
+- **FR-009**: WPSG users MUST be identified dynamically by client code 'WPSG' (not by a hardcoded client ID).
 
 ### Key Entities
 
@@ -81,3 +102,4 @@ As a quote requester, the thank-you email I receive includes key details of my s
 - **SC-001**: 100% of successfully submitted quote requests trigger a thank-you email send attempt to the quote's contact email.
 - **SC-002**: The thank-you email contains the quote reference number, property name, and description summary in every delivery.
 - **SC-003**: Quote submission success rate is unaffected by email delivery failures (0% submission failures caused by email errors).
+- **SC-004**: All active WPSG staff/admin users receive a notification email for every submitted quote.
