@@ -322,6 +322,14 @@ exports.submitQuote = async (req, res) => {
             // Don't fail the request if notifications fail
         }
 
+        // Send acknowledgement email to quote requester
+        try {
+            await quoteNotificationService.notifyQuoteRequesterAcknowledgement(quote);
+        } catch (ackError) {
+            console.error('Error sending quote requester acknowledgement:', ackError);
+            // Don't fail the request if acknowledgement email fails
+        }
+
         return res.status(200).json({
             success: true,
             message: 'Quote submitted successfully',

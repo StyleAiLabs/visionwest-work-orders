@@ -86,6 +86,29 @@ const ReleaseNotesPage = () => {
             ]
         },
         {
+            version: '2.9.0',
+            date: 'March 12, 2026',
+            title: 'Quote Request Thank-You Email',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Automatic thank-you email sent to quote requesters when a quote request is submitted',
+                        'Email includes quote reference number, property name, description summary, and next steps',
+                        'Uses Brevo Template #27 for consistent branding with existing quote notifications'
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'New notifyQuoteRequesterAcknowledgement() function in quoteNotificationService.js',
+                        'Non-blocking email delivery — submission always succeeds even if email fails',
+                        'Sends to contact_email on the quote (the requester), not the logged-in user'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.8.0',
             date: 'October 20, 2025',
             title: 'Work Order Cancellation with Audit Trail',

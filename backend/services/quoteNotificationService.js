@@ -679,4 +679,35 @@ exports.notifyQuoteUpdated = async (quote, updatedBy, changes) => {
     }
 };
 
+/**
+ * Send acknowledgement email to quote requester on submission
+ * Notifies: The contact_email on the quote (the person requesting the work)
+ * Uses Brevo Template #27
+ */
+exports.notifyQuoteRequesterAcknowledgement = async (quote) => {
+    try {
+        if (!quote.contact_email) {
+            console.log('⚠ No contact email on quote - skipping requester acknowledgement');
+            return;
+        }
+
+        await emailService.sendBrevoTemplateEmail({
+            templateId: 27,
+            to: [{ email: quote.contact_email, name: quote.contact_person || '' }],
+            params: {
+                contact_person: quote.contact_person || '',
+                quote_number: quote.quote_number,
+                property_name: quote.property_name || '',
+                property_address: quote.property_address || '',
+                description: quote.description || ''
+            }
+        });
+
+        console.log(`✓ Quote requester acknowledgement email sent to ${quote.contact_email}`);
+    } catch (error) {
+        console.error('Error sending quote requester acknowledgement email:', error);
+        // Don't throw - acknowledgement email is non-critical
+    }
+};
+
 module.exports = exports;
