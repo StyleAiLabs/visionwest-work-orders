@@ -36,6 +36,29 @@ The thank-you email uses existing fields from the `quotes` table. No schema chan
 | `property_address` | `quote.property_address` | "14 Blythe Place, Henderson" |
 | `description` | `quote.description` | "Repair leaking bathroom tap..." |
 
+### Notification Function — Template #17 Params (corrected, US3)
+
+**Function**: `notifyQuoteSubmitted(quote, submittedBy)`
+
+**Template params passed to Brevo Template #17**:
+
+| Param | Source | Example |
+|-------|--------|---------|
+| `recipient_name` | `staffUsers.map(r => r.name).join(', ')` | "John Doe, Jane Smith" |
+| `submitted_by_name` | `submittedBy.full_name` | "Alice Johnson" |
+| `client_name` | `quote.client.name` | "VisionWest" |
+| `quote_number` | `quote.quote_number` | "QTE-2026-003" |
+| `property_name` | `quote.property_name` | "14 Blythe Place" |
+| `property_address` | `quote.property_address` | "14 Blythe Place, Henderson" |
+| `description` | `quote.description` | "Repair leaking bathroom tap..." |
+| `is_urgent` | `quote.is_urgent ? 'Yes' : 'No'` | "No" |
+| `contact_person` | `quote.contact_person` | "Jane Smith" |
+| `contact_email` | `quote.contact_email` | "jane@example.com" |
+| `contact_phone` | `quote.contact_phone \|\| 'N/A'` | "021 123 4567" |
+| `required_by_date` | `quote.required_by_date` (formatted) | "15/04/2026" |
+
+**Note**: `quote.client` requires the `Client` model to be included in the `submitQuote()` query (`{ model: Client, as: 'client', attributes: ['id', 'name', 'code'] }`).
+
 ## State Transitions
 
 No new state transitions. The email is triggered by the existing `Draft → Submitted` transition in `submitQuote()`. The email does not alter any quote state.

@@ -61,6 +61,22 @@
 
 ---
 
+## Phase 4b: User Story 3 — WPSG Staff/Admin Notification Fix (Priority: P1)
+
+**Goal**: Ensure WPSG staff/admin receive correctly formatted notification emails on quote submission, with dynamic WPSG identification
+
+**Independent Test**: Submit a quote and verify all active WPSG staff/admin users receive a notification email with correct submitter name, client name, and quote details
+
+### Implementation for User Story 3
+
+- [x] T010 [US3] Fix `getWPSGStaffUsers()` in `backend/services/quoteNotificationService.js` — replace hardcoded `client_id: 8` with dynamic `Client.findOne({ where: { code: 'WPSG' } })` lookup (FR-009)
+- [x] T011 [US3] Fix `notifyQuoteSubmitted()` Template #17 params in `backend/services/quoteNotificationService.js` — rename `submitted_by` → `submitted_by_name`, add `recipient_name` and `client_name` params. Add `Client` model include to `submitQuote()` query in `backend/controllers/quote.controller.js` (FR-007, FR-008)
+- [ ] T012 [US3] Manual test: submit a quote and verify WPSG staff receive notification email with correct recipient name, submitter name, and client name
+
+**Checkpoint**: WPSG staff/admin receive notification emails with correct param values. Dynamic WPSG lookup works across all environments.
+
+---
+
 ## Phase 5: Polish & Release
 
 **Purpose**: Version bump and release documentation
@@ -78,6 +94,7 @@
 - **Phase 1 (Setup)**: N/A — no tasks
 - **Phase 2 (Foundational)**: Verify Brevo template — BLOCKS Phase 3
 - **Phase 3 (US1 - P1)**: Depends on Phase 2. Core implementation (2 files).
+- **Phase 4b (US3 - P1)**: Independent of Phase 4. Fixes existing `notifyQuoteSubmitted()` flow.
 - **Phase 4 (US2 - P2)**: Depends on Phase 3. Template content verification.
 - **Phase 5 (Polish)**: Depends on Phase 3 completion. T007 and T008 can run in parallel.
 

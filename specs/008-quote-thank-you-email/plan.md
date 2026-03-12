@@ -7,6 +7,8 @@
 
 Add an acknowledgement email notification sent to the quote requester's contact email when a quote request is submitted. The email uses Brevo Template #27 and includes the quote number, property name, description summary, and next-step guidance. This integrates into the existing `submitQuote` flow in `quoteNotificationService.js`, following the same async, failure-tolerant pattern used by `notifyQuoteSubmitted` (Template #17).
 
+**Amendment (US3)**: Fix the existing WPSG staff notification (Template #17) to use correct Brevo param names (`recipient_name`, `submitted_by_name`, `client_name`), replace hardcoded `client_id: 8` with dynamic WPSG lookup by `code`, and add `Client` model include to the `submitQuote()` query.
+
 ## Technical Context
 
 **Language/Version**: Node.js 18.x (backend)
@@ -51,11 +53,14 @@ specs/008-quote-thank-you-email/
 backend/
 ├── services/
 │   └── quoteNotificationService.js  # ADD: notifyQuoteRequesterAcknowledgement()
+│                                     # FIX: getWPSGStaffUsers() dynamic lookup
+│                                     # FIX: notifyQuoteSubmitted() Template #17 params
 └── controllers/
     └── quote.controller.js          # MODIFY: call new notification in submitQuote()
+│                                     # MODIFY: add Client include to submitQuote() query
 ```
 
-**Structure Decision**: Backend-only change. No frontend, migration, or new route needed. Two files modified.
+**Structure Decision**: Backend-only change. No frontend, migration, or new route needed. Two files modified (3 changes total: 1 new function, 2 bug fixes).
 
 ## Complexity Tracking
 
