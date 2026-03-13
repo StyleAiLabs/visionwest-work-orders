@@ -1,5 +1,6 @@
 const db = require('../models');
 const emailService = require('../utils/emailService');
+const smsService = require('./smsService');
 const Notification = db.notification;
 
 /**
@@ -125,6 +126,45 @@ const getClientUsers = async (clientId) => {
 };
 
 /**
+ * Get admin SMS numbers from environment variable
+ * @returns {string[]} Array of phone number strings
+ */
+const getAdminSMSNumbers = () => {
+    const numbersStr = process.env.ADMIN_SMS_NUMBERS || '';
+    if (!numbersStr.trim()) {
+        console.log('⚠ ADMIN_SMS_NUMBERS not configured - skipping admin SMS');
+        return [];
+    }
+    return numbersStr.split(',').map(n => n.trim()).filter(n => n.length > 0);
+};
+
+/**
+ * Send SMS to all configured admin numbers
+ * @param {string} message - SMS message body (event-specific, without link)
+ * @param {Object} quoteMetadata - Metadata including quoteId and quote_number
+ */
+const sendAdminQuoteSMS = async (message, quoteMetadata) => {
+    const adminNumbers = getAdminSMSNumbers();
+    if (adminNumbers.length === 0) return;
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const fullMessage = `${message} View: ${frontendUrl}/quotes/${quoteMetadata.quoteId}`;
+
+    for (const phone of adminNumbers) {
+        try {
+            const result = await smsService.sendSMS(phone, fullMessage, quoteMetadata);
+            if (result.success) {
+                console.log(`✓ Quote SMS sent to ${phone}`);
+            } else {
+                console.log(`⚠ Quote SMS failed for ${phone}: ${result.reason || result.error}`);
+            }
+        } catch (err) {
+            console.error(`✗ Quote SMS error for ${phone}:`, err.message);
+        }
+    }
+};
+
+/**
  * Notify when quote is submitted for review
  * Notifies: All WPSG staff
  */
@@ -177,6 +217,12 @@ exports.notifyQuoteSubmitted = async (quote, submittedBy) => {
         }
 
         console.log(`✓ Quote submitted notifications sent to ${staffUsers.length} staff members`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} submitted.`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending quote submitted notifications:', error);
     }
@@ -232,6 +278,12 @@ exports.notifyQuoteProvided = async (quote, providedBy) => {
         }
 
         console.log(`✓ Quote provided notifications sent to ${clientUsers.length} client users`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} quoted ($${formatCurrency(quote.estimated_cost)}).`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending quote provided notifications:', error);
     }
@@ -285,6 +337,12 @@ exports.notifyQuoteApproved = async (quote, approvedBy) => {
         }
 
         console.log(`✓ Quote approved notifications sent to ${staffUsers.length} staff members`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} approved.`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending quote approved notifications:', error);
     }
@@ -369,6 +427,12 @@ exports.notifyQuoteDeclinedByClient = async (quote, declinedBy, reason) => {
         }
 
         console.log(`✓ Quote declined by client notifications sent to ${staffUsers.length} staff members`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} declined.`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending quote declined by client notifications:', error);
     }
@@ -422,6 +486,12 @@ exports.notifyQuoteConverted = async (quote, workOrder, convertedBy) => {
         }
 
         console.log(`✓ Quote converted notifications sent to ${clientUsers.length} client users`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} converted to WO ${workOrder.job_no}.`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending quote converted notifications:', error);
     }
@@ -473,6 +543,12 @@ exports.notifyInfoRequested = async (quote, requestedBy, message) => {
         }
 
         console.log(`✓ Info requested notifications sent to ${clientUsers.length} client users`);
+
+        // Send SMS to admin numbers
+        await sendAdminQuoteSMS(
+            `Quote ${quote.quote_number} - info requested.`,
+            { quoteId: quote.id, quote_number: quote.quote_number }
+        );
     } catch (error) {
         console.error('Error sending info requested notifications:', error);
     }

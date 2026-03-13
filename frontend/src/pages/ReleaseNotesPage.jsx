@@ -86,6 +86,31 @@ const ReleaseNotesPage = () => {
             ]
         },
         {
+            version: '2.10.0',
+            date: 'March 13, 2026',
+            title: 'Quote SMS Notifications',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'SMS notifications sent to WPSG admins at 6 key quote lifecycle stages',
+                        'Supported events: Submitted, Quoted, Approved, Declined, Converted to WO, Info Requested',
+                        'SMS includes quote number, event description, and direct link to quote in the app',
+                        'Configurable admin phone numbers via ADMIN_SMS_NUMBERS environment variable'
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'Reuses existing smsService.sendSMS() webhook integration with n8n',
+                        'New sendAdminQuoteSMS() helper in quoteNotificationService.js',
+                        'All SMS messages under 160 characters for single-segment delivery',
+                        'Non-blocking — SMS failures logged but never block quote workflows'
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.9.0',
             date: 'March 12, 2026',
             title: 'Quote Request Thank-You Email',
