@@ -60,9 +60,8 @@
     /* Inline critical CSS for Android PWA with NextGen WOM theme */
     html,
     body {
-      width: 100vw !important;
-      max-width: 100vw !important;
-      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
       /* NextGen WOM background color for splash */
@@ -70,11 +69,20 @@
     }
 
     #root {
-      width: 100vw !important;
-      max-width: 100vw !important;
-      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100% !important;
       /* NextGen WOM background */
       background-color: #f8fafc !important;
+    }
+
+    /* Only apply overflow-x: hidden on mobile (Android PWA fix) */
+    @media screen and (max-width: 1023px) {
+      html, body {
+        overflow-x: hidden !important;
+      }
+      #root {
+        overflow-x: hidden !important;
+      }
     }
 
     /* Custom splash screen for better control */
