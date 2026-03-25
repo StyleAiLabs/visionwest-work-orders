@@ -23,6 +23,7 @@ import QuoteRequestForm from './pages/Quotes/QuoteRequestForm';
 import QuoteDetailPage from './pages/Quotes/QuoteDetailPage';
 import { useAuth } from './hooks/useAuth';
 import MainLayout from './components/layout/MainLayout';
+import { SidebarProvider } from './context/SidebarContext';
 import InstallPrompt from './components/common/InstallPrompt';
 
 // Protected route wrapper
@@ -102,6 +103,7 @@ const App = () => {
       <ClientProvider>
         <AlertProvider>
           <Router>
+            <SidebarProvider>
             <InstallPrompt />
             <ToastContainer
               position="top-right"
@@ -295,6 +297,7 @@ const App = () => {
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </div>
+            </SidebarProvider>
           </Router>
         </AlertProvider>
       </ClientProvider>

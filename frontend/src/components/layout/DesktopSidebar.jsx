@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import nextgenLogo from '../../assets/nextgen-logo.png';
+import { useSidebar } from '../../hooks/useSidebar';
 
 const navItems = [
     {
@@ -42,7 +43,8 @@ const navItems = [
     },
 ];
 
-const DesktopSidebar = ({ isOpen, onToggle }) => {
+const DesktopSidebar = () => {
+    const { isOpen, close } = useSidebar();
     const location = useLocation();
 
     const isActive = (path) => {
@@ -53,48 +55,44 @@ const DesktopSidebar = ({ isOpen, onToggle }) => {
     };
 
     return (
-        <>
-            {/* Sidebar */}
-            <aside
-                className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 bg-deep-navy text-pure-white z-[9998] transition-transform duration-300 ease-in-out ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-                style={{ width: '240px', overflowY: 'hidden' }}
-            >
-                {/* Logo area — same height as AppHeader (64px) */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-deep-navy-light">
-                    <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
-                    {/* Close button */}
-                    <button
-                        onClick={onToggle}
-                        className="p-1 rounded-full hover:bg-deep-navy-light transition-colors"
-                        aria-label="Close sidebar"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </button>
-                </div>
+        <aside
+            className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 bg-deep-navy text-pure-white z-[9998] transition-transform duration-300 ease-in-out ${
+                isOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            style={{ width: '240px' }}
+        >
+            {/* Logo area — same height as AppHeader (64px) */}
+            <div className="h-16 flex items-center justify-between px-4 border-b border-deep-navy-light">
+                <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
+                <button
+                    onClick={close}
+                    className="p-1 rounded-full hover:bg-deep-navy-light transition-colors"
+                    aria-label="Close sidebar"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                </button>
+            </div>
 
-                {/* Navigation links */}
-                <nav className="flex-1 py-4">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                                isActive(item.path)
-                                    ? 'bg-nextgen-green text-white'
-                                    : 'text-gray-300 hover:bg-deep-navy-light hover:text-white'
-                            }`}
-                        >
-                            {item.icon}
-                            <span className="text-sm font-medium">{item.label}</span>
-                        </Link>
-                    ))}
-                </nav>
-            </aside>
-        </>
+            {/* Navigation links */}
+            <nav className="flex-1 py-4">
+                {navItems.map((item) => (
+                    <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                            isActive(item.path)
+                                ? 'bg-nextgen-green text-white'
+                                : 'text-gray-300 hover:bg-deep-navy-light hover:text-white'
+                        }`}
+                    >
+                        {item.icon}
+                        <span className="text-sm font-medium">{item.label}</span>
+                    </Link>
+                ))}
+            </nav>
+        </aside>
     );
 };
 

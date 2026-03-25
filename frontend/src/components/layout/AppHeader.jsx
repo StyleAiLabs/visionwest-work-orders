@@ -1,57 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import nextgenLogo from '../../assets/nextgen-logo.png';
-
-const STORAGE_KEY = 'wom-sidebar-open';
+import { useSidebar } from '../../hooks/useSidebar';
 
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
-    // Read sidebar state to position header and show toggle
-    const [sidebarOpen, setSidebarOpen] = useState(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored !== null ? stored === 'true' : true;
-    });
-
-    // Listen for sidebar state changes from MainLayout
-    useEffect(() => {
-        const handleStorage = () => {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            setSidebarOpen(stored === 'true');
-        };
-        window.addEventListener('storage', handleStorage);
-
-        // Also poll for same-tab changes (storage event only fires cross-tab)
-        const interval = setInterval(() => {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            setSidebarOpen(stored === 'true');
-        }, 100);
-
-        return () => {
-            window.removeEventListener('storage', handleStorage);
-            clearInterval(interval);
-        };
-    }, []);
-
-    const toggleSidebar = () => {
-        const newValue = !sidebarOpen;
-        setSidebarOpen(newValue);
-        localStorage.setItem(STORAGE_KEY, String(newValue));
-    };
+    const { isOpen, open } = useSidebar();
 
     return (
         <header
             className={`bg-deep-navy text-pure-white fixed top-0 left-0 right-0 z-[9999] shadow-lg transition-[left] duration-300 ease-in-out ${
-                sidebarOpen ? 'lg:left-[240px]' : 'lg:left-0'
+                isOpen ? 'lg:left-[240px]' : 'lg:left-0'
             }`}
-            style={{
-                height: '64px',
-                padding: '16px',
-            }}
+            style={{ height: '64px', padding: '16px' }}
         >
-            {/* Left side: hamburger toggle (desktop) or back button */}
+            {/* Left side: hamburger toggle (desktop, when sidebar closed) + back button */}
             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                {/* Hamburger toggle — desktop only, shown when sidebar is closed */}
-                {!sidebarOpen && (
+                {!isOpen && (
                     <button
-                        onClick={toggleSidebar}
+                        onClick={open}
                         className="hidden lg:block p-1 rounded-full hover:bg-deep-navy-light transition-colors"
                         aria-label="Open sidebar"
                     >
@@ -61,7 +26,6 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                     </button>
                 )}
 
-                {/* Back button */}
                 {showBackButton && (
                     <button
                         onClick={onBackClick}
@@ -75,27 +39,21 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                 )}
             </div>
 
-            {/* Title - centered when back button is present, left-aligned otherwise */}
+            {/* Title */}
             <div
                 className={`flex items-center h-full ${showBackButton ? 'justify-center' : 'justify-start'}`}
-                style={{
-                    paddingLeft: (!sidebarOpen || showBackButton) ? '40px' : '0',
-                }}
+                style={{ paddingLeft: (!isOpen || showBackButton) ? '40px' : '0' }}
             >
                 {title === "Dashboard" ? (
                     <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
                 ) : (
-                    <h1 className="text-lg font-semibold truncate">
-                        {title}
-                    </h1>
+                    <h1 className="text-lg font-semibold truncate">{title}</h1>
                 )}
             </div>
 
             {/* Right-aligned action buttons */}
             {rightContent && (
-                <div
-                    className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2"
-                >
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
                     {rightContent}
                 </div>
             )}
