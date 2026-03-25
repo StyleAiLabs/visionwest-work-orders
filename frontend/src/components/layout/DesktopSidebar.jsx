@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import nextgenLogo from '../../assets/nextgen-logo.png';
 
 const SIDEBAR_WIDTH = 240; // px
 
@@ -55,17 +56,16 @@ const DesktopSidebar = () => {
 
     return (
         <aside
-            className="hidden lg:flex flex-col fixed top-0 left-0 bottom-0 bg-deep-navy text-pure-white z-[9998]"
-            style={{ width: `${SIDEBAR_WIDTH}px` }}
+            className="hidden lg:flex flex-col fixed top-0 left-0 bottom-0 bg-deep-navy text-pure-white z-[9998] overscroll-contain"
+            style={{ width: `${SIDEBAR_WIDTH}px`, overflowY: 'hidden' }}
         >
             {/* Logo area — same height as AppHeader (64px) */}
             <div className="h-16 flex items-center px-4 border-b border-deep-navy-light">
-                <img src="/icons/icon-192x192.png" alt="NextGen WOM" className="h-8 w-8 mr-3" />
-                <span className="text-lg font-semibold">NextGen WOM</span>
+                <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
             </div>
 
             {/* Navigation links */}
-            <nav className="flex-1 py-4 overflow-y-auto">
+            <nav className="flex-1 py-4">
                 {navItems.map((item) => (
                     <Link
                         key={item.path}
