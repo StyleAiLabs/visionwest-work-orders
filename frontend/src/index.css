@@ -51,17 +51,15 @@ html {
     /* Lock viewport on Android */
     touch-action: manipulation;
 
-    /* Force proper viewport on Android */
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
+    /* Force proper viewport on Android (mobile only) */
+    width: 100%;
+    max-width: 100%;
 }
 
 body {
-    /* Force proper body sizing on Android */
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
+    /* Force proper body sizing on Android (mobile only) */
+    width: 100%;
+    max-width: 100%;
     margin: 0;
     padding: 0;
 
@@ -76,32 +74,26 @@ body {
     color: var(--vw-gray-900);
 }
 
-/* Root container fixes for Android */
+/* Root container */
 #root {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    /* Dynamic viewport height for Android */
 }
 
-/* App container specific fixes */
+/* App container */
 .app-container {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
 }
 
-/* Desktop: undo Android PWA overflow constraints so the document scrolls naturally */
-@media screen and (min-width: 1024px) {
+/* Mobile only: prevent horizontal scroll (Android PWA fix) */
+@media screen and (max-width: 1023px) {
     html, body, #root, .app-container {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: visible;
-        overflow-y: visible;
+        overflow-x: hidden;
     }
 }
 
