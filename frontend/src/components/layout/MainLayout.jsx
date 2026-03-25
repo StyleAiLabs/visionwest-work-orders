@@ -9,7 +9,7 @@ const MainLayout = ({ children }) => {
             <DesktopSidebar />
 
             {/* Main content — shifts right on desktop */}
-            <div className="lg:ml-[240px]">
+            <div className="lg:ml-[240px] pb-16 lg:pb-0">
                 {children}
             </div>
 
