@@ -22,6 +22,7 @@ import QuoteListPage from './pages/Quotes/QuoteListPage';
 import QuoteRequestForm from './pages/Quotes/QuoteRequestForm';
 import QuoteDetailPage from './pages/Quotes/QuoteDetailPage';
 import { useAuth } from './hooks/useAuth';
+import MainLayout from './components/layout/MainLayout';
 import InstallPrompt from './components/common/InstallPrompt';
 
 // Protected route wrapper
@@ -131,7 +132,9 @@ const App = () => {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <DashboardPage />
+                      <MainLayout>
+                        <DashboardPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -140,7 +143,9 @@ const App = () => {
                   path="/work-orders"
                   element={
                     <ProtectedRoute>
-                      <WorkOrdersPage />
+                      <MainLayout>
+                        <WorkOrdersPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -149,7 +154,9 @@ const App = () => {
                   path="/work-orders/create"
                   element={
                     <ProtectedRoute>
-                      <CreateWorkOrder />
+                      <MainLayout>
+                        <CreateWorkOrder />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -158,7 +165,9 @@ const App = () => {
                   path="/work-orders/:id"
                   element={
                     <ProtectedRoute>
-                      <WorkOrderDetailPage />
+                      <MainLayout>
+                        <WorkOrderDetailPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -167,7 +176,9 @@ const App = () => {
                   path="/work-orders/:id/photos/add"
                   element={
                     <ProtectedRoute>
-                      <PhotoUploadPage />
+                      <MainLayout>
+                        <PhotoUploadPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -176,7 +187,9 @@ const App = () => {
                   path="/alerts"
                   element={
                     <ProtectedRoute>
-                      <AlertsPage />
+                      <MainLayout>
+                        <AlertsPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -185,7 +198,9 @@ const App = () => {
                   path="/settings"
                   element={
                     <ProtectedRoute>
-                      <SettingsPage />
+                      <MainLayout>
+                        <SettingsPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -194,7 +209,9 @@ const App = () => {
                   path="/release-notes"
                   element={
                     <ProtectedRoute>
-                      <ReleaseNotesPage />
+                      <MainLayout>
+                        <ReleaseNotesPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -203,7 +220,9 @@ const App = () => {
                   path="/work-orders/:id/update-status"
                   element={
                     <ProtectedRoute>
-                      <StatusUpdatePage />
+                      <MainLayout>
+                        <StatusUpdatePage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -221,7 +240,9 @@ const App = () => {
                   path="/users"
                   element={
                     <ProtectedRoute>
-                      <UserManagementPage />
+                      <MainLayout>
+                        <UserManagementPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -230,7 +251,9 @@ const App = () => {
                   path="/quotes/new"
                   element={
                     <ProtectedRoute>
-                      <QuoteRequestForm />
+                      <MainLayout>
+                        <QuoteRequestForm />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -239,7 +262,9 @@ const App = () => {
                   path="/quotes/:id/edit"
                   element={
                     <ProtectedRoute>
-                      <QuoteRequestForm />
+                      <MainLayout>
+                        <QuoteRequestForm />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -248,7 +273,9 @@ const App = () => {
                   path="/quotes/:id"
                   element={
                     <ProtectedRoute>
-                      <QuoteDetailPage />
+                      <MainLayout>
+                        <QuoteDetailPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
@@ -257,7 +284,9 @@ const App = () => {
                   path="/quotes"
                   element={
                     <ProtectedRoute>
-                      <QuoteListPage />
+                      <MainLayout>
+                        <QuoteListPage />
+                      </MainLayout>
                     </ProtectedRoute>
                   }
                 />
