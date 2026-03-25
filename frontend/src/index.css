@@ -95,6 +95,16 @@ body {
     min-height: 100dvh;
 }
 
+/* Desktop: undo Android PWA overflow constraints so the document scrolls naturally */
+@media screen and (min-width: 1024px) {
+    html, body, #root, .app-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: visible;
+        overflow-y: visible;
+    }
+}
+
 /* Critical: Override Tailwind's min-h-screen for Android */
 .min-h-screen {
     min-height: 100vh !important;
