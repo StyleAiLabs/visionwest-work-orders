@@ -5,6 +5,10 @@ import { useSidebar } from '../../hooks/useSidebar';
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     const { isOpen, open } = useSidebar();
 
+    // On desktop with sidebar open, header doesn't need logo — sidebar has it
+    // On desktop with sidebar closed, show hamburger + page title
+    // On mobile, always show logo on Dashboard, title on other pages
+
     return (
         <header
             className={`bg-deep-navy text-pure-white fixed top-0 left-0 right-0 z-[9999] shadow-lg transition-[left] duration-300 ease-in-out ${
@@ -12,7 +16,7 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
             }`}
             style={{ height: '64px', padding: '16px' }}
         >
-            {/* Left side: hamburger toggle (desktop, when sidebar closed) + back button */}
+            {/* Left side: hamburger (desktop, sidebar closed) + back button */}
             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
                 {!isOpen && (
                     <button
@@ -39,16 +43,24 @@ const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent })
                 )}
             </div>
 
-            {/* Title */}
+            {/* Title area */}
             <div
                 className={`flex items-center h-full ${showBackButton ? 'justify-center' : 'justify-start'}`}
                 style={{ paddingLeft: (!isOpen || showBackButton) ? '40px' : '0' }}
             >
-                {title === "Dashboard" ? (
-                    <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
-                ) : (
-                    <h1 className="text-lg font-semibold truncate">{title}</h1>
-                )}
+                {/* Mobile: show logo on Dashboard, title on other pages */}
+                <div className="lg:hidden">
+                    {title === "Dashboard" ? (
+                        <img src={nextgenLogo} alt="NextGen WOM" className="h-8" />
+                    ) : (
+                        <h1 className="text-lg font-semibold truncate">{title}</h1>
+                    )}
+                </div>
+
+                {/* Desktop: always show page title text (logo is in sidebar) */}
+                <h1 className="hidden lg:block text-lg font-semibold truncate">
+                    {title || 'Dashboard'}
+                </h1>
             </div>
 
             {/* Right-aligned action buttons */}
