@@ -7,7 +7,7 @@ const MainLayout = ({ children }) => {
     const { isOpen } = useSidebar();
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <>
             {/* Desktop sidebar — fixed, slides in/out */}
             <DesktopSidebar />
 
@@ -22,7 +22,7 @@ const MainLayout = ({ children }) => {
 
             {/* Mobile bottom nav — hidden on desktop */}
             <MobileNavigation />
-        </div>
+        </>
     );
 };
 

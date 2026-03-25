@@ -249,7 +249,7 @@ const WorkOrderDetailPage = () => {
             />
 
             {/* Main Content Container with top padding for fixed header */}
-            <div className="min-h-screen overflow-y-auto" style={{ paddingTop: '64px' }}>
+            <div style={{ paddingTop: '64px' }}>
                 <div className="max-w-4xl mx-auto p-4 space-y-4">
 
                     {/* Work Order Summary */}

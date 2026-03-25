@@ -213,7 +213,7 @@ const DashboardPage = () => {
             />
 
             {/* Dashboard Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 p-4">
                 {/* T049: Client Filter for admin users */}
                 <div style={{ paddingTop: '70px' }}>
                     <ClientFilter
