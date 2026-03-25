@@ -4,13 +4,12 @@ import nextgenLogo from '../../assets/nextgen-logo.png';
 const AppHeader = ({ title, showBackButton = false, onBackClick, rightContent }) => {
     return (
         <header
-            className="bg-deep-navy text-pure-white fixed top-0 left-0 right-0 z-[9999] shadow-lg"
+            className="bg-deep-navy text-pure-white fixed top-0 left-0 lg:left-[240px] right-0 z-[9999] shadow-lg"
             style={{
                 height: '64px',
                 padding: '16px',
                 position: 'fixed',
                 top: 0,
-                left: 0,
                 right: 0,
                 zIndex: 9999
             }}
