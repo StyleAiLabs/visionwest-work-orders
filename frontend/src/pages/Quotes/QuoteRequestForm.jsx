@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAttachments } from '../../hooks/useAttachments';
 import AppHeader from '../../components/layout/AppHeader';
-import MobileNavigation from '../../components/layout/MobileNavigation';
+
 import ThumbnailGallery from '../../components/ThumbnailGallery';
 import { quoteService } from '../../services/quoteService';
 import { toast } from 'react-toastify';
@@ -269,10 +269,9 @@ const QuoteRequestForm = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <AppHeader title="Quote Request" />
-                <div className="pt-16 pb-20 flex justify-center items-center">
+                <div className="pt-16 flex justify-center items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nextgen-green"></div>
                 </div>
-                <MobileNavigation />
             </div>
         );
     }
@@ -281,7 +280,7 @@ const QuoteRequestForm = () => {
         <div className="min-h-screen bg-gray-50">
             <AppHeader title={isEditMode ? 'Edit Quote Request' : 'New Quote Request'} />
 
-            <main className="pt-16 pb-20 px-4">
+            <main className="pt-16 px-4">
                 <div className="max-w-2xl mx-auto">
                     {/* T025: Mobile-responsive form */}
                     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
@@ -644,7 +643,6 @@ const QuoteRequestForm = () => {
                 </div>
             </main>
 
-            <MobileNavigation />
         </div>
     );
 };

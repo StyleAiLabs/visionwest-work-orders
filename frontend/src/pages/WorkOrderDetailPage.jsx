@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { workOrderService } from '../services/workOrderService';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import StatusBadge from '../components/common/StatusBadge';
 import PhotoGallery from '../components/workOrders/PhotoGallery';
 import NotesSection from '../components/workOrders/NotesSection';
@@ -249,7 +249,7 @@ const WorkOrderDetailPage = () => {
             />
 
             {/* Main Content Container with top padding for fixed header */}
-            <div className="pb-20 min-h-screen overflow-y-auto" style={{ paddingTop: '64px' }}>
+            <div className="min-h-screen overflow-y-auto" style={{ paddingTop: '64px' }}>
                 <div className="max-w-4xl mx-auto p-4 space-y-4">
 
                     {/* Work Order Summary */}
@@ -386,8 +386,6 @@ const WorkOrderDetailPage = () => {
                     </div>
                 </div>
             </div>
-
-            <MobileNavigation />
 
             {/* Toast notification */}
             {toastState.show && (

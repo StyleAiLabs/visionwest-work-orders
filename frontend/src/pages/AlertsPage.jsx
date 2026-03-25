@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import AlertItem from '../components/alerts/AlertItem';
 import AlertFilter from '../components/alerts/AlertFilter';
@@ -47,7 +47,7 @@ const AlertsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title={`Alerts ${unreadCount > 0 ? `(${unreadCount})` : ''}`}
                 showBackButton={true}
@@ -104,7 +104,6 @@ const AlertsPage = () => {
                 )}
             </div>
 
-            <MobileNavigation />
         </div>
     );
 };

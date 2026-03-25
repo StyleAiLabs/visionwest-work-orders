@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import AppHeader from '../../components/layout/AppHeader';
-import MobileNavigation from '../../components/layout/MobileNavigation';
+
 import QuoteProvisionForm from '../../components/Quotes/QuoteProvisionForm';
 import QuoteAttachments from '../../components/QuoteAttachments';
 import QuoteMessages from '../../components/QuoteMessages';
@@ -159,10 +159,9 @@ const QuoteDetailPage = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <AppHeader title="Quote Details" />
-                <div className="pt-16 pb-20 flex justify-center items-center">
+                <div className="pt-16 flex justify-center items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nextgen-green"></div>
                 </div>
-                <MobileNavigation />
             </div>
         );
     }
@@ -171,7 +170,7 @@ const QuoteDetailPage = () => {
         return (
             <div className="min-h-screen bg-gray-50">
                 <AppHeader title="Quote Details" />
-                <div className="pt-16 pb-20 px-4">
+                <div className="pt-16 px-4">
                     <div className="max-w-2xl mx-auto text-center">
                         <p className="text-gray-600">Quote not found</p>
                         <button
@@ -182,7 +181,6 @@ const QuoteDetailPage = () => {
                         </button>
                     </div>
                 </div>
-                <MobileNavigation />
             </div>
         );
     }
@@ -191,7 +189,7 @@ const QuoteDetailPage = () => {
         <div className="min-h-screen bg-gray-50">
             <AppHeader title="Quote Details" />
 
-            <main className="pt-16 pb-20 px-4">
+            <main className="pt-16 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="bg-white rounded-lg shadow-md p-6 mb-4">
@@ -427,8 +425,6 @@ const QuoteDetailPage = () => {
                     </button>
                 </div>
             </main>
-
-            <MobileNavigation />
 
             {/* T100: Conversion Dialog */}
             {showConvertDialog && (

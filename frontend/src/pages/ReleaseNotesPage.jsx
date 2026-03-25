@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import { useNavigate } from 'react-router-dom';
 import { appService } from '../services/appService';
 
@@ -547,7 +547,7 @@ const ReleaseNotesPage = () => {
                 onBackClick={() => navigate('/settings')}
             />
 
-            <div className="pt-16 pb-16 p-4">
+            <div className="pt-16 p-4">
                 <div className="space-y-6">
                     {releases.map((release, index) => (
                         <div key={release.version} className="bg-white rounded-lg shadow p-4">
@@ -643,7 +643,6 @@ const ReleaseNotesPage = () => {
                 </div>
             </div>
 
-            <MobileNavigation />
         </div>
     );
 };

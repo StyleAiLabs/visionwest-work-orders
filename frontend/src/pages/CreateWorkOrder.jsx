@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import WorkOrderForm from '../components/workOrders/WorkOrderForm';
 import Toast from '../components/common/Toast';
 import { workOrderService } from '../services/workOrderService';
@@ -122,7 +122,7 @@ const CreateWorkOrder = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title="Create Work Order"
                 showBackButton={true}
@@ -149,8 +149,6 @@ const CreateWorkOrder = () => {
                     />
                 </div>
             </div>
-
-            <MobileNavigation />
 
             {/* Toast notification */}
             {toast.show && (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import SummaryCard from '../components/dashboard/SummaryCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import QuickActionButton from '../components/dashboard/QuickActionButton';
@@ -201,13 +201,12 @@ const DashboardPage = () => {
                         </button>
                     </div>
                 </div>
-                <MobileNavigation />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-16">
+        <div className="min-h-screen flex flex-col bg-gray-50">
             <AppHeader
                 title="Dashboard"
                 rightContent={headerRightContent}
@@ -307,8 +306,6 @@ const DashboardPage = () => {
                 </div>
             </div>
 
-            {/* Bottom Navigation */}
-            <MobileNavigation />
         </div>
     );
 };

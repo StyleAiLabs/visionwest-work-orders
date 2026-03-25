@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/common/Button';
@@ -45,7 +45,7 @@ const SettingsPage = () => {
                 onBackClick={() => navigate(-1)}
             />
 
-            <div className="pt-16 pb-16 p-4">
+            <div className="pt-16 p-4">
                 <div className="bg-white rounded-lg shadow p-4 mb-4">
                     <h2 className="text-lg font-medium mb-2">Account</h2>
                     {user && (
@@ -119,7 +119,6 @@ const SettingsPage = () => {
                 </Button>
             </div>
 
-            <MobileNavigation />
         </div>
     );
 };

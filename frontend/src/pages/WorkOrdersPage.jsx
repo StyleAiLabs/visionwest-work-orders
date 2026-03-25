@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import AppHeader from '../components/layout/AppHeader';
-import MobileNavigation from '../components/layout/MobileNavigation';
+
 import WorkOrderCard from '../components/workOrders/WorkOrderCard';
 import FilterBar from '../components/workOrders/FilterBar';
 import AuthorizedPersonFilter from '../components/workOrders/AuthorizedPersonFilter';
@@ -124,7 +124,7 @@ const WorkOrdersPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50">
             <AppHeader
                 title="Work Orders"
                 showBackButton={true}
@@ -268,8 +268,6 @@ const WorkOrdersPage = () => {
                     </div>
                 )}
             </div>
-
-            <MobileNavigation />
 
             {/* Floating Action Button (FAB) - Only for client_admin users */}
             {/* Use Portal to render to dedicated fab-portal container */}

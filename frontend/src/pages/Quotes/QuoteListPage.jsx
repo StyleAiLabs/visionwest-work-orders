@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import AppHeader from '../../components/layout/AppHeader';
-import MobileNavigation from '../../components/layout/MobileNavigation';
+
 import { quoteService } from '../../services/quoteService';
 
 // T036: Status badge component with colors
@@ -142,7 +142,7 @@ const QuoteListPage = () => {
         <div className="min-h-screen bg-gray-50">
             <AppHeader title="Quotes" />
 
-            <main className="pt-16 pb-20 px-4">
+            <main className="pt-16 px-4">
                 <div className="max-w-7xl mx-auto">
                     {/* Header with New Quote Button - T040 */}
                     <div className="flex justify-between items-center mb-4">
@@ -290,7 +290,6 @@ const QuoteListPage = () => {
                 </div>
             </main>
 
-            <MobileNavigation />
         </div>
     );
 };
