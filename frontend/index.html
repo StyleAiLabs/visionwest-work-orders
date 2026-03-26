@@ -75,15 +75,9 @@
       background-color: #f8fafc !important;
     }
 
-    /* Only apply overflow-x: hidden on mobile (Android PWA fix) */
-    @media screen and (max-width: 1023px) {
-      html, body {
-        overflow-x: hidden !important;
-      }
-      #root {
-        overflow-x: hidden !important;
-      }
-    }
+    /* IMPORTANT: Do NOT add overflow-x:hidden here.
+       It implicitly sets overflow-y:auto, creating nested scroll
+       containers that freeze page scrolling on all devices. */
 
     /* Custom splash screen for better control */
     .splash-screen {

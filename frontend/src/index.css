@@ -90,12 +90,10 @@ body {
     min-height: 100dvh;
 }
 
-/* Mobile only: prevent horizontal scroll (Android PWA fix) */
-@media screen and (max-width: 1023px) {
-    html, body, #root, .app-container {
-        overflow-x: hidden;
-    }
-}
+/* Prevent horizontal scroll without creating nested scroll containers.
+   IMPORTANT: Do NOT use overflow-x:hidden here — it implicitly sets
+   overflow-y:auto (CSS spec), creating scroll containers that trap
+   scroll events and freeze page scrolling. */
 
 /* Critical: Override Tailwind's min-h-screen for Android */
 .min-h-screen {

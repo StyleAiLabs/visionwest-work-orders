@@ -268,7 +268,11 @@ const QuoteRequestForm = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <AppHeader title="Quote Request" />
+                <AppHeader
+                    title="Quote Request"
+                    showBackButton={true}
+                    onBackClick={() => navigate('/quotes')}
+                />
                 <div className="pt-16 flex justify-center items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nextgen-green"></div>
                 </div>
@@ -278,7 +282,11 @@ const QuoteRequestForm = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <AppHeader title={isEditMode ? 'Edit Quote Request' : 'New Quote Request'} />
+            <AppHeader
+                title={isEditMode ? 'Edit Quote Request' : 'New Quote Request'}
+                showBackButton={true}
+                onBackClick={() => navigate('/quotes')}
+            />
 
             <main className="pt-16 px-4">
                 <div className="max-w-2xl mx-auto">

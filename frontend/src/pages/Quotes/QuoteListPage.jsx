@@ -140,7 +140,11 @@ const QuoteListPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <AppHeader title="Quotes" />
+            <AppHeader
+                title="Quotes"
+                showBackButton={true}
+                onBackClick={() => navigate('/dashboard')}
+            />
 
             <main className="pt-16 px-4">
                 <div className="max-w-7xl mx-auto">
