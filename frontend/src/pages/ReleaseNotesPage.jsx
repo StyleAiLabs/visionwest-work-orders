@@ -9,6 +9,40 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.11.0',
+            date: 'March 27, 2026',
+            title: 'Desktop Sidebar Navigation & Unified Headers',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Persistent desktop sidebar navigation — always-visible sidebar on screens 1024px and wider with Dashboard, Work Orders, Quotes, and Settings links',
+                        'Collapsible sidebar with toggle button — users can expand/collapse to reclaim screen space',
+                        'Active route highlighting — current page highlighted in sidebar for clear navigation context',
+                        'Unified page headers with back button — all Quote pages (list, detail, request form) now have consistent back navigation'
+                    ]
+                },
+                {
+                    category: 'Improvements',
+                    items: [
+                        'Responsive layout — desktop sidebar auto-hides on mobile/tablet, mobile bottom nav hidden on desktop',
+                        'Fixed critical scroll freeze bug — removed overflow-x:hidden rules that created nested scroll containers per CSS spec',
+                        'Header adapts to sidebar state — shifts content and hides hamburger menu when sidebar is visible on desktop',
+                        'Consistent navigation patterns across all pages'
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'New DesktopSidebar component with 240px fixed sidebar and lg: breakpoint (1024px)',
+                        'SidebarContext and useSidebar hook for shared sidebar open/close state',
+                        'MainLayout wrapper component integrating sidebar, header, and mobile nav',
+                        'Removed duplicate MobileNavigation imports from 10 page files'
+                    ]
+                }
+            ]
+        },
+        {
             version: '3.0.0',
             date: 'November 2, 2025',
             title: 'Quote Request System - Complete MVP Launch',
