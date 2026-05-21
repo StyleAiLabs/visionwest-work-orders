@@ -56,6 +56,9 @@ exports.createWorkOrderFromEmail = async (req, res) => {
         console.log('Webhook received data:', JSON.stringify(req.body, null, 2));
 
         // Extract data sent by n8n
+        // Support both snake_case (normalized) and Title_Case (raw n8n PDF extraction)
+        // as well as American ("authorized") and British ("authorised") spellings
+        const body = req.body;
         const {
             job_no,
             date,
@@ -67,14 +70,18 @@ exports.createWorkOrderFromEmail = async (req, res) => {
             property_phone,
             description,
             po_number,
-            authorized_by,
-            authorized_contact,
-            authorized_email,
             email_subject,
             email_sender,
             email_received_date,
             attachment_data
-        } = req.body;
+        } = body;
+
+        const authorized_by      = body.authorized_by      || body.Authorised_By      || body.authorised_by      || body.Authorized_By;
+        const authorized_contact = body.authorized_contact || body.Authorised_By_Phone || body.authorised_contact || body.Authorized_Contact;
+        const authorized_email   = body.authorized_email   || body.Authorised_By_Email || body.authorised_email   || body.Authorized_Email;
+
+        console.log('Resolved authorized_email:', authorized_email);
+        console.log('Resolved authorized_by:', authorized_by);
 
         // Validate required fields
         if (!job_no || !supplier_name || !property_name || !description) {
@@ -435,6 +442,9 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
     try {
         console.log('Update webhook received data:', JSON.stringify(req.body, null, 2));
 
+        // Support both snake_case (normalized) and Title_Case (raw n8n PDF extraction)
+        // as well as American ("authorized") and British ("authorised") spellings
+        const body = req.body;
         const {
             job_no,
             date,
@@ -446,14 +456,18 @@ exports.updateWorkOrderFromEmail = async (req, res) => {
             property_phone,
             description,
             po_number,
-            authorized_by,
-            authorized_contact,
-            authorized_email,
             email_subject,
             email_sender,
             email_received_date,
             status // Allow status updates
-        } = req.body;
+        } = body;
+
+        const authorized_by      = body.authorized_by      || body.Authorised_By      || body.authorised_by      || body.Authorized_By;
+        const authorized_contact = body.authorized_contact || body.Authorised_By_Phone || body.authorised_contact || body.Authorized_Contact;
+        const authorized_email   = body.authorized_email   || body.Authorised_By_Email || body.authorised_email   || body.Authorized_Email;
+
+        console.log('Resolved authorized_email:', authorized_email);
+        console.log('Resolved authorized_by:', authorized_by);
 
         // Job number is required for updates
         if (!job_no) {

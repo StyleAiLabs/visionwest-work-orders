@@ -873,6 +873,18 @@ exports.updateWorkOrderStatus = async (req, res) => {
             }
         });
 
+        // Fire completion webhook to trigger email notification to property manager
+        if (status === 'completed') {
+            setImmediate(async () => {
+                try {
+                    const { sendCompletionWebhook } = require('../services/completionWebhookService');
+                    await sendCompletionWebhook(workOrder);
+                } catch (err) {
+                    console.error('❌ Error in completion webhook:', err);
+                }
+            });
+        }
+
     } catch (error) {
         console.error('❌ Error updating work order status:', error);
         return res.status(500).json({
