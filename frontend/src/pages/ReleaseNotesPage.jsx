@@ -9,6 +9,39 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.12.0',
+            date: 'August 12, 2026',
+            title: 'Auto Reminders for Information Requests & Email Fixes',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Automated follow-up reminders — when WPSG requests additional information, clients automatically receive a reminder at 4 hours and again at 24 hours if no response is received',
+                        'Reminders are automatically cancelled when the client responds, when WPSG provides a quote, or when a new info request supersedes the previous one',
+                        'Reminder emails use the same template as the original info request but clearly labelled as a follow-up (1st or 2nd reminder)',
+                    ]
+                },
+                {
+                    category: 'Bug Fixes',
+                    items: [
+                        'Fixed Brevo Template #17 (Quote Submitted to WPSG) — all 9 quote params now correctly substituted in subject and body; template was previously rendered in design-editor mode which blocked param substitution',
+                        'Fixed Brevo Template #21 (Additional Information Needed) — added property name, address, and the actual information request message to the client email; these were being sent by the backend but not displayed',
+                        'Fixed missing recipient name in Template #21 — the greeting now correctly shows the client contact\'s name',
+                        'Unblocked WPSG staff email addresses that were incorrectly on Brevo\'s suppression list',
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'New quote_reminders table with DB migration (reminder_number, scheduled_at, sent_at, cancelled_at)',
+                        'New reminderService.js — schedules reminders on info request, processes due reminders via cron (every 5 min), cancels on client response or quote progression',
+                        'node-cron added for server-side scheduled job processing',
+                        'Cancel trigger added to addMessage controller — client reply while quote is Information Requested auto-cancels pending reminders',
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.11.0',
             date: 'March 27, 2026',
             title: 'Desktop Sidebar Navigation & Unified Headers',

@@ -1,6 +1,7 @@
 const db = require('../models');
 const emailService = require('../utils/emailService');
 const smsService = require('./smsService');
+const reminderService = require('./reminderService');
 const Notification = db.notification;
 
 /**
@@ -532,6 +533,7 @@ exports.notifyInfoRequested = async (quote, requestedBy, message) => {
                 templateId: 21,
                 to: recipients,
                 params: {
+                    recipient_name: recipients.map(r => r.name).join(', '),
                     quote_number: quote.quote_number,
                     property_name: quote.property_name,
                     property_address: quote.property_address,
@@ -541,6 +543,9 @@ exports.notifyInfoRequested = async (quote, requestedBy, message) => {
                 }
             });
         }
+
+        // Schedule follow-up reminders (4h and 24h) if no response
+        await reminderService.scheduleReminders(quote);
 
         console.log(`✓ Info requested notifications sent to ${clientUsers.length} client users`);
 

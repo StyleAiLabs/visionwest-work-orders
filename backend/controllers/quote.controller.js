@@ -710,6 +710,14 @@ exports.provideQuote = async (req, res) => {
             }
         }
 
+        // Cancel any pending info-request reminders since staff is now providing a quote
+        try {
+            const reminderService = require('../services/reminderService');
+            await reminderService.cancelPendingReminders(quoteId);
+        } catch (e) {
+            console.log('Note: Could not cancel reminders:', e.message);
+        }
+
         // T054: Update quote with provided details
         await quote.update({
             status: 'Quoted',
@@ -1204,6 +1212,20 @@ exports.addMessage = async (req, res) => {
         });
 
         console.log('✓ Message created:', quoteMessage.id);
+
+        // If a client user responds while quote is "Information Requested", cancel pending reminders
+        if (
+            quote.status === 'Information Requested' &&
+            (user.role === 'client' || user.role === 'client_admin')
+        ) {
+            try {
+                const reminderService = require('../services/reminderService');
+                await reminderService.cancelPendingReminders(quoteId);
+                console.log('✓ Pending reminders cancelled — client provided a response');
+            } catch (e) {
+                console.log('Note: Could not cancel reminders:', e.message);
+            }
+        }
 
         // Fetch the created message with user info
         const createdMessage = await QuoteMessage.findByPk(quoteMessage.id, {

@@ -45,6 +45,7 @@ db.smsNotification = require('./smsNotification.model')(sequelize, Sequelize);
 db.quote = require('./quote.model.js')(sequelize, Sequelize);
 db.quoteMessage = require('./quoteMessage.model.js')(sequelize, Sequelize);
 db.quoteAttachment = require('./quoteAttachment.model.js')(sequelize, Sequelize);
+db.quoteReminder = require('./quoteReminder.model.js')(sequelize, Sequelize);
 
 // Define relationships
 // Client relationships
@@ -106,6 +107,10 @@ db.quoteMessage.belongsTo(db.quote, { foreignKey: 'quote_id', as: 'quote' });
 // Quote to QuoteAttachment relationship
 db.quote.hasMany(db.quoteAttachment, { foreignKey: 'quote_id', as: 'attachments' });
 db.quoteAttachment.belongsTo(db.quote, { foreignKey: 'quote_id', as: 'quote' });
+
+// Quote to QuoteReminder relationship
+db.quote.hasMany(db.quoteReminder, { foreignKey: 'quote_id', as: 'reminders' });
+db.quoteReminder.belongsTo(db.quote, { foreignKey: 'quote_id', as: 'quote' });
 
 // User to QuoteMessage relationship
 db.user.hasMany(db.quoteMessage, { foreignKey: 'user_id', as: 'quoteMessages' });

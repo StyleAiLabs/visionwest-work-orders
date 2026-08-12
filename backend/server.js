@@ -451,6 +451,10 @@ const initializeDatabase = async () => {
     }
 };
 
+// Start quote reminder cron job
+const reminderService = require('./services/reminderService');
+reminderService.startReminderCron();
+
 // Start server first (binds to port immediately for Render), then initialize database
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}.`);
