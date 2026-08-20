@@ -59,6 +59,11 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.TEXT,
             allowNull: true
         },
+        indicative_budget: {
+            type: Sequelize.DECIMAL(10, 2),
+            allowNull: true,
+            comment: 'Client-provided indicative budget allocation for the job (NZD)'
+        },
         contact_person: {
             type: Sequelize.STRING(255),
             allowNull: false

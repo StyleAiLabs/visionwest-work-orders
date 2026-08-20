@@ -22,6 +22,7 @@ const QuoteRequestForm = () => {
     const [formData, setFormData] = useState({
         property_name: '',
         property_address: '',
+
         title: '',
         work_type: '',
         description: '',
@@ -31,6 +32,7 @@ const QuoteRequestForm = () => {
         contact_email: '',
         is_urgent: false,
         required_by_date: '',
+        indicative_budget: '',
         special_instructions: ''
     });
 
@@ -97,6 +99,7 @@ const QuoteRequestForm = () => {
                     contact_email: quote.contact_email || '',
                     is_urgent: quote.is_urgent || false,
                     required_by_date: quote.required_by_date || '',
+                    indicative_budget: quote.indicative_budget || '',
                     special_instructions: quote.special_instructions || ''
                 });
             }
@@ -509,6 +512,26 @@ const QuoteRequestForm = () => {
                                         onChange={handleChange}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nextgen-green focus:border-transparent"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Indicative Budget Allocation (NZD) <span className="text-gray-400 font-normal">— optional</span>
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+                                        <input
+                                            type="number"
+                                            name="indicative_budget"
+                                            value={formData.indicative_budget}
+                                            onChange={handleChange}
+                                            min="0"
+                                            step="0.01"
+                                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nextgen-green focus:border-transparent"
+                                            placeholder="e.g. 5000.00"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">Your approximate budget helps Williams Property Services tailor the quote to your needs.</p>
                                 </div>
 
                                 <div>

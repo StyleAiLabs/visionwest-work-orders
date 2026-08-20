@@ -358,6 +358,15 @@ const QuoteDetailPage = () => {
                                 </div>
                             )}
 
+                            {quote.indicative_budget && (
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Indicative Budget</label>
+                                    <p className="text-gray-900 font-medium">
+                                        NZD ${parseFloat(quote.indicative_budget).toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="text-sm font-medium text-gray-600">Submitted By</label>
                                 <p className="text-gray-900">{quote.creator?.full_name}</p>

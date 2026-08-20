@@ -212,7 +212,8 @@ exports.notifyQuoteSubmitted = async (quote, submittedBy) => {
                     contact_person: quote.contact_person,
                     contact_email: quote.contact_email,
                     contact_phone: quote.contact_phone || 'N/A',
-                    required_by_date: quote.required_by_date ? new Date(quote.required_by_date).toLocaleDateString() : 'N/A'
+                    required_by_date: quote.required_by_date ? new Date(quote.required_by_date).toLocaleDateString() : 'N/A',
+                    indicative_budget: quote.indicative_budget ? `NZD $${parseFloat(quote.indicative_budget).toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Not specified'
                 }
             });
         }

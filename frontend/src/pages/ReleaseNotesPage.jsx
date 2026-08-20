@@ -9,6 +9,30 @@ const ReleaseNotesPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [releases, setReleases] = useState([
         {
+            version: '2.13.0',
+            date: 'August 20, 2026',
+            title: 'Indicative Budget Allocation on Quote Requests',
+            features: [
+                {
+                    category: 'New Features',
+                    items: [
+                        'Clients can now optionally enter an indicative budget allocation (NZD) when submitting a quote request',
+                        'Budget amount is shown in the quote detail view for both VisionWest and WPSG portal users',
+                        'Budget is included in the email notification sent to WPSG staff (Template #17) so they can tailor their quote accordingly',
+                    ]
+                },
+                {
+                    category: 'Technical Implementation',
+                    items: [
+                        'New indicative_budget DECIMAL(10,2) column added to quotes table via Sequelize migration',
+                        'QuoteRequestForm.jsx — optional NZD numeric input field with $ prefix and helper text',
+                        'QuoteDetailPage.jsx — budget displayed in quote info section when present',
+                        'Brevo Template #17 updated to render {{ params.indicative_budget }} after Required By Date',
+                    ]
+                }
+            ]
+        },
+        {
             version: '2.12.0',
             date: 'August 12, 2026',
             title: 'Auto Reminders for Information Requests & Email Fixes',

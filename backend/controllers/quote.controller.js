@@ -43,6 +43,7 @@ exports.createQuote = async (req, res) => {
             work_type,
             description,
             scope_of_work,
+            indicative_budget,
             contact_person,
             contact_email,
             contact_phone,
@@ -109,6 +110,7 @@ exports.createQuote = async (req, res) => {
             work_type: work_type || null,
             description,
             scope_of_work: scope_of_work || null,
+            indicative_budget: indicative_budget ? parseFloat(indicative_budget) : null,
             contact_person,
             contact_email,
             contact_phone: contact_phone || null,
@@ -176,6 +178,7 @@ exports.updateQuote = async (req, res) => {
             work_type,
             description,
             scope_of_work,
+            indicative_budget,
             contact_person,
             contact_email,
             contact_phone,
@@ -192,6 +195,7 @@ exports.updateQuote = async (req, res) => {
         if (work_type !== undefined) updateData.work_type = work_type;
         if (description !== undefined) updateData.description = description;
         if (scope_of_work !== undefined) updateData.scope_of_work = scope_of_work;
+        if (indicative_budget !== undefined) updateData.indicative_budget = indicative_budget ? parseFloat(indicative_budget) : null;
         if (contact_person !== undefined) updateData.contact_person = contact_person;
         if (contact_email !== undefined) updateData.contact_email = contact_email;
         if (contact_phone !== undefined) updateData.contact_phone = contact_phone;
